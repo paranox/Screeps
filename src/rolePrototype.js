@@ -1,5 +1,6 @@
 function Role(name)
 {
+    console.log("Role(" + name + ")");
 	this.name = name;
 };
 
@@ -14,7 +15,7 @@ Role.prototype.run = function(creep)
 	console.log(creep.name + ": " + this.name + " can't do anything!");
 }
 
-module.exports = Role.prototype;
+module.exports = Role;
 
 /*module.exports =
 {

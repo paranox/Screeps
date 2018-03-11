@@ -64,7 +64,8 @@ module.exports.loop = function ()
                  * which would be ideal but ultimately a workable solution, I guess.
                 role = Object.create(roleBuilder);
                 */
-                role = Object.create(roleBuilder); 
+                role = Object.create(roleBuilder);
+                role.constructor();
                 allBuilders.push(creep);
                 break;
         }
