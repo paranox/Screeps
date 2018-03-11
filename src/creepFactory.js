@@ -1,67 +1,6 @@
 ﻿var utils = require('utils');
 var roles = require('roles');
 
-var getPrototypeBuilder = function ()
-{
-    var prototype = {};
-
-    prototype.namePrefix = "Builder";
-    prototype.minimumParts = [WORK, CARRY, MOVE];
-    prototype.partWeightMap = {};
-    prototype.partWeightMap[WORK] = 2.0;
-    prototype.partWeightMap[CARRY] = 2.0;
-    prototype.partWeightMap[MOVE] = 1.0;
-    prototype.opts = { memory: { role: 'builder' } };
-
-    return prototype;
-}
-
-var getPrototypeHarvester = function ()
-{
-    var prototype = {};
-
-    prototype.namePrefix = "Harvester";
-    prototype.minimumParts = [WORK, CARRY, MOVE];
-    prototype.partWeightMap = {};
-    prototype.partWeightMap[WORK] = 2.0;
-    prototype.partWeightMap[CARRY] = 1.0;
-    prototype.partWeightMap[MOVE] = 2.0;
-    prototype.opts = { memory: { role: 'harvester' } };
-
-    return prototype;
-}
-
-var getPrototypeUpgrader = function ()
-{
-    var prototype = {};
-
-    prototype.namePrefix = "Upgrader";
-    prototype.minimumParts = [WORK, CARRY, MOVE];
-    prototype.partWeightMap = {};
-    prototype.partWeightMap[WORK] = 2;
-    prototype.partWeightMap[CARRY] = 2;
-    prototype.partWeightMap[MOVE] = 1;
-    prototype.opts = { memory: { role: 'upgrader' } };
-
-    return prototype;
-}
-
-var getPrototype = function (role)
-{
-    switch (role)
-    {
-        case roles.Harvester:
-            return getPrototypeHarvester();
-        case roles.Builder:
-            return getPrototypeBuilder();
-        case roles.Upgrader:
-            return getPrototypeUpgrader();
-    }
-
-    console.log("Unhandled Creep prototype role: " + role);
-    return null;
-}
-
 var getPartList = function (minimumParts, partWeights, energyCapacityAvailable, maxParts)
 {
     //var initialBodyCost = utils.getBodyCost(initialParts);
@@ -162,11 +101,11 @@ var getPartList = function (minimumParts, partWeights, energyCapacityAvailable, 
 var getBluePrintFromPrototype = function (prototype, energyCapacityAvailable, maxParts)
 {
     var blueprint = {};
-    blueprint.namePrefix = prototype.namePrefix;
+    blueprint.namePrefix = prototype.roleName;
     blueprint.parts = getPartList(prototype.minimumParts, prototype.partWeightMap, energyCapacityAvailable, maxParts);
     blueprint.opts = prototype.opts;
 
-    console.log("Blueprint: " + Object.keys(blueprint));
+    //console.log("Blueprint: " + Object.keys(blueprint));
 
     return blueprint;
 }
@@ -175,7 +114,7 @@ var creepFactory =
 {
     getPrototypeByRole: function (role)
     {
-        return getPrototype(role);
+        return roles.getPrototype(role);
     },
 
     buildPartList: function (minimumParts, partWeights, energyCapacityAvailable, maxParts)
@@ -190,14 +129,26 @@ var creepFactory =
 
     buildBlueprintByRole: function (role, energyCapacityAvailable, maxParts)
     {
-        var prototype = getPrototype(role);
-        console.log("Prototype: " + Object.keys(prototype));
-        return getBluePrintFromPrototype(prototype, energyCapacityAvailable, maxParts);
+        var prototype = roles.getPrototype(role);
+        if (prototype != undefined && prototype != null)
+        {
+            //console.log("Prototype[" + role + "]: " + prototype.roleName + "(" + (typeof prototype) + ")");
+            return getBluePrintFromPrototype(prototype, energyCapacityAvailable, maxParts);
+        }
+
+        console.log("No prototype found for role " + role);
+        return null;
     },
 
     buildCreepFromBlueprint: function (spawn, blueprint)
     {
-        console.log("Build blueprint: " + Object.keys(blueprint));
+        if (blueprint == undefined || blueprint == null)
+        {
+            console.log("Invalid blueprint provided: " + blueprint);
+            return;
+        }
+
+        //console.log("Build blueprint: " + Object.keys(blueprint));
 
         var newName = blueprint.namePrefix + Game.time;
 
@@ -206,6 +157,22 @@ var creepFactory =
         {
             console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " +
                 spawn.room + ", energy cost: " + utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");
+        }
+        else
+        {
+            if (status == ERR_NOT_ENOUGH_ENERGY)
+            {
+                /*console.log("Unable to build creep, cost too high: " + utils.getBodyCost(blueprint.parts) + "/" +
+                spawn.room.energyCapacityAvailable + "\nTried to build creep: '" + newName +
+                "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " + spawn.room +
+                ", energy cost: " + utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");*/
+            }
+            else
+            {
+                console.log("Unable to build creep, error code: " + status + "\nTried to build creep: '" + newName +
+                "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " + spawn.room +
+                ", energy cost: " + utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");
+            }
         }
     }
 }

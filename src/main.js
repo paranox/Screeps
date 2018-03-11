@@ -2,13 +2,14 @@ var utils = require('utils');
 var creepFactory = require('creepFactory');
 
 var roles = require('roles');
+var roleType = require('roleTypes');
 var roleHarvester = require('role.harvester');
 var roleUpgrader = require('role.upgrader');
-var roleBuilder = require('role.builder');
-//require('role.builder');
 
 module.exports.loop = function ()
 {
+    roles.initPrototypes();
+
     for (var name in Memory.creeps)
     {
         if (!Game.creeps[name])
@@ -46,35 +47,22 @@ module.exports.loop = function ()
 
         switch (creep.memory.role)
         {
+            case 'builder':
+                role = roles.getPrototype(roleType.Builder);
+                allBuilders.push(creep);
+                break;
             case 'harvester':
-                //role = new roleHarvester();
+                role = roles.getPrototype(roleType.Harvester);
                 allHarvesters.push(creep);
                 break;
             case 'upgrader':
-                //role = new roleUpgrader();
+                role = roles.getPrototype(roleType.Upgrader);
                 allUpgraders.push(creep);
-                break;
-            case 'builder':
-                /* This segment doesn't work: ReferenceError: RoleBuilder is not defined
-                 * Tried using 'require('role.builder');' instead of the 'var roleBuilder =...'
-                role = new RoleBuilder();
-                */
-                /* This segment works with 'var roleBuilder = require('role.builder')'
-                 * Doesn't call the constructor of RoleBuilder prototype defined in role.builder.js
-                 * which would be ideal but ultimately a workable solution, I guess.
-                role = Object.create(roleBuilder);
-                */
-                role = Object.create(roleBuilder);
-                role.constructor();
-                allBuilders.push(creep);
                 break;
         }
 
         if (role != null)
-        {
-            role.init(creep);
             role.run(creep);
-        }
     }
 
     const minNumHarvesters = 4;
@@ -94,21 +82,21 @@ module.exports.loop = function ()
         {
             //console.log("Too few Harvesters (" + allHarvesters.length + "/" + minNumHarvesters + ")!");
 
-            var blueprint = creepFactory.buildBlueprintByRole(roles.Harvester, spawn.room.energyCapacityAvailable, 50);
+            var blueprint = creepFactory.buildBlueprintByRole(roleType.Harvester, spawn.room.energyCapacityAvailable, 50);
             creepFactory.buildCreepFromBlueprint(spawn, blueprint);
         }
         else if (allBuilders.length < minNumBuilders)
         {
             //console.log("Too few Builders (" + allBuilders.length + "/" + minNumBuilders + ")!");
 
-            var blueprint = creepFactory.buildBlueprintByRole(roles.Builder, spawn.room.energyCapacityAvailable, 50);
+            var blueprint = creepFactory.buildBlueprintByRole(roleType.Builder, spawn.room.energyCapacityAvailable, 50);
             creepFactory.buildCreepFromBlueprint(spawn, blueprint);
         }
         else if (allUpgraders.length < minNumUpgraders)
         {
             //console.log("Too few Upgraders (" + allUpgraders.length + "/" + minNumUpgraders + ")!");
 
-            var blueprint = creepFactory.buildBlueprintByRole(roles.Upgrader, spawn.room.energyCapacityAvailable, 50);
+            var blueprint = creepFactory.buildBlueprintByRole(roleType.Upgrader, spawn.room.energyCapacityAvailable, 50);
             creepFactory.buildCreepFromBlueprint(spawn, blueprint);
         }
     }
