@@ -12,7 +12,7 @@ RoleBuilder.prototype.constructor = RoleBuilder;
 RoleBuilder.prototype.init = function(creep)
 {
     //this.base.init(creep);
-    console.log(creep.name + ": " + this.name + " initialized!");
+    console.log(creep.name + ": " + this.roleName + " initialized!");
 };
 
 RoleBuilder.prototype.run = function(creep)

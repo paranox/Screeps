@@ -1,18 +1,18 @@
-function Role(name)
+function Role(roleName)
 {
-    console.log("Role(" + name + ")");
-	this.name = name;
+	console.log("Role(" + roleName + ")");
+	this.roleName = roleName;
 };
 
 Role.prototype.init = function(creep)
 {
-	console.log(this.name + ": I'm alive!");
+	console.log(this.roleName + ": I'm alive!");
 	//setState(creep.memory.state);
 }
 
 Role.prototype.run = function(creep)
 {
-	console.log(creep.name + ": " + this.name + " can't do anything!");
+	console.log(creep.name + ": " + this.roleName + " can't do anything!");
 }
 
 module.exports = Role;
