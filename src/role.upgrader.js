@@ -1,7 +1,6 @@
-﻿var UpgraderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Upgrade: 3 });
-var Speak = Object.freeze({});
+﻿var Role = require('rolePrototype');
 
-var Role = require('rolePrototype');
+var UpgraderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Upgrade: 3 });
 
 function Upgrader()
 {
@@ -130,59 +129,6 @@ Upgrader.prototype.run = function(creep)
 
             break;
     }
-
-    /*if (creep.carry.energy == 0)
-    {
-        var source = creep.pos.findClosestByPath(FIND_SOURCES, { filter: (s) => (s.energy / s.energyCapacity > 0.1) });
-        if (source == null)
-        {
-            if (doDebug)
-                console.log(creep.name + ": Can't find a Source!");
-        }
-        else
-        {
-            if (creep.harvest(source) == ERR_NOT_IN_RANGE)
-            {
-                if (doDebug)
-                    console.log(creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
-
-                creep.moveTo(source, { visualizePathStyle: { stroke: '#ffaa00' } } );
-                //creep.say('☭ Harvesting...');
-            }
-            else if (doDebug)
-                console.log(creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
-        }
-    }
-    else
-    {
-        var controller = creep.room.controller;
-        if (controller == null)
-        {
-            if (doDebug)
-                console.log(creep.name + ": Can't find Controller!");
-        }
-        else
-        {
-            var status = creep.upgradeController(controller);
-            if (status == 0)
-            {
-                if (doDebug)
-                    console.log(creep.name + ": Upgraded Controller at " + controller.pos.x + "," + controller.pos.y);
-            }
-            else
-            {
-                if (status == ERR_NOT_IN_RANGE)
-                {
-                    if (doDebug)
-                        console.log(creep.name + ": Moving to Controller at " + controller.pos.x + "," + controller.pos.y);
-
-                    creep.moveTo(controller, { visualizePathStyle: { stroke: '#ffaa00' } });
-                }
-                else if (doDebug)
-                    console.log(creep.name + ": Error code: " + status + ". Unable to Upgrade Controller at " + controller.pos.x + "," + controller.pos.y);
-            }
-        }
-    }*/
 };
 
 module.exports = Upgrader.prototype;
