@@ -156,7 +156,8 @@ var creepFactory =
         if (status == 0)
         {
             console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " +
-                spawn.room + ", energy cost: " + utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");
+                spawn.room + ", energy cost: " + utils.getBodyCost(blueprint.parts) + "/" + spawn.room.energyCapacityAvailable +
+                "\nbody parts: [" + blueprint.parts + "]");
         }
         else
         {
