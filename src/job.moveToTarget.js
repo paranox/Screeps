@@ -11,3 +11,5 @@ function MoveToTarget(target)
 
 MoveToTarget.prototype = Object.create(Job);
 MoveToTarget.prototype.constructor = MoveToTarget;
+
+module.exports = MoveToTarget.prototype;

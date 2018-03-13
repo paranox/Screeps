@@ -64,21 +64,45 @@ Builder.prototype.run = function(creep)
             break;
         case BuilderState.Harvest:
             var source = creep.pos.findClosestByPath(FIND_SOURCES);
+
+            if (source == null)
+            {
+                if (doDebug)
+                    console.log(creep.name + ": Can't find a Source!");
+                
+                creep.memory.state = BuilderState.Error;
+                return;
+            }
+
             if (creep.carry.energy < creep.carryCapacity)
             {
                 var status = creep.harvest(source);
-                if (status == ERR_NOT_IN_RANGE)
+                switch (status)
                 {
-                    if (doDebug)
-                        console.log(creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
+                    case OK:
+                        if (doDebug)
+                            console.log(creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
 
-                    creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
-                    creep.memory.state = BuilderState.SeekSource;
+                        break;
+                    case ERR_NOT_IN_RANGE:
+                        if (doDebug)
+                            console.log(creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
 
-                    //creep.say("↻ Move!");
+                        creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
+                        creep.memory.state = BuilderState.SeekSource;
+
+                        //creep.say("↻ Move!");
+
+                        break;
+                    case ERR_NOT_ENOUGH_RESOURCES:
+                        if (doDebug)
+                            console.log(creep.name + ": Source out of resources at " + source.pos.x + "," + source.pos.y);
+                        break;
+                    default:
+                        console.log(creep.name + ": Unhandled status (Error code: " + status +
+                            ") when trying to harvest Source at " + source.pos.x + "," + source.pos.y);
+                        break;
                 }
-                else if (doDebug)
-                    console.log(creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
             }
             else
             {

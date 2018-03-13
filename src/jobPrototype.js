@@ -1,42 +1,45 @@
-function Job(jobName)
+function Job(jobType, jobName)
 {
-	//console.log("Job(" + jobName + ")");
+	console.log("Job.constructor<" + jobType + "(" + jobName + ")");
+	this.jobType = jobType;
 	this.jobName = jobName;
+	this.hasEnded = false;
 };
 
-Job.prototype.loadMemory = function(creep, jobIndex)
+Job.prototype.readSaveData = function(data)
 {
-	console.log(creep.name + ": " + this.jobName + " of type " + (typeof this) + " has nothing to load from memory!");
+	console.log(creep.name + ": Job<" + this.jobType + ">(" + this.jobName + ")  has no need for data!");
+	return false;
 }
 
-Job.prototype.saveMemory = function(creep, jobIndex)
+Job.prototype.setIndex = function(jobIndex)
 {
-	console.log(creep.name + ": " + this.jobName + " of type " + (typeof this) + " has nothing to save to memory!");
-}
+	this.jobIndex = jobIndex;
+};
 
-Job.prototype.clearMemory = function(creep, jobIndex)
+Job.prototype.createSaveData = function()
 {
-	console.log(creep.name + ": " + this.jobName + " of type " + (typeof this) + " has nothing to clear from memory!");
-}
-
-Job.prototype.init = function(creep, memoryEntry)
-{
-	
-}
+	return { "jobType": this.jobType };
+};
 
 Job.prototype.start = function(creep)
 {
 	
-}
+};
 
 Job.prototype.run = function(creep)
 {
-	console.log(creep.name + ": " + this.jobName + " of type " + (typeof this) + " doesn't require any work!");
-}
+	console.log(creep.name + ": Job<" + this.jobType + ">(" + this.jobName + ") doesn't require any work!");
+};
 
-Job.prototype.end = function(creep)
+Job.prototype.end = function(creep, isDone)
 {
-	
-}
+	this.hasEnded = true;
 
-module.exports = Job;
+	if (isDone)
+    	creep.say("❓ Job done!");
+    else
+    	creep.say("❓ Job fail!");
+};
+
+module.exports = Job.prototype;

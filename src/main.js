@@ -18,14 +18,14 @@ module.exports.loop = function ()
         }
     }
 
-    var tower = Game.getObjectById('a878af84ec73a0b43ccd746c');
+    var tower = Game.getObjectById('d2bb057b6a343c5');
     if (tower != null)
     {
-        var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, 
+        /*var closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, 
             { filter: (structure) => structure.hits < structure.hitsMax });
 
         if (closestDamagedStructure != null)
-            tower.repair(closestDamagedStructure);
+            tower.repair(closestDamagedStructure);*/
 
         var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
 
@@ -73,7 +73,15 @@ module.exports.loop = function ()
         }
 
         if (role != null)
+        {
+            if (creep.memory.role == 'repairer')
+                role.init(creep);
+
             role.run(creep);
+
+            if (creep.memory.role == 'repairer')
+                role.clear(creep);
+        }
     }
 
     var spawn = Game.spawns["Spawn.home"];

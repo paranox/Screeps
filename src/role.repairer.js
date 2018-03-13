@@ -1,7 +1,11 @@
 var Role = require('rolePrototype');
+var Jobs = require('jobs');
+var JobType = require('jobTypes');
+var JobRepairTarget = require('job.repairTarget');
 
 var RepairerState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Repair: 3, Upgrade: 4 });
 
+// TODO: DON'T use this.variables in a role unless they're shared between all creeps
 function Repairer()
 {
     //console.log("Repairer()");
@@ -18,17 +22,94 @@ function Repairer()
 Repairer.prototype = Object.create(Role);
 Repairer.prototype.constructor = Repairer;
 
-Repairer.prototype.run = function(creep)
+Repairer.prototype.init = function(creep)
 {
-    const doDebug = true;
+    this.doDebug = creep.memory.doDebug;
 
     if (!creep.memory.state)
     {
-        if (doDebug)
+        if (this.doDebug == true)
             console.log("Initializing creep " + creep.name + " memory");
 
         creep.memory.state = RepairerState.Idle;
     }
+
+    this.jobs = [];
+
+    if (creep.memory.jobs == undefined || creep.memory.jobs.length == 0)
+    {
+        if (this.doDebug == true)
+            console.log(creep.name + ": No jobs in memory");
+
+        return;
+    }
+
+    if (this.doDebug == true)
+        console.log(creep.name + ": Found " + creep.memory.jobs.length + " jobs in memory");
+
+    var job;
+    for (var i = 0; i < creep.memory.jobs.length; i++)
+    {
+        job = Jobs.loadFromMemory(creep, i);
+
+        if (job != null)
+        {
+            if (this.doDebug == true)
+                console.log(creep.name + ": Job[" + i + "]<" + job.jobType + ">(" + job.jobName + "): Successfully loaded from memory");
+
+            this.jobs.push(job);
+        }
+        else if (this.doDebug == true)
+            console.log(creep.name + ": Failed to load Job[" + i + "] from memory");
+    }
+
+    this.currentJob = this.jobs.length > 0 ? this.jobs[this.jobs.length - 1] : null;
+}
+
+Repairer.prototype.run = function(creep)
+{
+    if (this.currentJob == null)
+    {
+        if (this.doDebug == true)
+            console.log(creep.name + ": No job found to run!");
+
+        this.runOld(creep);
+        return;
+    }
+
+    this.currentJob.run(creep);
+}
+
+Repairer.prototype.clear = function(creep)
+{
+    let jobsToSave = [];
+
+    if (this.jobs != undefined)
+    {
+        var job;
+        for (var i = 0; i < this.jobs.length; i++)
+        {
+            job = this.jobs[i];
+
+            if (job.hasEnded == false)
+                jobsToSave.push(job);
+        }
+    }
+    else if (this.doDebug == true)
+    {
+        console.log(creep.name + ": No jobs found to clear or save!");
+        return;
+    }
+
+    if (this.doDebug == true)
+        console.log(creep.name + ": Saving " + jobsToSave.length + " jobs to memory");
+
+    Jobs.saveToMemory(creep, jobsToSave);
+}
+
+Repairer.prototype.runOld = function(creep)
+{
+    const doDebug = false;
 
     switch (creep.memory.state)
     {
@@ -69,6 +150,14 @@ Repairer.prototype.run = function(creep)
             break;
         case RepairerState.Harvest:
             var source = creep.pos.findClosestByPath(FIND_SOURCES);
+
+            if (source == null)
+            {
+                console.log(creep.name + ": Can't find a Source!");
+                creep.memory.state = RepairerState.Error;
+                return;
+            }
+
             if (creep.carry.energy < creep.carryCapacity)
             {
                 var status = creep.harvest(source);
@@ -107,13 +196,11 @@ Repairer.prototype.run = function(creep)
 
             if (target != null)
             {
-                if (creep.repair(target) == ERR_NOT_IN_RANGE)
-                {
-                    if (doDebug)
-                        console.log(creep.name + ": Moving to repair target at " + target.pos.x + "," + target.pos.y);
-
-                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
-                }
+                let job = Jobs.createJobFromData( { "jobType": JobType.RepairTarget, "target": target.id } );
+                if (job != null)
+                    this.jobs.push(job);
+                else if (doDebug)
+                    console.log(creep.name + ": Nothing to add to job list!");
             }
             else
             {
@@ -224,7 +311,7 @@ function getRepairTarget(room)
         targets = others;
 
     var index = 0;
-    /*var hitsRatio = 1.0;
+    var hitsRatio = 1.0;
     var lowestHitsRatio = Number.MAX_VALUE;
     for (var t = 0; t < targets.length; t++)
     {
@@ -235,7 +322,7 @@ function getRepairTarget(room)
             index = t;
             lowestHitsRatio = hitsRatio;
         }
-    }*/
+    }
 
     if (targets != null && targets.length > 0)
         target = targets[index];

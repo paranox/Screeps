@@ -41,8 +41,10 @@ Upgrader.prototype.run = function(creep)
             var source = creep.pos.findClosestByPath(FIND_SOURCES, { filter: (s) => (s.energy > 0) });
             if (source == null)
             {
-                console.log(creep.name + ": Can't find a viable Source!");
-                //creep.memory.state = UpgraderState.Error;
+                if (doDebug)
+                    console.log(creep.name + ": Can't find a viable Source!");
+
+                creep.memory.state = UpgraderState.Error;
                 return;
             }
 
