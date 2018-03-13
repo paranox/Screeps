@@ -38,11 +38,11 @@ Upgrader.prototype.run = function(creep)
 
             break;
         case UpgraderState.SeekSource:
-            var source = creep.pos.findClosestByPath(FIND_SOURCES);//, { filter: (s) => (s.energy / s.energyCapacity > 0.1) });
+            var source = creep.pos.findClosestByPath(FIND_SOURCES, { filter: (s) => (s.energy > 0) });
             if (source == null)
             {
-                console.log(creep.name + ": Can't find a Source!");
-                creep.memory.state = UpgraderState.Error;
+                console.log(creep.name + ": Can't find a viable Source!");
+                //creep.memory.state = UpgraderState.Error;
                 return;
             }
 
@@ -126,6 +126,11 @@ Upgrader.prototype.run = function(creep)
                 else if (doDebug)
                     console.log(creep.name + ": Error code: " + status + ". Unable to Upgrade Controller at " + controller.pos.x + "," + controller.pos.y);
             }
+
+            break;
+        default: // Reset
+            creep.memory.state = UpgraderState.Idle;
+            creep.say("???");
 
             break;
     }

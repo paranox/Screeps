@@ -247,6 +247,7 @@ Harvester.prototype.run = function(creep)
         default: // Reset
             creep.memory.state = HarvesterState.Idle;
             creep.say("???");
+            
             break;
     }
 };

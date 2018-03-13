@@ -161,6 +161,11 @@ Builder.prototype.run = function(creep)
             }
 
             break;
+        default: // Reset
+            creep.memory.state = BuilderState.Idle;
+            creep.say("???");
+
+            break;
     }
 };
 
@@ -182,13 +187,15 @@ function getBuildTarget(room)
 
         switch (target.structureType)
         {
+            case STRUCTURE_TOWER:
+                defenses.push(target);
+                break;
             case STRUCTURE_EXTENSION:
                 extensions.push(target);
                 break;
-            case STRUCTURE_TOWER:
-                defenses.push(target);
             case STRUCTURE_WALL:
                 walls.push(target);
+                break;
             default:
                 others.push(target);
                 break;
@@ -196,10 +203,10 @@ function getBuildTarget(room)
     }
 
     var targets = null;
-    if (extensions.length > 0)
-        targets = extensions;
-    else if (defenses.length > 0)
+    if (defenses.length > 0)
         targets = defenses;
+    else if (extensions.length > 0)
+        targets = extensions;
     else if (walls.length > 0)
         targets = walls;
     else
