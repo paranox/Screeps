@@ -98,12 +98,13 @@ Builder.prototype.run = function(creep)
                 return;
             }
 
-            var targets = creep.room.find(FIND_CONSTRUCTION_SITES);
-            if (targets.length > 0)
+            var target = getBuildTarget(creep.room);
+
+            if (target != null)
             {
-                if (creep.build(targets[0]) == ERR_NOT_IN_RANGE)
+                if (creep.build(target) == ERR_NOT_IN_RANGE)
                 {
-                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffaa00'}});
                 }
             }
             else
@@ -162,5 +163,53 @@ Builder.prototype.run = function(creep)
             break;
     }
 };
+
+function getBuildTarget(room)
+{
+    var allTarges = room.find(FIND_CONSTRUCTION_SITES);
+    var extensions = [];
+    var defenses = [];
+    var walls = [];
+    var others = [];
+
+    var target = null;
+    for (var i = 0; i < allTarges.length; i++)
+    {
+        target = allTarges[i];
+
+        //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
+            //" at " + target.pos + ", progress " + target.progress);
+
+        switch (target.structureType)
+        {
+            case STRUCTURE_EXTENSION:
+                extensions.push(target);
+                break;
+            case STRUCTURE_TOWER:
+                defenses.push(target);
+            case STRUCTURE_WALL:
+                walls.push(target);
+            default:
+                others.push(target);
+                break;
+        }
+    }
+
+    var targets = null;
+    if (extensions.length > 0)
+        targets = extensions;
+    else if (defenses.length > 0)
+        targets = defenses;
+    else if (walls.length > 0)
+        targets = walls;
+    else
+        targets = others;
+
+    // TODO: Pick the closest one
+    if (targets != null && targets.length > 0)
+        target = targets[0];
+
+    return target;
+}
 
 module.exports = Builder.prototype;
