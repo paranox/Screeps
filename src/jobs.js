@@ -1,25 +1,28 @@
-//var jobPrototype = require('jobPrototype');
 var JobType = require('jobTypes');
-var jobRepairTarget = require('job.repairTarget');
+var JobRepairTarget = require('job.repairTarget');
 
 function createJob(data, jobIndex)
 {
 	var job = null;
 
 	if (data.jobType == JobType.RepairTarget)
-        job = Object.create(jobRepairTarget);
+    {
+    	//console.log("Creating Job\<RepairTarget\>");
+    	job = Object.create(JobRepairTarget);
+    }
     else
     {
     	console.log("Unhandled job type: " + data.jobType);
     	return null;
     }
 
-    job.constructor(data.jobType, null);
+    job.constructor(data.opts);
     job.setIndex(jobIndex);
 
-    if (job != null && job.readSaveData(data))
+    if (job.readSaveData(data))
 		return job;
 
+	console.log("Failed to read job of type " + data.jobType + " from data!");
 	return null;
 }
 
@@ -27,27 +30,28 @@ module.exports =
 {
 	createJobFromData: function(data, jobIndex)
 	{
+		//console.log("Creating Job[" + jobIndex + "] from data");
 		return createJob(data, jobIndex);
 	},
 
-	loadFromMemory: function(creep, jobIndex)
+	loadFromMemory: function(actor, jobIndex)
 	{
-		if (creep.memory.jobs == undefined)
+		if (actor.creep.memory.jobs == undefined)
 		{
-			console.log(creep.name + ": Unable to load job from memory, jobs array was not defined");
+			console.log(actor.creep.name + ": Unable to load job from memory, jobs array was not defined");
 			return false;
 		}
 
-		if (jobIndex < 0 || jobIndex >= creep.memory.jobs.length)
+		if (jobIndex < 0 || jobIndex >= actor.creep.memory.jobs.length)
 		{
-			console.log(creep.name + ": Unable to load job from memory, invalid jobIndex: " + this.jobIndex);
+			console.log(actor.creep.name + ": Unable to load job from memory, invalid jobIndex: " + this.jobIndex);
 			return false;
 		}
 
-		return createJob(creep.memory.jobs[jobIndex], jobIndex);
+		return createJob(actor.creep.memory.jobs[jobIndex], jobIndex);
 	},
 
-	saveToMemory: function(creep, jobs)
+	saveToMemory: function(actor, jobs)
 	{
 		var data = [];
 
@@ -60,6 +64,6 @@ module.exports =
 	    		data.push(job.createSaveData());
 	    }
 
-        creep.memory.jobs = data;
+        actor.creep.memory.jobs = data;
 	}
 }

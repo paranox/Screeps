@@ -1,13 +1,14 @@
 var Job = require('jobPrototype');
 var JobType = require('jobTypes');
 
-function RepairTarget(jobIndex, opts)
+function RepairTarget(opts)
 {
-	//console.log("RepairTarget.constructor(" + jobIndex + ")");
+	//console.log("Job->RepairTarget.constructor(" + (opts != null && opts != undefined ? opts.entries() : opts) + ")");
+	this.jobName = "RepairTarget";
+	this.jobType = JobType.RepairTarget;
+	
     this.base = Job;
-    this.base.constructor(JobType.RepairTarget, "RepairTarget");
-
-	this.doDebug = true;
+    this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
 		this.target = opts.target;
@@ -34,7 +35,7 @@ RepairTarget.prototype.readSaveData = function(data)
 		return false;
 	}
 
-	console.log("Target found based on save data: " + data.target);
+	//console.log("Target found based on save data: " + data.target);
 	return true;
 };
 
@@ -45,56 +46,58 @@ RepairTarget.prototype.createSaveData = function()
 	return data;
 };
 
-RepairTarget.prototype.run = function(creep)
+RepairTarget.prototype.onUpdate = function(actor)
 {
-	console.log(creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
+	if (actor.doDebug)
+        console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    if (this.target == null)
+    if (this.target == undefined || this.target == null)
     {
-        if (this.doDebug)
-            console.log(creep.name + ": Nothing to repair!");
+        if (actor.doDebug)
+            console.log(actor.creep.name + ": Nothing to repair!");
 
-        this.end(creep, false);
+        this.end(actor, false);
+        return;
     }
 
-    if (creep.carry.energy <= 0)
+    if (actor.creep.carry.energy <= 0)
     {
-        if (this.doDebug)
-            console.log(creep.name + ": No energy to repair with!");
+        if (actor.doDebug)
+            console.log(actor.creep.name + ": No energy to repair with!");
 
-        this.end(creep, true);
+        this.end(actor, true);
         return;
     }
 
 	if (this.target.hits >= this.target.hitsMax)
 	{
-		if (this.doDebug)
+		if (actor.doDebug)
         {    
-    		console.log(creep.name + ": Target " + this.target.name + " at " +
+    		console.log(actor.creep.name + ": Target " + this.target.name + " at " +
     			this.target.pos.x + "," + this.target.pos.y + " is fully repaired!");
 		}
 
-        this.end(creep, true);
+        this.end(actor, true);
         return;
 	}
 
-	let status = creep.repair(this.target);
+	let status = actor.creep.repair(this.target);
 	switch (status)
 	{
 		case OK:
-	        if (this.doDebug)
-	            console.log(creep.name + ": Repaired target at " + this.target.pos.x + "," + this.target.pos.y);
+	        if (actor.doDebug)
+	            console.log(actor.creep.name + ": Repaired target at " + this.target.pos.x + "," + this.target.pos.y);
 
 			break;
 		case ERR_NOT_IN_RANGE:
-	        if (this.doDebug)
-	            console.log(creep.name + ": Moving to repair target at " + this.target.pos.x + "," + this.target.pos.y);
+	        if (actor.doDebug)
+	            console.log(actor.creep.name + ": Moving to repair target at " + this.target.pos.x + "," + this.target.pos.y);
 
-	        creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
+	        actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
 			break;
 		default:
-            console.log(creep.name + ": Unhandled status (Error code: " + status +
+            console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
                 ") when trying to repair target at " + this.target.pos.x + "," + this.target.pos.y);
 
 			break;

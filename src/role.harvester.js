@@ -1,136 +1,137 @@
 ﻿var Role = require('rolePrototype');
+var RoleType = require('roleTypes');
 
 var HarvesterState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, MoveTo: 2, Harvest: 3, Transfer: 4, Next: 5, Upgrade: 6 });
 
 function Harvester()
 {
-    //console.log("Harvester()");
-    this.base = Role;
-    this.base("Harvester");
+    //console.log("Harvester.constructor()");
+    this.roleName = "Harvester";
+
+    this.base = Object.create(Role);
+    this.base.constructor(this, RoleType.Harvester);
 
     this.partWeightMap[WORK] = 2.0;
     this.partWeightMap[CARRY] = 1.0;
     this.partWeightMap[MOVE] = 2.0;
-
-    this.opts = { memory: { role: 'harvester' } };
 }
 
 Harvester.prototype = Object.create(Role);
 Harvester.prototype.constructor = Harvester;
 
-Harvester.prototype.run = function(creep)
+Harvester.prototype.run = function(actor)
 {
     const doDebug = false;
 
-    if (!creep.memory.state)
-        creep.memory.state = HarvesterState.Idle;
+    if (!actor.creep.memory.state)
+        actor.creep.memory.state = HarvesterState.Idle;
 
-    switch (creep.memory.state)
+    switch (actor.creep.memory.state)
     {
         case HarvesterState.Idle:
-            if (creep.carry.energy < creep.carryCapacity)
-                creep.memory.state = HarvesterState.SeekSource;
+            if (actor.creep.carry.energy < actor.creep.carryCapacity)
+                actor.creep.memory.state = HarvesterState.SeekSource;
             else
             {
-                creep.memory.state = HarvesterState.Harvest;
-                creep.say("█ I'm full!");
+                actor.creep.memory.state = HarvesterState.Harvest;
+                actor.creep.say("█ I'm full!");
             }
 
             break;
         case HarvesterState.SeekSource:
-            if (creep.carry.energy >= creep.carryCapacity)
+            if (actor.creep.carry.energy >= actor.creep.carryCapacity)
             {
-                creep.memory.state = HarvesterState.Transfer;
-                creep.say("█ I'm full!");
+                actor.creep.memory.state = HarvesterState.Transfer;
+                actor.creep.say("█ I'm full!");
                 return;
             }
 
-            var source = creep.pos.findClosestByPath(FIND_SOURCES);//, { filter: (s) => (s.energy / s.energyCapacity > 0.1) });
+            var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);//, { filter: (s) => (s.energy / s.energyCapacity > 0.1) });
             if (source == null)
             {
-                console.log(creep.name + ": Can't find a Source!");
-                creep.memory.state = HarvesterState.Error;
+                console.log(actor.creep.name + ": Can't find a Source!");
+                actor.creep.memory.state = HarvesterState.Error;
                 return;
             }
 
-            var status = creep.harvest(source);
+            var status = actor.creep.harvest(source);
             if (status == ERR_NOT_IN_RANGE)
             {
                 if (doDebug)
-                    console.log(creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
+                    console.log(actor.creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
 
-                creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
-                creep.memory.state = HarvesterState.MoveTo;
+                actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
+                actor.creep.memory.state = HarvesterState.MoveTo;
                     
-                creep.say("↻ Moving...");
+                actor.creep.say("↻ Moving...");
             }
             else
             {
-                creep.memory.state = HarvesterState.Harvest;
-                creep.say("☭ Harvest!");
+                actor.creep.memory.state = HarvesterState.Harvest;
+                actor.creep.say("☭ Harvest!");
             }
 
             break;
         case HarvesterState.MoveTo:
             // TODO: Use a path to check if at target
-            /*if (!creep.memory._move)
+            /*if (!actor.creep.memory._move)
             {
                 if (doDebug)
-                    console.log(creep.name + ": Refreshing path to Source at " + source.pos.x + "," + source.pos.y);
+                    console.log(actor.creep.name + ": Refreshing path to Source at " + source.pos.x + "," + source.pos.y);
 
-                var source = creep.pos.findClosestByPath(FIND_SOURCES);
-                creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
+                var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);
+                actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
             }
             else
-                creep.moveByPath(creep.memory._move);*/
+                actor.creep.moveByPath(actor.creep.memory._move);*/
 
-            var source = creep.pos.findClosestByPath(FIND_SOURCES);
+            var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);
 
-            if (creep.harvest(source) == 0)
+            if (actor.creep.harvest(source) == 0)
             {
-                creep.memory.state = HarvesterState.Harvest;
-                creep.say("☭ Harvest!");
+                actor.creep.memory.state = HarvesterState.Harvest;
+                actor.creep.say("☭ Harvest!");
             }
             else
-                creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
+                actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
 
             break;
         case HarvesterState.Harvest:
-            var source = creep.pos.findClosestByPath(FIND_SOURCES);
-            if (creep.carry.energy < creep.carryCapacity)
+            var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);
+            if (actor.creep.carry.energy < actor.creep.carryCapacity)
             {
-                var status = creep.harvest(source);
+                var status = actor.creep.harvest(source);
                 if (status == ERR_NOT_IN_RANGE)
                 {
                     if (doDebug)
-                        console.log(creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
+                        console.log(actor.creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
 
-                    creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
-                    creep.memory.state = HarvesterState.MoveTo;
+                    actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
+                    actor.creep.memory.state = HarvesterState.MoveTo;
 
-                    creep.say("↻ Move!");
+                    actor.creep.say("↻ Move!");
                 }
                 else if (doDebug)
-                    console.log(creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
+                    console.log(actor.creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
             }
             else
             {
                 if (doDebug)
-                    console.log(creep.name + ": I'm full!");
+                    console.log(actor.creep.name + ": I'm full!");
 
-                creep.memory.state = HarvesterState.Transfer;
-                creep.say("█ I'm full!");
+                actor.creep.memory.state = HarvesterState.Transfer;
+                actor.creep.say("█ I'm full!");
                 return;
             }
             break;
         case HarvesterState.Transfer:
-            if (creep.carry.energy == 0)
+            if (actor.creep.carry.energy == 0)
             {
-                creep.memory.state = HarvesterState.SeekSource;
+                actor.creep.memory.state = HarvesterState.SeekSource;
                 return;
             }
 
-            var targets = creep.room.find(FIND_STRUCTURES,
+            var targets = actor.creep.room.find(FIND_STRUCTURES,
             {
                 filter: (structure) =>
                 {
@@ -144,28 +145,28 @@ Harvester.prototype.run = function(creep)
             if (targets.length > 0)
             {
                 var target = targets[0];
-                var status = creep.transfer(target, RESOURCE_ENERGY);
+                var status = actor.creep.transfer(target, RESOURCE_ENERGY);
                 if (status == 0)
                 {
                     if (doDebug)
-                        console.log(creep.name + ": Transferred Energy to " + target + " at " + target.pos.x + "," + target.pos.y);
+                        console.log(actor.creep.name + ": Transferred Energy to " + target + " at " + target.pos.x + "," + target.pos.y);
 
-                    creep.say("⚡ Transfer!");
-                    creep.memory.state = HarvesterState.Transfer;
+                    actor.creep.say("⚡ Transfer!");
+                    actor.creep.memory.state = HarvesterState.Transfer;
                 }
                 else
                 {
                     if (status == ERR_NOT_IN_RANGE)
                     {
                         if (doDebug)
-                            console.log(creep.name + ": Moving to " + target + " at " + target.pos.x + "," + target.pos.y);
+                            console.log(actor.creep.name + ": Moving to " + target + " at " + target.pos.x + "," + target.pos.y);
 
-                        creep.moveTo(target, { visualizePathStyle: { stroke: "#ffffff" } });
-                        creep.say("↻ Move!");
+                        actor.creep.moveTo(target, { visualizePathStyle: { stroke: "#ffffff" } });
+                        actor.creep.say("↻ Move!");
                     }
                     else if (doDebug)
                     {
-                        console.log(creep.name + ": Error code: " + status + ". Unable to transfer Energy to " + target + " at " +
+                        console.log(actor.creep.name + ": Error code: " + status + ". Unable to transfer Energy to " + target + " at " +
                             target.pos.x + "," + target.pos.y);
                     }
                 }
@@ -173,30 +174,30 @@ Harvester.prototype.run = function(creep)
             else
             {
                 if (doDebug)
-                    console.log(creep.name + ": Nowhere to transfer!");
+                    console.log(actor.creep.name + ": Nowhere to transfer!");
 
-                creep.memory.state = HarvesterState.Upgrade;
-                creep.say("❓ Job done!");
+                actor.creep.memory.state = HarvesterState.Upgrade;
+                actor.creep.say("❓ Job done!");
             }
 
             break;
         case HarvesterState.Next:
-            if (creep.carry.energy == 0)
-                creep.memory.state = HarvesterState.SeekSource;
+            if (actor.creep.carry.energy == 0)
+                actor.creep.memory.state = HarvesterState.SeekSource;
             else
             {
-                creep.say("Next!");
-                creep.memory.state = HarvesterState.MoveTo;
+                actor.creep.say("Next!");
+                actor.creep.memory.state = HarvesterState.MoveTo;
             }
             break;
         case HarvesterState.Upgrade:
-            if (creep.carry.energy == 0)
+            if (actor.creep.carry.energy == 0)
             {
-                creep.memory.state = HarvesterState.SeekSource;
+                actor.creep.memory.state = HarvesterState.SeekSource;
                 return;
             }
 
-            var targets = creep.room.find(FIND_STRUCTURES,
+            var targets = actor.creep.room.find(FIND_STRUCTURES,
             {
                 filter: (structure) =>
                 {
@@ -209,44 +210,44 @@ Harvester.prototype.run = function(creep)
 
             if (targets.length > 0)
             {
-                creep.memory.state = HarvesterState.Harvest;
-                creep.say("☭ Harvest!");
+                actor.creep.memory.state = HarvesterState.Harvest;
+                actor.creep.say("☭ Harvest!");
                 return;
             }
 
-            var controller = creep.room.controller;
+            var controller = actor.creep.room.controller;
             if (controller == null)
             {
                 if (doDebug)
-                    console.log(creep.name + ": Can't find Controller!");
+                    console.log(actor.creep.name + ": Can't find Controller!");
 
-                creep.memory.state = HarvesterState.Error;
+                actor.creep.memory.state = HarvesterState.Error;
                 return;
             }
 
-            var status = creep.upgradeController(controller);
+            var status = actor.creep.upgradeController(controller);
             if (status == 0)
             {
                 if (doDebug)
-                    console.log(creep.name + ": Upgraded Controller at " + controller.pos.x + "," + controller.pos.y);
+                    console.log(actor.creep.name + ": Upgraded Controller at " + controller.pos.x + "," + controller.pos.y);
             }
             else
             {
                 if (status == ERR_NOT_IN_RANGE)
                 {
                     if (doDebug)
-                        console.log(creep.name + ": Moving to Controller at " + controller.pos.x + "," + controller.pos.y);
+                        console.log(actor.creep.name + ": Moving to Controller at " + controller.pos.x + "," + controller.pos.y);
 
-                    creep.moveTo(controller, { visualizePathStyle: { stroke: '#ffaa00' } });
+                    actor.creep.moveTo(controller, { visualizePathStyle: { stroke: '#ffaa00' } });
                 }
                 else if (doDebug)
-                    console.log(creep.name + ": Error code: " + status + ". Unable to Upgrade Controller at " + controller.pos.x + "," + controller.pos.y);
+                    console.log(actor.creep.name + ": Error code: " + status + ". Unable to Upgrade Controller at " + controller.pos.x + "," + controller.pos.y);
             }
 
             break;
         default: // Reset
-            creep.memory.state = HarvesterState.Idle;
-            creep.say("???");
+            actor.creep.memory.state = HarvesterState.Idle;
+            actor.creep.say("???");
             
             break;
     }

@@ -1,12 +1,13 @@
 var utils = require('utils');
 var creepFactory = require('creepFactory');
 
-var roles = require('roles');
-var roleType = require('roleTypes');
+var Actor = require('actor');
+var Roles = require('roles');
+var RoleType = require('roleTypes');
 
 module.exports.loop = function ()
 {
-    roles.initPrototypes();
+    Roles.initPrototypes();
 
     for (var name in Memory.creeps)
     {
@@ -17,6 +18,17 @@ module.exports.loop = function ()
             continue;
         }
     }
+
+    var actor;
+    var actors = [];
+    for (var name in Game.creeps)
+    {
+        actor = Object.create(Actor);
+        actor.constructor(Game.creeps[name]);
+        actors.push(actor);
+    }
+
+    //console.log("Created " + actors.length + " Actor objects");
 
     var tower = Game.getObjectById('d2bb057b6a343c5');
     if (tower != null)
@@ -35,7 +47,6 @@ module.exports.loop = function ()
 
     const targetBodyPartCount = 120;
 
-    var creepCount = 0;
     var bodyPartCount = 0;
 
     var allHarvesters = [];//_.filter(Game.creeps, (creep) => creep.memory.role == 'harvester');
@@ -43,44 +54,38 @@ module.exports.loop = function ()
     var allBuilders = [];
     var allRepairers = [];
 
-    var creep, role;
-    for (var name in Game.creeps)
+    var role;
+    for (var i = 0; i < actors.length; i++)
     {
-        role = null;
-        creepCount++;
+        actor = actors[i];
+        bodyPartCount += actor.creep.body.length;
 
-        creep = Game.creeps[name];
-        bodyPartCount += creep.body.length;
-
-        switch (creep.memory.role)
+        switch (actor.creep.memory.role)
         {
-            case 'builder':
-                role = roles.getPrototype(roleType.Builder);
-                allBuilders.push(creep);
+            case RoleType.Builder:
+                allBuilders.push(actor);
                 break;
-            case 'harvester':
-                role = roles.getPrototype(roleType.Harvester);
-                allHarvesters.push(creep);
+            case RoleType.Harvester:
+                allHarvesters.push(actor);
                 break;
-            case 'upgrader':
-                role = roles.getPrototype(roleType.Upgrader);
-                allUpgraders.push(creep);
+            case RoleType.Upgrader:
+                allUpgraders.push(actor);
                 break;
-            case 'repairer':
-                role = roles.getPrototype(roleType.Repairer);
-                allRepairers.push(creep);
+            case RoleType.Repairer:
+                allRepairers.push(actor);
                 break;
+            default:
+                console.log("Unhandled creep role parameter: " + actor.creep.memory.role);
+                continue;
         }
+
+        role = Roles.getPrototype(actor.creep.memory.role);
 
         if (role != null)
         {
-            if (creep.memory.role == 'repairer')
-                role.init(creep);
-
-            role.run(creep);
-
-            if (creep.memory.role == 'repairer')
-                role.clear(creep);
+            role.init(actor);
+            role.run(actor);
+            role.end(actor);
         }
     }
 
@@ -98,10 +103,10 @@ module.exports.loop = function ()
     const minNumBuilders = 2;
     const minNumRepairers = 2;
     
-    const targetWeightBuilders = 2.0;
-    const targetWeightHarvesters = 1.0;
-    const targetWeightUpgraders = 1.5;
-    const targetWeightRepairers = 1.0;
+    const targetRatioBuilders = 2.0;
+    const targetRatioHarvesters = 1.0;
+    const targetRatioUpgraders = 1.5;
+    const targetRatioRepairers = 1.0;
 
     var roleToBuild = -1;
     var energyCapacity = spawn.room.energyCapacityAvailable;
@@ -109,22 +114,22 @@ module.exports.loop = function ()
     if (allHarvesters.length < minNumHarvesters)
     {
         //console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
-        roleToBuild = roleType.Harvester;
+        roleToBuild = RoleType.Harvester;
     }
     else if (allBuilders.length < minNumBuilders)
     {
         //console.log("Too few Builders (" + allBuilders.length + " < " + minNumBuilders + ")!");
-        roleToBuild = roleType.Builder;
+        roleToBuild = RoleType.Builder;
     }
     else if (allUpgraders.length < minNumUpgraders)
     {
         //console.log("Too few Upgraders (" + allUpgraders.length + " < " + minNumUpgraders + ")!");
-        roleToBuild = roleType.Upgrader;
+        roleToBuild = RoleType.Upgrader;
     }
     else if (allRepairers.length < minNumRepairers)
     {
         //console.log("Too few Repairers (" + allRepairers.length + " < " + minNumRepairers + ")!");
-        roleToBuild = roleType.Repairer;
+        roleToBuild = RoleType.Repairer;
     }
     else
     {
@@ -139,49 +144,49 @@ module.exports.loop = function ()
 
     if (roleToBuild == -1)
     {
-        var ratioBuilders = allBuilders.length / creepCount;
-        var ratioHarvesters = allHarvesters.length / creepCount;
-        var ratioUpgraders = allUpgraders.length / creepCount;
-        var ratioRepairers = allRepairers.length / creepCount;
+        var ratioBuilders = allBuilders.length / actors.length;
+        var ratioHarvesters = allHarvesters.length / actors.length;
+        var ratioUpgraders = allUpgraders.length / actors.length;
+        var ratioRepairers = allRepairers.length / actors.length;
 
-        /*console.log("Creeps: Builder(weight: " + targetWeightBuilders + "): " + allBuilders.length +
-            ", Harvesters(weight: " + targetWeightHarvesters + "): " + allHarvesters.length +
-            ", Upgraders(weight: " + targetWeightUpgraders + "): " + allUpgraders.length +
-            ", Repairers(weight: " + targetWeightRepairers + "): " + allRepairers.length +
-            " of total " + creepCount);*/
+        /*console.log("Creeps: Builder(weight: " + targetRatioBuilders + "): " + allBuilders.length +
+            ", Harvesters(weight: " + targetRatioHarvesters + "): " + allHarvesters.length +
+            ", Upgraders(weight: " + targetRatioUpgraders + "): " + allUpgraders.length +
+            ", Repairers(weight: " + targetRatioRepairers + "): " + allRepairers.length +
+            " of total " + actors.length);*/
 
-        var weightBuilders = targetWeightBuilders - ratioBuilders;
-        var weightHarvesters = targetWeightHarvesters - ratioHarvesters;
-        var weightUpgraders = targetWeightUpgraders - ratioUpgraders;
-        var weightRepairers = targetWeightRepairers - ratioRepairers;
+        var weightBuilders = targetRatioBuilders - ratioBuilders;
+        var weightHarvesters = targetRatioHarvesters - ratioHarvesters;
+        var weightUpgraders = targetRatioUpgraders - ratioUpgraders;
+        var weightRepairers = targetRatioRepairers - ratioRepairers;
 
         if (weightHarvesters > weightBuilders && weightHarvesters > weightUpgraders)
         {
             //console.log("Repairers needed most: " + weightHarvesters + " > " +
                 //weightBuilders + ", " + weightRepairers + ", " + weightUpgraders);
 
-            roleToBuild = roleType.Harvester;
+            roleToBuild = RoleType.Harvester;
         }
         else if (weightBuilders > weightHarvesters && weightBuilders > weightUpgraders)
         {
             //console.log("Repairers needed most: " + weightBuilders + " > " +
                 //weightHarvesters + ", " + weightRepairers + ", " + weightUpgraders);
             
-            roleToBuild = roleType.Builder;
+            roleToBuild = RoleType.Builder;
         }
         else if (weightRepairers > weightBuilders && weightRepairers > weightHarvesters && weightRepairers > weightUpgraders)
         {
             //console.log("Repairers needed most: " + weightRepairers + " > " +
                 //weightBuilders + ", " + weightHarvesters + ", " + weightUpgraders);
 
-            roleToBuild = roleType.Repairer;
+            roleToBuild = RoleType.Repairer;
         }
         else
         {
             //console.log("Repairers needed most: " + weightUpgraders + " > " +
                 //weightBuilders + ", " + weightHarvesters + ", " + weightRepairers);
 
-            roleToBuild = roleType.Upgrader;
+            roleToBuild = RoleType.Upgrader;
         }
     }
 
