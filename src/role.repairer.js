@@ -98,7 +98,42 @@ Repairer.prototype.run = function(actor)
     if (this.tryDoJob(actor))
         return;
 
-    console.log(actor.creep.name + ": Running legacy role work!");
+    // No energy, go harvest
+    if (actor.creep.carry.energy == 0)
+    {
+        console.log(actor.creep.name + ": Need to harvest!");
+        actor.setState(RepairerState.Harvest);
+
+        let job = Jobs.createFromType(JobType.Harvest);
+        if (job != null)
+            actor.addJob(job);
+        else
+            console.log(actor.creep.name + ": Error creating Harvest job!");
+        
+        return;
+    }
+
+    // Try to find repair target
+    var target = getRepairTarget(actor.creep.room);
+
+    if (target != null)
+    {
+        actor.setState(RepairerState.Repair);
+        let job = Jobs.createFromType(JobType.RepairTarget, { "target": target });
+
+        if (job != null)
+            actor.addJob(job);
+        else
+            console.log(actor.creep.name + ": Error creating Repair job!");
+
+        return;
+    }
+
+    if (actor.doDebug)
+        console.log(actor.creep.name + ": Nothing to repair!");
+
+    actor.setState(RepairerState.Upgrade);
+
     this.runOld(actor);
 };
 
@@ -109,6 +144,9 @@ Repairer.prototype.end = function(actor)
 
 Repairer.prototype.runOld = function(actor)
 {
+    if (actor.doDebug)
+        console.log(actor.creep.name + ": Running legacy role work!");
+
     switch (actor.state)
     {
         case RepairerState.Idle:
@@ -188,25 +226,6 @@ Repairer.prototype.runOld = function(actor)
             {
                 actor.state = RepairerState.SeekSource;
                 return;
-            }
-
-            var target = getRepairTarget(actor.creep.room);
-
-            if (target != null)
-            {
-                let job = Jobs.createJobFromData( { "jobType": JobType.RepairTarget, "target": target.id } );
-                if (job != null)
-                    actor.jobs.push(job);
-                else if (actor.doDebug)
-                    console.log(actor.creep.name + ": Nothing to add to job list!");
-            }
-            else
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": Nothing to repair!");
-
-                actor.state = RepairerState.Upgrade;
-                actor.creep.say("❓ Job done!");
             }
             break;
         case RepairerState.Upgrade:

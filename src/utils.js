@@ -1,6 +1,12 @@
 ﻿var utils =
 {
-    getBodyCost: function (bodyParts) {
+    objectToString: function(obj)
+    {
+        return "{" + (Object.keys(obj).map(key => " " + key + ": " + obj[key])) + " }";
+    },
+
+    getBodyCost: function(bodyParts)
+    {
         let cost = 0;
         bodyParts.forEach((bodyPart) =>
         {
@@ -11,7 +17,8 @@
         return cost;
     },
     
-    getBodyPartCost: function (part) {
+    getBodyPartCost: function(part)
+    {
         return BODYPART_COST[part];
     }
 }

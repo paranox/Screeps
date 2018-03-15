@@ -8,6 +8,7 @@ function Job(context)
 
 	if (context.setIndex == undefined)
 		context.setIndex = this.setIndex;
+
 	if (context.readSaveData == undefined)
 		context.readSaveData = this.readSaveData;
 	if (context.createSaveData == undefined)
@@ -26,33 +27,48 @@ Job.prototype.setIndex = function(jobIndex)
 	this.jobIndex = jobIndex;
 };
 
-Job.prototype.readSaveData = function(data)
+Job.prototype.readSaveData = function(context, data)
 {
 	if (data.jobType == undefined)
 	{
 		console.log("Job save data has no job type defined!");
 		return false;
 	}
-	
-	this.jobType = data.jobType;
+	else
+		context.jobType = data.jobType;
+
+	if (data.startTime == undefined)
+	{
+		console.log("Job save data has no start time defined! Setting to " + Game.time);
+		context.startTime = Game.time;
+	}
+	else
+	{
+		context.startTime = data.startTime;
+		context.hasStarted = data.startTime < Game.time;
+	}
+
 	return true;
 };
 
-Job.prototype.createSaveData = function()
+Job.prototype.createSaveData = function(context)
 {
-	return { "jobType": this.jobType };
+	return { "jobType": context.jobType, "startTime": context.startTime };
 };
 
 Job.prototype.start = function(actor)
 {
-	//console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".start()");
+	if (actor.doDebug)
+		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".start()");
+
 	this.hasStarted = true;
+	this.startTime = Game.time;
 	this.onStart(actor);
 };
 
 Job.prototype.onStart = function(actor)
 {
-	
+	actor.creep.say("Job Start!");
 };
 
 Job.prototype.update = function(actor)
@@ -68,7 +84,9 @@ Job.prototype.onUpdate = function(actor)
 
 Job.prototype.end = function(actor, isDone)
 {
-	//console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".end(" + isDone + ")");
+	if (actor.doDebug)
+		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".end(" + isDone + ")");
+
 	this.hasEnded = true;
 	this.onEnd(actor, isDone);
 };

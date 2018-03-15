@@ -87,6 +87,8 @@ module.exports.loop = function ()
             role.run(actor);
             role.end(actor);
         }
+
+        actor.end();
     }
 
     var spawn = Game.spawns["Spawn.home"];

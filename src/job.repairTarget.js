@@ -1,9 +1,10 @@
+var Utils = require('utils');
 var Job = require('jobPrototype');
 var JobType = require('jobTypes');
 
 function RepairTarget(opts)
 {
-	//console.log("Job->RepairTarget.constructor(" + (opts != null && opts != undefined ? opts.entries() : opts) + ")");
+	//console.log("Job->RepairTarget.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "RepairTarget";
 	this.jobType = JobType.RepairTarget;
 	
@@ -11,7 +12,10 @@ function RepairTarget(opts)
     this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
-		this.target = opts.target;
+	{
+		if (opts.target != null)
+			this.target = opts.target;
+	}
 }
 
 RepairTarget.prototype = Object.create(Job);
@@ -19,19 +23,24 @@ RepairTarget.prototype.constructor = RepairTarget;
 
 RepairTarget.prototype.readSaveData = function(data)
 {
+	if (!this.base.readSaveData(this, data))
+		return false;
+
 	if (data.target != undefined && data.target != null)
 	{
-		this.target = Game.getObjectById(data.target);
+		let target = Game.getObjectById(data.target);
 
-		if (this.target == null)
+		if (target == null)
 		{
 			console.log("Target id[" + data.target + "] was not found!");
 			return false;
 		}
+
+		this.target = target;
 	}
 	else
 	{
-		console.log("Target information was not included in save data: " + data);
+		console.log("Target information was not included in save data: " + Utils.objectToString(data));
 		return false;
 	}
 
@@ -41,10 +50,18 @@ RepairTarget.prototype.readSaveData = function(data)
 
 RepairTarget.prototype.createSaveData = function()
 {
-	var data = this.base.createSaveData();
-	data["target"] = this.target.id;
+	var data = this.base.createSaveData(this);
+
+	if (this.target != undefined && this.target != null)
+		data["target"] = this.target.id;
+
 	return data;
 };
+
+RepairTarget.prototype.onStart = function(actor)
+{
+	actor.creep.say("⚒ Repair!");
+}
 
 RepairTarget.prototype.onUpdate = function(actor)
 {
