@@ -1,13 +1,11 @@
-var utils = require('utils');
-var creepFactory = require('creepFactory');
-
 var Actor = require('actor');
-var Roles = require('roles');
+var RoleFactory = require('roleFactory');
 var RoleType = require('roleTypes');
+var CreepFactory = require('creepFactory');
 
 module.exports.loop = function ()
 {
-    Roles.initPrototypes();
+    RoleFactory.initPrototypes();
 
     for (var name in Memory.creeps)
     {
@@ -79,7 +77,10 @@ module.exports.loop = function ()
                 continue;
         }
 
-        role = Roles.getPrototype(actor.creep.memory.role);
+        if (actor.creep.spawning)
+            continue;
+        
+        role = RoleFactory.getPrototype(actor.creep.memory.role);
 
         if (role != null)
         {
@@ -105,10 +106,10 @@ module.exports.loop = function ()
     const minNumBuilders = 2;
     const minNumRepairers = 2;
     
-    const targetRatioBuilders = 2.0;
+    const targetRatioBuilders = 1.0;
     const targetRatioHarvesters = 1.0;
     const targetRatioUpgraders = 1.5;
-    const targetRatioRepairers = 1.0;
+    const targetRatioRepairers = 1.5;
 
     var roleToBuild = -1;
     var energyCapacity = spawn.room.energyCapacityAvailable;
@@ -192,7 +193,7 @@ module.exports.loop = function ()
         }
     }
 
-    var blueprint = creepFactory.buildBlueprintByRole(roleToBuild, energyCapacity, 50);
+    var blueprint = CreepFactory.buildBlueprintByRole(roleToBuild, energyCapacity, 50);
     if (blueprint != null)
-        creepFactory.buildCreepFromBlueprint(spawn, blueprint);
+        CreepFactory.buildCreepFromBlueprint(spawn, blueprint);
 }

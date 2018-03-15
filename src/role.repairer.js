@@ -1,6 +1,6 @@
 var Role = require('rolePrototype');
 var RoleType = require('roleTypes');
-var Jobs = require('jobs');
+var JobFactory = require('jobFactory');
 var JobType = require('jobTypes');
 
 var RepairerState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Repair: 3, Upgrade: 4 });
@@ -40,6 +40,7 @@ function getRepairTarget(room)
 
         switch (target.structureType)
         {
+            case STRUCTURE_RAMPART:
             case STRUCTURE_TOWER:
                 if (target.hits / target.hitsMax < 0.95) defenses.push(target);
                 break;
@@ -47,7 +48,7 @@ function getRepairTarget(room)
                 if (target.hits / target.hitsMax < 0.95) extensions.push(target);
                 break;
             case STRUCTURE_WALL:
-                if (target.hits / target.hitsMax < 0.75) walls.push(target);
+                if (target.hits / target.hitsMax < 0.25) walls.push(target);
                 break;
             case STRUCTURE_ROAD:
                 if (target.hits / target.hitsMax < 0.5) others.push(target);
@@ -101,10 +102,9 @@ Repairer.prototype.run = function(actor)
     // No energy, go harvest
     if (actor.creep.carry.energy == 0)
     {
-        console.log(actor.creep.name + ": Need to harvest!");
         actor.setState(RepairerState.Harvest);
 
-        let job = Jobs.createFromType(JobType.Harvest);
+        let job = JobFactory.createFromType(JobType.Harvest);
         if (job != null)
             actor.addJob(job);
         else
@@ -119,7 +119,7 @@ Repairer.prototype.run = function(actor)
     if (target != null)
     {
         actor.setState(RepairerState.Repair);
-        let job = Jobs.createFromType(JobType.RepairTarget, { "target": target });
+        let job = JobFactory.createFromType(JobType.Repair, { "target": target });
 
         if (job != null)
             actor.addJob(job);

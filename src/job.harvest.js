@@ -95,16 +95,21 @@ Harvest.prototype.onUpdate = function(actor)
             actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: "#ffaa00" } });
 
             break;
+        case ERR_BUSY:
+            if (actor.doDebug)
+                console.log(actor.creep.name + ": Creep busy, unable to harvest Source at " + this.target.pos.x + "," + this.target.pos.y);
+
+            break;
         case ERR_NOT_ENOUGH_RESOURCES:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Source out of resources at " + source.pos.x + "," + source.pos.y);
+                console.log(actor.creep.name + ": Source out of resources at " + this.target.pos.x + "," + this.target.pos.y);
 
 			this.end(actor, false);
 
             break;
         default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to harvest Source at " + source.pos.x + "," + source.pos.y);
+                ") when trying to harvest Source at " + this.target.pos.x + "," + this.target.pos.y);
 
             break;
     }

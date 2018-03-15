@@ -1,5 +1,5 @@
 var Utils = require('utils');
-var Jobs = require('jobs');
+var JobFactory = require('jobFactory');
 
 function Actor(creep)
 {
@@ -29,7 +29,7 @@ function Actor(creep)
 	    var job;
 	    for (let i = 0; i < creep.memory.jobs.length; i++)
 	    {
-	        job = Jobs.createFromData(creep.memory.jobs[i]);
+	        job = JobFactory.createFromData(creep.memory.jobs[i]);
 
 	        if (job != null)
 	        {

@@ -1,5 +1,5 @@
 var JobType = require('jobTypes');
-var JobRepairTarget = require('job.repairTarget');
+var JobRepair = require('job.repair');
 var JobHarvest = require('job.harvest');
 
 function createJobFromData(data)
@@ -22,8 +22,8 @@ function createJobFromType(jobType, opts)
 
 	switch (jobType)
 	{
-		case JobType.RepairTarget:
-			job = Object.create(JobRepairTarget);
+		case JobType.Repair:
+			job = Object.create(JobRepair);
 			break;
 		case JobType.Harvest:
 			job = Object.create(JobHarvest);

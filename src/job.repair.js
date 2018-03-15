@@ -2,11 +2,11 @@ var Utils = require('utils');
 var Job = require('jobPrototype');
 var JobType = require('jobTypes');
 
-function RepairTarget(opts)
+function Repair(opts)
 {
-	//console.log("Job->RepairTarget.constructor(opts: " + Utils.objectToString(opts) + ")");
-	this.jobName = "RepairTarget";
-	this.jobType = JobType.RepairTarget;
+	//console.log("Job->Repair.constructor(opts: " + Utils.objectToString(opts) + ")");
+	this.jobName = "Repair";
+	this.jobType = JobType.Repair;
 	
     this.base = Job;
     this.base.constructor(this);
@@ -18,10 +18,10 @@ function RepairTarget(opts)
 	}
 }
 
-RepairTarget.prototype = Object.create(Job);
-RepairTarget.prototype.constructor = RepairTarget;
+Repair.prototype = Object.create(Job);
+Repair.prototype.constructor = Repair;
 
-RepairTarget.prototype.readSaveData = function(data)
+Repair.prototype.readSaveData = function(data)
 {
 	if (!this.base.readSaveData(this, data))
 		return false;
@@ -48,7 +48,7 @@ RepairTarget.prototype.readSaveData = function(data)
 	return true;
 };
 
-RepairTarget.prototype.createSaveData = function()
+Repair.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
@@ -58,12 +58,12 @@ RepairTarget.prototype.createSaveData = function()
 	return data;
 };
 
-RepairTarget.prototype.onStart = function(actor)
+Repair.prototype.onStart = function(actor)
 {
 	actor.creep.say("⚒ Repair!");
 }
 
-RepairTarget.prototype.onUpdate = function(actor)
+Repair.prototype.onUpdate = function(actor)
 {
 	if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
@@ -121,4 +121,4 @@ RepairTarget.prototype.onUpdate = function(actor)
     }
 };
 
-module.exports = RepairTarget.prototype;
+module.exports = Repair.prototype;

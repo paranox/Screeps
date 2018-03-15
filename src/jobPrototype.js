@@ -37,16 +37,13 @@ Job.prototype.readSaveData = function(context, data)
 	else
 		context.jobType = data.jobType;
 
-	if (data.startTime == undefined)
-	{
-		console.log("Job save data has no start time defined! Setting to " + Game.time);
-		context.startTime = Game.time;
-	}
-	else
+	if (data.startTime != undefined)
 	{
 		context.startTime = data.startTime;
 		context.hasStarted = data.startTime < Game.time;
 	}
+	else
+		context.hasStarted = false;
 
 	return true;
 };
@@ -59,7 +56,7 @@ Job.prototype.createSaveData = function(context)
 Job.prototype.start = function(actor)
 {
 	if (actor.doDebug)
-		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".start()");
+		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".start() at time " + Game.time);
 
 	this.hasStarted = true;
 	this.startTime = Game.time;
