@@ -91,9 +91,15 @@ Job.prototype.end = function(actor, isDone)
 Job.prototype.onEnd = function(actor, isDone)
 {
 	if (isDone)
-    	actor.creep.say("❓ Job done!");
+	{
+		// Symbol Dec:10004, Hex:2714, HEAVY CHECK MARK, https://www.w3schools.com/charsets/ref_utf_symbols.asp
+    	actor.creep.say("✔ Job done!");
+	}
     else
-    	actor.creep.say("❓ Job fail!");
+    {
+		// Symbol Dec:10008, Hex:2718, HEAVY BALLOT X, https://www.w3schools.com/charsets/ref_utf_symbols.asp
+    	actor.creep.say("✘ Job fail!");
+    }
 };
 
 module.exports = Job.prototype;

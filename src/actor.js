@@ -9,8 +9,16 @@ function Actor(creep)
 		console.log("Actor.constructor(" + creep.name + ")");
 
 	this.creep = creep;
-    this.state = 0;
 
+    if (creep.spawning)
+    	creep.memory.isSpawning = true;
+    else if (creep.memory.isSpawning)
+    {
+    	delete creep.memory.isSpawning;
+    	creep.say("HelloWorld");
+    }
+
+    this.state = 0;
     if (creep.memory.state != undefined)
     {
     	this.state = creep.memory.state;

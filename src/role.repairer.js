@@ -3,7 +3,7 @@ var RoleType = require('roleTypes');
 var JobFactory = require('jobFactory');
 var JobType = require('jobTypes');
 
-var RepairerState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Repair: 3, Upgrade: 4 });
+//var RepairerState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Repair: 3, Upgrade: 4 });
 
 /// Constructor
 
@@ -20,7 +20,47 @@ function Repairer()
     this.partWeightMap[MOVE] = 2.0;
 }
 
+/// Prototype
+
+Repairer.prototype = Object.create(Role);
+Repairer.prototype.constructor = Repairer;
+
+Repairer.prototype.run = function(actor)
+{
+    if (this.tryDoJob(actor))
+        return;
+
+    var job = getJob(actor);
+    if (job != null)
+        actor.addJob(job);
+}
+
+module.exports = Repairer.prototype;
+
 /// Internal functions
+
+function getJob(actor)
+{
+    // No energy, go harvest
+    if (actor.creep.carry.energy == 0)
+        return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
+
+    // Try to find a target for a Repair job
+    var target = getRepairTarget(actor.creep.room);
+    if (target != null)
+        return JobFactory.createFromType(JobType.Repair, { "for": actor.creep.name, "target": target });
+    else if (actor.doDebug)
+        console.log(actor.creep.name + ": Nothing to repair!");
+
+    // Get the room's Controller for an Upgrade job
+    var controller = actor.creep.room.controller;
+    if (controller != null)
+        return JobFactory.createFromType(JobType.Upgrade, { "for": actor.creep.name });
+    else
+        console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
+
+    return null;
+}
 
 function getRepairTarget(room)
 {
@@ -87,198 +127,4 @@ function getRepairTarget(room)
         target = targets[index];
 
     return target;
-};
-
-/// Prototype
-
-Repairer.prototype = Object.create(Role);
-Repairer.prototype.constructor = Repairer;
-
-Repairer.prototype.run = function(actor)
-{
-    if (this.tryDoJob(actor))
-        return;
-
-    // No energy, go harvest
-    if (actor.creep.carry.energy == 0)
-    {
-        actor.setState(RepairerState.Harvest);
-
-        let job = JobFactory.createFromType(JobType.Harvest);
-        if (job != null)
-            actor.addJob(job);
-        else
-            console.log(actor.creep.name + ": Error creating Harvest job!");
-        
-        return;
-    }
-
-    // Try to find repair target
-    var target = getRepairTarget(actor.creep.room);
-
-    if (target != null)
-    {
-        actor.setState(RepairerState.Repair);
-        let job = JobFactory.createFromType(JobType.Repair, { "target": target });
-
-        if (job != null)
-            actor.addJob(job);
-        else
-            console.log(actor.creep.name + ": Error creating Repair job!");
-
-        return;
-    }
-
-    if (actor.doDebug)
-        console.log(actor.creep.name + ": Nothing to repair!");
-
-    actor.setState(RepairerState.Upgrade);
-
-    this.runOld(actor);
-};
-
-Repairer.prototype.end = function(actor)
-{
-
-};
-
-Repairer.prototype.runOld = function(actor)
-{
-    if (actor.doDebug)
-        console.log(actor.creep.name + ": Running legacy role work!");
-
-    switch (actor.state)
-    {
-        case RepairerState.Idle:
-            if (actor.creep.carry.energy < actor.creep.carryCapacity)
-                actor.state = RepairerState.SeekSource;
-            else
-            {
-                actor.state = RepairerState.Repair;
-                actor.creep.say("█ I'm full!");
-            }
-
-            break;
-        case RepairerState.SeekSource:
-            var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);//, { filter: (s) => (s.energy / s.energyCapacity > 0.1) });
-            if (source == null)
-            {
-                console.log(actor.creep.name + ": Can't find a Source!");
-                actor.state = RepairerState.Error;
-                return;
-            }
-
-            var status = actor.creep.harvest(source);
-            if (status == ERR_NOT_IN_RANGE)
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
-
-                actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
-                //actor.creep.say("↻ Move!");
-            }
-            else
-            {
-                actor.state = RepairerState.Harvest;
-                actor.creep.say("☭ Harvest!");
-            }
-
-            break;
-        case RepairerState.Harvest:
-            var source = actor.creep.pos.findClosestByPath(FIND_SOURCES);
-
-            if (source == null)
-            {
-                console.log(actor.creep.name + ": Can't find a Source!");
-                actor.state = RepairerState.Error;
-                return;
-            }
-
-            if (actor.creep.carry.energy < actor.creep.carryCapacity)
-            {
-                var status = actor.creep.harvest(source);
-                if (status == ERR_NOT_IN_RANGE)
-                {
-                    if (actor.doDebug)
-                        console.log(actor.creep.name + ": Moving to Source at " + source.pos.x + "," + source.pos.y);
-
-                    actor.creep.moveTo(source, { visualizePathStyle: { stroke: "#ffaa00" } });
-                    actor.state = RepairerState.SeekSource;
-
-                    //creep.say("↻ Move!");
-                }
-                else if (actor.doDebug)
-                    console.log(actor.creep.name + ": Harvested from Source at " + source.pos.x + "," + source.pos.y);
-            }
-            else
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": I'm full!");
-
-                actor.state = RepairerState.Repair;
-                actor.creep.say("█ I'm full!");
-                return;
-            }
-
-            break;
-        case RepairerState.Repair:
-            if (actor.creep.carry.energy == 0)
-            {
-                actor.state = RepairerState.SeekSource;
-                return;
-            }
-            break;
-        case RepairerState.Upgrade:
-            if (actor.creep.carry.energy == 0)
-            {
-                actor.state = RepairerState.SeekSource;
-                return;
-            }
-
-            var targets = actor.creep.room.find(FIND_CONSTRUCTION_SITES);
-            if (targets.length > 0)
-            {
-                actor.state = RepairerState.Repair;
-                actor.creep.say("⚒ Work!");
-                return;
-            }
-
-            var controller = actor.creep.room.controller;
-            if (controller == null)
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": Can't find Controller!");
-
-                actor.state = RepairerState.Error;
-                return;
-            }
-
-            var status = actor.creep.upgradeController(controller);
-            if (status == 0)
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": Upgraded Controller at " + controller.pos.x + "," + controller.pos.y);
-            }
-            else
-            {
-                if (status == ERR_NOT_IN_RANGE)
-                {
-                    if (actor.doDebug)
-                        console.log(actor.creep.name + ": Moving to Controller at " + controller.pos.x + "," + controller.pos.y);
-
-                    actor.creep.moveTo(controller, { visualizePathStyle: { stroke: '#ffaa00' } });
-                }
-                else if (actor.doDebug)
-                    console.log(actor.creep.name + ": Error code: " + status + ". Unable to Upgrade Controller at " + controller.pos.x + "," + controller.pos.y);
-            }
-
-            break;
-        default: // Reset
-            actor.state = RepairerState.Idle;
-            actor.creep.say("???");
-
-            break;
-    }
-};
-
-module.exports = Repairer.prototype;
+}

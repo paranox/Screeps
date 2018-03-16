@@ -150,7 +150,7 @@ var creepFactory =
 
         //console.log("Build blueprint: " + Object.keys(blueprint));
 
-        var newName = blueprint.namePrefix + Game.time;
+        var newName = blueprint.namePrefix + "[" + Game.time + "]";
 
         var status = spawn.spawnCreep(blueprint.parts, newName, blueprint.opts);
         if (status == 0)

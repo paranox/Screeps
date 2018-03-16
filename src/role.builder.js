@@ -1,7 +1,12 @@
 var Role = require('rolePrototype');
 var RoleType = require('roleTypes');
+var JobFactory = require('jobFactory');
+var JobPrototypeBuild = require('job.build');
+var JobType = require('jobTypes');
 
-var BuilderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Build: 3, Upgrade: 4 });
+//var BuilderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Build: 3, Upgrade: 4 });
+
+/// Constructor
 
 function Builder()
 {
@@ -16,10 +21,49 @@ function Builder()
     this.partWeightMap[MOVE] = 1.0;
 }
 
+/// Prototype
+
 Builder.prototype = Object.create(Role);
 Builder.prototype.constructor = Builder;
 
 Builder.prototype.run = function(actor)
+{
+    if (this.tryDoJob(actor))
+        return;
+
+    var job = getJob(actor);
+    if (job != null)
+        actor.addJob(job);
+}
+
+module.exports = Builder.prototype;
+
+/// Internal functions
+
+function getJob(actor)
+{
+    // No energy, go harvest
+    if (actor.creep.carry.energy == 0)
+        return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
+
+    // Try to find a target for a Supply job
+    var target = JobPrototypeBuild.getBuildTarget(actor.creep.room);
+    if (target != null)
+        return JobFactory.createFromType(JobType.Build, { "for": actor.creep.name, "target": target });
+    else if (actor.doDebug)
+        console.log(actor.creep.name + ": Nothing to build!");
+
+    // Get the room's Controller for an Upgrade job
+    var controller = actor.creep.room.controller;
+    if (controller != null)
+        return JobFactory.createFromType(JobType.Upgrade, { "for": actor.creep.name });
+    else
+        console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
+
+    return null;
+}
+
+function oldRun(actor)
 {
     const doDebug = false;
 
@@ -192,56 +236,4 @@ Builder.prototype.run = function(actor)
 
             break;
     }
-};
-
-function getBuildTarget(room)
-{
-    var allTarges = room.find(FIND_CONSTRUCTION_SITES);
-    var extensions = [];
-    var defenses = [];
-    var walls = [];
-    var others = [];
-
-    var target = null;
-    for (var i = 0; i < allTarges.length; i++)
-    {
-        target = allTarges[i];
-
-        //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
-            //" at " + target.pos + ", progress " + target.progress);
-
-        switch (target.structureType)
-        {
-            case STRUCTURE_TOWER:
-                defenses.push(target);
-                break;
-            case STRUCTURE_EXTENSION:
-                extensions.push(target);
-                break;
-            case STRUCTURE_WALL:
-                walls.push(target);
-                break;
-            default:
-                others.push(target);
-                break;
-        }
-    }
-
-    var targets = null;
-    if (defenses.length > 0)
-        targets = defenses;
-    else if (extensions.length > 0)
-        targets = extensions;
-    else if (walls.length > 0)
-        targets = walls;
-    else
-        targets = others;
-
-    // TODO: Pick the closest one
-    if (targets != null && targets.length > 0)
-        target = targets[0];
-
-    return target;
 }
-
-module.exports = Builder.prototype;
