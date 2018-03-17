@@ -56,7 +56,65 @@ Repair.prototype.createSaveData = function()
 		data["target"] = this.target.id;
 
 	return data;
-};
+}
+
+Repair.prototype.getRepairTarget = function(room)
+{
+    var allTarges = room.find(FIND_STRUCTURES, { filter: (s) =>
+        { return s.hits != undefined && s.hitsMax != undefined && s.hits < s.hitsMax; } });
+
+    var target = null;
+    var chosenTarget = null;
+    var priority = 0.0;
+    var highestPriority = 0.0;
+    for (var i = 0; i < allTarges.length; i++)
+    {
+        target = allTarges[i];
+
+        priority = 1.0 - target.hits / target.hitsMax;
+
+        switch (target.structureType)
+        {
+            case STRUCTURE_RAMPART:
+            case STRUCTURE_TOWER:
+                priority *= 2.0;
+                break;
+            case STRUCTURE_CONTAINER:
+            case STRUCTURE_STORAGE:
+            case STRUCTURE_EXTENSION:
+                priority *= 1.5;
+                break;
+            case STRUCTURE_ROAD:
+                priority *= 0.75;
+                break;
+            case STRUCTURE_WALL:
+                priority *= 0.5;
+                break;
+        }
+
+        //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
+        //    " at " + target.pos + " has priority " + priority + ", hits: " + target.hits + "/" + target.hitsMax);
+
+        if (priority > highestPriority)
+        {
+            //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
+            //    " at " + target.pos + " now has highest priority " + priority + ", hits: " + target.hits + "/" + target.hitsMax);
+
+            highestPriority = priority;
+            chosenTarget = target;
+        }
+    }
+
+    if (chosenTarget == null && allTarges.length > 0)
+    {
+    	chosenTarget = allTarges[0];
+    	console.log("Unable to prioritize targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+    }
+    //else
+    //    console.log("Target " + chosenTarget.structureType + " at " + target.pos + " was chosen!");
+
+    return chosenTarget;
+}
 
 Repair.prototype.onStart = function(actor)
 {

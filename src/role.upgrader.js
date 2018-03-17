@@ -1,6 +1,7 @@
 ﻿var Role = require('rolePrototype');
 var RoleType = require('roleTypes');
 var JobFactory = require('jobFactory');
+var JobPrototypeResupply = require('job.resupply');
 var JobType = require('jobTypes');
 
 //var UpgraderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Upgrade: 3 });
@@ -41,9 +42,15 @@ module.exports = Upgrader.prototype;
 
 function getJob(actor)
 {
-    // No energy, go harvest
+    // No energy, go get some
     if (actor.creep.carry.energy == 0)
+    {
+        var target = JobPrototypeResupply.getResupplyTarget(actor);
+        if (target != null)
+            return JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name, "target": target });
+
         return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
+    }
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;

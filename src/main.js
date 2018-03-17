@@ -43,7 +43,7 @@ module.exports.loop = function ()
             tower.attack(closestHostile);
     }
 
-    const targetBodyPartCount = 120;
+    const targetBodyPartCount = 128;
 
     var bodyPartCount = 0;
 
@@ -51,6 +51,7 @@ module.exports.loop = function ()
     var allUpgraders = [];
     var allBuilders = [];
     var allRepairers = [];
+    var allSuppliers = [];
 
     var role;
     for (var i = 0; i < actors.length; i++)
@@ -72,6 +73,9 @@ module.exports.loop = function ()
             case RoleType.Repairer:
                 allRepairers.push(actor);
                 break;
+            case RoleType.Supplier:
+                allSuppliers.push(actor);
+                break;
             default:
                 console.log("Unhandled creep role parameter: " + actor.creep.memory.role);
                 continue;
@@ -79,7 +83,7 @@ module.exports.loop = function ()
 
         if (actor.creep.spawning)
             continue;
-        
+
         role = RoleFactory.getPrototype(actor.creep.memory.role);
 
         if (role != null)
@@ -92,6 +96,16 @@ module.exports.loop = function ()
         actor.end();
     }
 
+    if (Memory.roles == undefined)
+        Memory.roles = {};
+
+    Memory.roles[Object.keys(RoleType)[RoleType.Builder + 1]] = allBuilders.length;
+    Memory.roles[Object.keys(RoleType)[RoleType.Harvester + 1]] = allHarvesters.length;
+    Memory.roles[Object.keys(RoleType)[RoleType.Upgrader + 1]] = allUpgraders.length;
+    Memory.roles[Object.keys(RoleType)[RoleType.Repairer + 1]] = allRepairers.length;
+    Memory.roles[Object.keys(RoleType)[RoleType.Supplier + 1]] = allSuppliers.length;
+    Memory.roles["Total"] = actors.length;
+
     var spawn = Game.spawns["Spawn.home"];
     if (spawn == null)
     {
@@ -101,15 +115,17 @@ module.exports.loop = function ()
     else if (spawn.spawning)
         return;
 
-    const minNumHarvesters = 4;
-    const minNumUpgraders = 2;
-    const minNumBuilders = 2;
-    const minNumRepairers = 2;
+    const minNumBuilders = 1;
+    const minNumHarvesters = 3;
+    const minNumUpgraders = 1;
+    const minNumRepairers = 1;
+    const minNumSuppliers = 0;
     
     const targetRatioBuilders = 1.0;
-    const targetRatioHarvesters = 1.0;
-    const targetRatioUpgraders = 1.5;
+    const targetRatioHarvesters = 2.0;
+    const targetRatioUpgraders = 1.0;
     const targetRatioRepairers = 1.5;
+    const targetRatioSuppliers = 1.5;
 
     var roleToBuild = -1;
     var energyCapacity = spawn.room.energyCapacityAvailable;
@@ -118,6 +134,11 @@ module.exports.loop = function ()
     {
         //console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
         roleToBuild = RoleType.Harvester;
+    }
+    else if (allSuppliers.length < minNumSuppliers)
+    {
+        //console.log("Too few Suppliers (" + allSuppliers.length + " < " + minNumSuppliers + ")!");
+        roleToBuild = RoleType.Supplier;
     }
     else if (allBuilders.length < minNumBuilders)
     {
@@ -151,43 +172,53 @@ module.exports.loop = function ()
         var ratioHarvesters = allHarvesters.length / actors.length;
         var ratioUpgraders = allUpgraders.length / actors.length;
         var ratioRepairers = allRepairers.length / actors.length;
+        var ratioSuppliers = allSuppliers.length / actors.length;
 
         /*console.log("Creeps: Builder(weight: " + targetRatioBuilders + "): " + allBuilders.length +
             ", Harvesters(weight: " + targetRatioHarvesters + "): " + allHarvesters.length +
             ", Upgraders(weight: " + targetRatioUpgraders + "): " + allUpgraders.length +
             ", Repairers(weight: " + targetRatioRepairers + "): " + allRepairers.length +
+            ", Suppliers(weight: " + targetRatioSuppliers + "): " + allSuppliers.length +
             " of total " + actors.length);*/
 
         var weightBuilders = targetRatioBuilders - ratioBuilders;
         var weightHarvesters = targetRatioHarvesters - ratioHarvesters;
         var weightUpgraders = targetRatioUpgraders - ratioUpgraders;
         var weightRepairers = targetRatioRepairers - ratioRepairers;
+        var weightSuppliers = targetRatioSuppliers - ratioSuppliers;
 
-        if (weightHarvesters > weightBuilders && weightHarvesters > weightUpgraders)
+        if (weightHarvesters > weightBuilders && weightHarvesters > weightUpgraders && weightHarvesters > weightRepairers && weightHarvesters > weightSuppliers)
         {
             //console.log("Repairers needed most: " + weightHarvesters + " > " +
-                //weightBuilders + ", " + weightRepairers + ", " + weightUpgraders);
+                //weightBuilders + ", " + weightRepairers + ", " + weightUpgraders + ", " + weightSuppliers);
 
             roleToBuild = RoleType.Harvester;
         }
-        else if (weightBuilders > weightHarvesters && weightBuilders > weightUpgraders)
+        else if (weightSuppliers > weightHarvesters && weightSuppliers > weightBuilders && weightSuppliers > weightRepairers && weightSuppliers > weightUpgraders)
+        {
+            //console.log("Suppliers needed most: " + weightSuppliers + " > " +
+                //weightHarvesters + ", " + weightBuilders + ", " + weightRepairers + ", " + weightUpgraders);
+            
+            roleToBuild = RoleType.Supplier;
+        }
+        else if (weightBuilders > weightHarvesters && weightBuilders > weightUpgraders && weightBuilders > weightRepairers && weightHarvesters > weightSuppliers)
         {
             //console.log("Repairers needed most: " + weightBuilders + " > " +
-                //weightHarvesters + ", " + weightRepairers + ", " + weightUpgraders);
+                //weightHarvesters + ", " + weightRepairers + ", " + weightUpgraders + ", " + weightSuppliers);
             
             roleToBuild = RoleType.Builder;
         }
-        else if (weightRepairers > weightBuilders && weightRepairers > weightHarvesters && weightRepairers > weightUpgraders)
+        else if (weightRepairers > weightBuilders && weightRepairers > weightHarvesters && weightRepairers > weightUpgraders && weightRepairers > weightSuppliers)
         {
             //console.log("Repairers needed most: " + weightRepairers + " > " +
-                //weightBuilders + ", " + weightHarvesters + ", " + weightUpgraders);
+                //weightBuilders + ", " + weightHarvesters + ", " + weightUpgraders + ", " + weightSuppliers);
 
             roleToBuild = RoleType.Repairer;
         }
         else
         {
             //console.log("Repairers needed most: " + weightUpgraders + " > " +
-                //weightBuilders + ", " + weightHarvesters + ", " + weightRepairers);
+                //weightBuilders + ", " + weightHarvesters + ", " + weightRepairers + ", " + weightSuppliers);
 
             roleToBuild = RoleType.Upgrader;
         }

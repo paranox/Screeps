@@ -2,6 +2,7 @@
 var RoleType = require('roleTypes');
 var JobFactory = require('jobFactory');
 var JobPrototypeSupply = require('job.supply');
+var JobPrototypeStore = require('job.store');
 var JobType = require('jobTypes');
 
 //var HarvesterState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, MoveTo: 2, Harvest: 3, Transfer: 4, Next: 5, Upgrade: 6 });
@@ -44,12 +45,19 @@ function getJob(actor)
     if (actor.creep.carry.energy == 0)
         return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
 
+    // Try to find a target for a Store job
+    var target = JobPrototypeStore.getStoreTarget(actor);
+    if (target != null)
+        return JobFactory.createFromType(JobType.Store, { "for": actor.creep.name, "target": target });
+    else if (true)//actor.doDebug)
+        console.log(actor.creep.name + ": Nothing to store energy to to!");
+
     // Try to find a target for a Supply job
     var target = JobPrototypeSupply.getSupplyTarget(actor);
     if (target != null)
         return JobFactory.createFromType(JobType.Supply, { "for": actor.creep.name, "target": target });
     else if (actor.doDebug)
-        console.log(actor.creep.name + ": Nothing to transfer to!");
+        console.log(actor.creep.name + ": Nothing to supply energy with!");
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
@@ -59,3 +67,4 @@ function getJob(actor)
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 
     return null;
+}

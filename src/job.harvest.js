@@ -63,7 +63,11 @@ Harvest.prototype.onUpdate = function(actor)
 
     if (this.target == undefined || this.target == null)
     {
-		this.target = actor.creep.pos.findClosestByPath(FIND_SOURCES);
+		this.target = actor.creep.pos.findClosestByPath(FIND_SOURCES, { filter : (source) =>
+			{
+				return source.energy > 0;
+			}
+		});
 
 		if (this.target == null)
         {

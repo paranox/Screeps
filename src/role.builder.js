@@ -2,6 +2,7 @@ var Role = require('rolePrototype');
 var RoleType = require('roleTypes');
 var JobFactory = require('jobFactory');
 var JobPrototypeBuild = require('job.build');
+var JobPrototypeResupply = require('job.resupply');
 var JobType = require('jobTypes');
 
 //var BuilderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Build: 3, Upgrade: 4 });
@@ -42,9 +43,15 @@ module.exports = Builder.prototype;
 
 function getJob(actor)
 {
-    // No energy, go harvest
+    // No energy, go get some
     if (actor.creep.carry.energy == 0)
+    {
+        var target = JobPrototypeResupply.getResupplyTarget(actor);
+        if (target != null)
+            return JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name, "target": target });
+
         return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
+    }
 
     // Try to find a target for a Supply job
     var target = JobPrototypeBuild.getBuildTarget(actor.creep.room);

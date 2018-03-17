@@ -41,7 +41,7 @@ Build.prototype.readSaveData = function(data)
 
 	//console.log("Target found based on save data: " + data.target);
 	return true;
-};
+}
 
 Build.prototype.createSaveData = function()
 {
@@ -51,12 +51,6 @@ Build.prototype.createSaveData = function()
 		data["target"] = this.target.id;
 
 	return data;
-};
-
-Build.prototype.onStart = function(actor)
-{
-	// Symbol Dec:9874, Hex:2692, HAMMER AND PICK, https://www.w3schools.com/charsets/ref_utf_symbols.asp
-	actor.creep.say("⚒ Build!");
 }
 
 Build.prototype.getBuildTarget = function(room)
@@ -107,6 +101,12 @@ Build.prototype.getBuildTarget = function(room)
         target = targets[0];
 
     return target;
+}
+
+Build.prototype.onStart = function(actor)
+{
+	// Symbol Dec:9874, Hex:2692, HAMMER AND PICK, https://www.w3schools.com/charsets/ref_utf_symbols.asp
+	actor.creep.say("⚒ Build!");
 }
 
 Build.prototype.onUpdate = function(actor)
@@ -187,6 +187,6 @@ Build.prototype.onUpdate = function(actor)
 
 			break;
     }
-};
+}
 
 module.exports = Build.prototype;

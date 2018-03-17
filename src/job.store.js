@@ -2,11 +2,11 @@ var Utils = require('utils');
 var Job = require('jobPrototype');
 var JobType = require('jobTypes');
 
-function Supply(opts)
+function Store(opts)
 {
-	//console.log("Job->Supply.constructor(opts: " + Utils.objectToString(opts) + ")");
-	this.jobName = "Supply";
-	this.jobType = JobType.Supply;
+	//console.log("Job->Store.constructor(opts: " + Utils.objectToString(opts) + ")");
+	this.jobName = "Store";
+	this.jobType = JobType.Store;
 	
     this.base = Job;
     this.base.constructor(this);
@@ -18,10 +18,10 @@ function Supply(opts)
 	}
 }
 
-Supply.prototype = Object.create(Job);
-Supply.prototype.constructor = Supply;
+Store.prototype = Object.create(Job);
+Store.prototype.constructor = Store;
 
-Supply.prototype.readSaveData = function(data)
+Store.prototype.readSaveData = function(data)
 {
 	if (!this.base.readSaveData(this, data))
 		return false;
@@ -43,7 +43,7 @@ Supply.prototype.readSaveData = function(data)
 	return true;
 };
 
-Supply.prototype.createSaveData = function()
+Store.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
@@ -53,32 +53,27 @@ Supply.prototype.createSaveData = function()
 	return data;
 };
 
-Supply.prototype.onStart = function(actor)
+Store.prototype.onStart = function(actor)
 {
-	// Symbol Dec:9889, Hex:26A1, HIGH VOLTAGE SIGN, https://www.w3schools.com/charsets/ref_utf_symbols.asp
-	actor.creep.say("⚡ Supply!");
+	// Symbol Dec:9638, Hex:25A6, SQUARE WITH ORTHOGONAL CROSSHATCH FILL, https://www.w3schools.com/charsets/ref_utf_symbols.asp
+	actor.creep.say("▦ Store!");
 }
 
-Supply.prototype.getSupplyTarget = function(actor)
+Store.prototype.getStoreTarget = function(actor)
 {
-	var targets = actor.creep.room.find(FIND_STRUCTURES,
+	var target = actor.creep.pos.findClosestByPath(FIND_STRUCTURES,
     {
         filter: (structure) =>
         {
-            return (structure.structureType == STRUCTURE_EXTENSION ||
-                structure.structureType == STRUCTURE_SPAWN ||
-                structure.structureType == STRUCTURE_TOWER) &&
-            	structure.energy < structure.energyCapacity;
+            return (structure.structureType == STRUCTURE_STORAGE || structure.structureType == STRUCTURE_CONTAINER) &&
+            	structure.store[RESOURCE_ENERGY] < structure.storeCapacity;
         }
     });
 
-    if (targets.length > 0)
-    	return targets[0];
-
-    return null;
+    return target;
 }
 
-Supply.prototype.onUpdate = function(actor)
+Store.prototype.onUpdate = function(actor)
 {
 	if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
@@ -86,7 +81,7 @@ Supply.prototype.onUpdate = function(actor)
     if (actor.creep.carry.energy <= 0)
     {
         if (actor.doDebug)
-            console.log(actor.creep.name + ": No energy to supply with!");
+            console.log(actor.creep.name + ": No energy to store!");
 
         this.end(actor, true);
         return;
@@ -94,10 +89,13 @@ Supply.prototype.onUpdate = function(actor)
 
     if (this.target == null)
     {
-        this.target = this.getSupplyTarget(actor);
+        this.target = this.getStoreTarget(actor);
 
         if (this.target == null)
         {
+	        if (actor.doDebug)
+	            console.log(actor.creep.name + ": No place store energy into!");
+
 	        this.end(actor, false);
 	        return;
 	    }
@@ -108,34 +106,34 @@ Supply.prototype.onUpdate = function(actor)
 	{
 		case OK:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Supplied target at " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Transfered energy to target at " + this.target.pos.x + "," + this.target.pos.y);
 
 			break;
 		case ERR_NOT_IN_RANGE:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Moving to supply target at " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Moving to store energy to target at " + this.target.pos.x + "," + this.target.pos.y);
 
 	        actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
 			break;
 		case ERR_FULL:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Target full, unable to supply target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Target full, unable to store energ to target at " + this.target.pos.x + "," + this.target.pos.y);
 
             this.target = null;
 
 			break;
         case ERR_BUSY:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Creep busy, unable to supply target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Creep busy, unable to store energy to target at " + this.target.pos.x + "," + this.target.pos.y);
 
             break;
 		default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to supply target at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to store energy to target at " + this.target.pos.x + "," + this.target.pos.y);
 
 			break;
     }
 }
 
-module.exports = Supply.prototype;
+module.exports = Store.prototype;
