@@ -16,9 +16,9 @@ function Upgrader()
     this.base = Object.create(Role);
     this.base.constructor(this, RoleType.Upgrader);
 
-    this.partWeightMap[WORK] = 2;
-    this.partWeightMap[CARRY] = 2;
-    this.partWeightMap[MOVE] = 1;
+    this.partWeightMap[WORK] = 1.0;
+    this.partWeightMap[CARRY] = 2.0;
+    this.partWeightMap[MOVE] = 1.5;
 }
 
 /// Prototype

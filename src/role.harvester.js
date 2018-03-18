@@ -16,8 +16,8 @@ function Harvester()
     this.base.constructor(this, RoleType.Harvester);
 
     this.partWeightMap[WORK] = 2.0;
-    this.partWeightMap[CARRY] = 1.0;
-    this.partWeightMap[MOVE] = 2.0;
+    this.partWeightMap[CARRY] = 1.5;
+    this.partWeightMap[MOVE] = 1.0;
 }
 
 /// Prototype
@@ -49,7 +49,7 @@ function getJob(actor)
     var target = JobPrototypeStore.getStoreTarget(actor);
     if (target != null)
         return JobFactory.createFromType(JobType.Store, { "for": actor.creep.name, "target": target });
-    else if (true)//actor.doDebug)
+    else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to store energy to to!");
 
     // Try to find a target for a Supply job

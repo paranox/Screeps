@@ -56,51 +56,62 @@ Build.prototype.createSaveData = function()
 Build.prototype.getBuildTarget = function(room)
 {
     var allTarges = room.find(FIND_CONSTRUCTION_SITES);
-    var extensions = [];
-    var defenses = [];
-    var walls = [];
-    var others = [];
 
     var target = null;
+    var chosenTarget = null;
+    var priority = 0.0;
+    var highestPriority = 0.0;
     for (var i = 0; i < allTarges.length; i++)
     {
         target = allTarges[i];
 
-        //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
-            //" at " + target.pos + ", progress " + target.progress);
-
         switch (target.structureType)
         {
+            case STRUCTURE_RAMPART:
             case STRUCTURE_TOWER:
-                defenses.push(target);
+                priority = 2.0;
                 break;
             case STRUCTURE_EXTENSION:
-                extensions.push(target);
+            	priority = 1.75;
+            	break;
+            case STRUCTURE_CONTAINER:
+            case STRUCTURE_STORAGE:
+                priority = 1.5;
                 break;
             case STRUCTURE_WALL:
-                walls.push(target);
+                priority = 0.5;
                 break;
-            default:
-                others.push(target);
+            case STRUCTURE_ROAD:
+                priority = 0.25;
                 break;
+        }
+
+        priority += Math.max(1, target.progress) / target.progressTotal;
+
+        //console.log("Build Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
+        //	" has priority " + priority + ", " + (Math.round(100 * target.progress / target.progressTotal) / 100) +
+        //	"% progress: " + target.progress + "/" + target.progressTotal);
+
+        if (priority > highestPriority)
+        {
+            //console.log("Build Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
+            //    " now has highest priority " + priority + ", " + (Math.round(100 * target.progress / target.progressTotal) / 100) +
+            //    "% progress: " + target.progress + "/" + target.progressTotal);
+
+            highestPriority = priority;
+            chosenTarget = target;
         }
     }
 
-    var targets = null;
-    if (defenses.length > 0)
-        targets = defenses;
-    else if (extensions.length > 0)
-        targets = extensions;
-    else if (walls.length > 0)
-        targets = walls;
-    else
-        targets = others;
+    if (chosenTarget == null && allTarges.length > 0)
+    {
+    	chosenTarget = allTarges[0];
+    	console.log("Unable to prioritize Build targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+    }
+    //else
+    //    console.log("Target " + chosenTarget.structureType + " at " + target.pos + " was chosen!");
 
-    // TODO: Pick the closest one
-    if (targets != null && targets.length > 0)
-        target = targets[0];
-
-    return target;
+    return chosenTarget;
 }
 
 Build.prototype.onStart = function(actor)

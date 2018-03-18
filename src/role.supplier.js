@@ -15,8 +15,8 @@ function Supplier()
     this.base.constructor(this, RoleType.Supplier);
 
     this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 2.0;
+    this.partWeightMap[CARRY] = 6.0;
+    this.partWeightMap[MOVE] = 6.5;
 }
 
 /// Prototype
@@ -53,7 +53,7 @@ function getJob(actor)
 
     if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to supply energy with!");
-    
+
     // No energy, go get some
     if (actor.creep.carry.energy == 0)
     {

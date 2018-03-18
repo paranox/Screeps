@@ -6,6 +6,7 @@ function Role(context, roleType)
 {
 	//console.log("Role.constructor(" + context.roleName + ")");
 
+	context.roleType = roleType;
     context.opts = { memory: { "role": roleType } };
 	context.minimumParts = [WORK, CARRY, MOVE];
     context.partWeightMap = {};

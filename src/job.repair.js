@@ -92,13 +92,14 @@ Repair.prototype.getRepairTarget = function(room)
                 break;
         }
 
-        //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
-        //    " at " + target.pos + " has priority " + priority + ", hits: " + target.hits + "/" + target.hitsMax);
+        //console.log("Repair Target[" + i + "/" + allTarges.length + "]" + target.structureType +
+        //    " at " + target.pos + " has priority " + priority + ", " + () + " hits: " + target.hits + "/" + target.hitsMax);
 
         if (priority > highestPriority)
         {
-            //console.log("Target[" + i + "/" + allTarges.length + "]" + target.structureType +
-            //    " at " + target.pos + " now has highest priority " + priority + ", hits: " + target.hits + "/" + target.hitsMax);
+            //console.log("Repair Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
+            //    " now has highest priority " + priority + ", " + (Math.round(100 * target.hits / target.hitsMax) / 100) +
+            //    "% hits: " + target.hits + "/" + target.hitsMax);
 
             highestPriority = priority;
             chosenTarget = target;
@@ -108,7 +109,7 @@ Repair.prototype.getRepairTarget = function(room)
     if (chosenTarget == null && allTarges.length > 0)
     {
     	chosenTarget = allTarges[0];
-    	console.log("Unable to prioritize targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+    	console.log("Unable to prioritize Repair targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
     }
     //else
     //    console.log("Target " + chosenTarget.structureType + " at " + target.pos + " was chosen!");

@@ -1,49 +1,67 @@
 ﻿var Utils = require('utils');
 var RoleFactory = require('roleFactory');
 
+/// Internal functions
+
 var getPartList = function (minimumParts, partWeights, energyCapacityAvailable, maxParts)
 {
-    //var initialBodyCost = Utils.getBodyCost(initialParts);
-    //console.log("Initial list of parts: [" + initialParts + "], energy cost: " + initialBodyCost +
-    //", extra budget: " + (energyCapacityAvailable - initialBodyCost));
+    const doDebug = false;
+
+    if (doDebug)
+    {
+        var initialBodyCost = Utils.getBodyCost(minimumParts);
+        console.log("Initial list of parts: [" + minimumParts + "], energy cost: " + initialBodyCost +
+        ", extra budget: " + (energyCapacityAvailable - initialBodyCost));
+    }
 
     // Add initial parts to map
 
     var partMap = {};
 
     var i, p;
-    var totalParts = 0;
     for (i = 0; i < minimumParts.length; i++)
     {
         var p = minimumParts[i];
         if (partMap.hasOwnProperty(p))
         {
             partMap[p]++;
-            //console.log("Initial list now has " + partMap[p] + " parts of type " + p);
+
+            if (doDebug)
+                console.log("Initial list now has " + partMap[p] + " parts of type " + p);
         }
         else
         {
             partMap[p] = 1;
-            //console.log("Initial list contains a new part type of " + p);
-        }
 
-        totalParts++;
+            if (doDebug)
+                console.log("Initial list contains a new part type of " + p);
+        }
     }
 
     // Calculate part weights if found
 
     var w;
+    var totalWeight = 0;
     var totalCostMod = 0;
     for (var type in partWeights)
     {
         w = partWeights[type];
+        totalWeight += w;
         totalCostMod += w * Utils.getBodyPartCost(type);
-        //console.log("Weight of extra part of type : " + type + "(" + (typeof type) + "):" + w);
+
+        if (doDebug)
+            console.log("Weight of extra part of type : " + type + "(" + (typeof type) + "):" + w);
     }
 
-    //console.log("Total weight of extra parts: " + totalWeight + ", cost mod: " + totalCostMod);
+    if (doDebug)
+        console.log("Total weight of extra parts: " + totalWeight + ", cost mod: " + totalCostMod);
 
-    // Find all parts and the count to add
+    // Find all parts on the extras and the count how many can be added easily
+
+    var totalParts = 0;
+    var totalCost = 0;
+    var cheapestExtraPartCost = 100000;
+    var cheapestExtraPartType = null;
 
     var min, max;
     for (var type in BODYPART_COST)
@@ -55,25 +73,102 @@ var getPartList = function (minimumParts, partWeights, energyCapacityAvailable, 
         {
             min = partMap[type];
 
-            //console.log("Minimum parts of type " + type + ": " + min);
+            if (doDebug)
+                console.log("Minimum parts of type " + type + ": " + min);
         }
 
         if (partWeights.hasOwnProperty(type))
         {
+            if (cheapestExtraPartType == null || cheapestExtraPartCost > BODYPART_COST[type])
+            {
+                cheapestExtraPartCost = BODYPART_COST[type];
+                cheapestExtraPartType = type;
+            }
+
             w = Number(partWeights[type]);
             i = w * (energyCapacityAvailable / totalCostMod);   // Weighted count
             max = Math.floor(maxParts * w);                     // Absolute maximum of this type
-            p = Math.min(i, max);
+            p = Math.min(Math.floor(i), max);
 
-            //console.log("Weighted maximum parts of type " + type + ": " + p +
-            //" (weight: " + w + ", max: " + max + "/" + maxParts + ")");
-
+            if (doDebug)
+            {
+                console.log("Weighted maximum parts of type " + type + ": " + p +
+                    " (weight: " + w + ", max: " + max + "/" + maxParts + ")");
+            }
         }
 
         p = Math.max(min, p);
 
         if (p > 0)
+        {
+            totalParts += p;
+            totalCost += p * BODYPART_COST[type];
             partMap[type] = p;
+        }
+    }
+
+    // Fill up any remaining space with weight priorities
+
+    var remainingBudget = energyCapacityAvailable - totalCost
+
+    if (remainingBudget >= cheapestExtraPartCost)
+    {
+        if (doDebug)
+            console.log("Remaining budget for parts: " + remainingBudget + ", cheapest part cost: " + cheapestExtraPartCost);
+
+        // Find the highest weight and add extra
+        max = 0.0;
+        var selectedType;
+
+        while (remainingBudget >= cheapestExtraPartCost)
+        {
+            selectedType = null;
+
+            for (var type in partWeights)
+            {
+                if (BODYPART_COST[type] > remainingBudget)
+                    continue;
+
+                w = partWeights[type];
+                i = Number(partMap[type]) / totalParts;
+                p = w * i;
+
+                if (doDebug)
+                {
+                    console.log("Extra part " + type + " cost: " + BODYPART_COST[type] + ", weight: " + p +
+                        " (" + w + "*" + partWeights[type] + "/" +  totalParts + ")");
+                }
+
+                if (i > max)
+                {
+                    selectedType = type;
+                    max = i;
+                }
+            }
+
+            if (selectedType != null)
+            {
+                totalParts++;
+                partMap[selectedType] = partMap[selectedType] + 1;
+                remainingBudget -= BODYPART_COST[selectedType];
+
+                if (doDebug)
+                {
+                    console.log("Found budget for extra part of type " + selectedType + ", weight: " + max +
+                        ", count now: " + partMap[selectedType]);
+                }
+            }
+            else
+                break;
+        }
+    }
+    else
+    {
+        if (doDebug)
+        {
+            console.log("Cheapest extra part costs " + cheapestExtraPartCost + " but remaining budget " +
+                remainingBudget + " doesn't allow it");
+        }
     }
 
     // Finalize the part list
@@ -86,14 +181,16 @@ var getPartList = function (minimumParts, partWeights, energyCapacityAvailable, 
 
         if (p > 0)
         {
-            for (i = 1; i < p; i++)
+            for (i = 1; i <= p; i++)
                 partList.push(type);
 
-            //console.log("Added " + (i - 1) + "/" + p + " parts of type " + type + "(" + (typeof type) + ")");
+            if (doDebug)
+                console.log("Added " + (i - 1) + "/" + p + " parts of type " + type + "(" + (typeof type) + ")");
         }
     }
 
-    //console.log("Final part list: [" + partList + "], cost: " + Utils.getBodyCost(partList));
+    if (doDebug)
+            console.log("Final part list: [" + partList + "], cost: " + Utils.getBodyCost(partList));
 
     return partList;
 }
@@ -103,6 +200,8 @@ var getBluePrintFromPrototype = function (prototype, energyCapacityAvailable, ma
     var blueprint = {};
     blueprint.namePrefix = prototype.roleName;
     blueprint.parts = getPartList(prototype.minimumParts, prototype.partWeightMap, energyCapacityAvailable, maxParts);
+    blueprint.cost = Utils.getBodyCost(blueprint.parts);
+    blueprint.budget = energyCapacityAvailable;
     blueprint.opts = prototype.opts;
 
     //console.log("Blueprint: " + Object.keys(blueprint));
@@ -110,7 +209,9 @@ var getBluePrintFromPrototype = function (prototype, energyCapacityAvailable, ma
     return blueprint;
 }
 
-var creepFactory =
+/// Exported object
+
+module.exports = 
 {
     getPrototypeByRole: function (role)
     {
@@ -177,5 +278,3 @@ var creepFactory =
         }
     }
 }
-
-module.exports = creepFactory;
