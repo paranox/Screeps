@@ -88,7 +88,7 @@ Supply.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No energy to supply with!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
 
@@ -98,7 +98,7 @@ Supply.prototype.onUpdate = function(actor)
 
         if (this.target == null)
         {
-	        this.end(actor, false);
+	        this.finish(actor, false);
 	        return;
 	    }
     }

@@ -83,7 +83,7 @@ Store.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No energy to store!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
 
@@ -96,7 +96,7 @@ Store.prototype.onUpdate = function(actor)
 	        if (actor.doDebug)
 	            console.log(actor.creep.name + ": No place store energy into!");
 
-	        this.end(actor, false);
+	        this.finish(actor, false);
 	        return;
 	    }
     }

@@ -4,7 +4,7 @@ function Job(context)
 	this.context = context;
 
 	context.hasStarted = false;
-	context.hasEnded = false;
+	context.hasFinished = false;
 
 	if (context.setIndex == undefined)
 		context.setIndex = this.setIndex;
@@ -79,16 +79,29 @@ Job.prototype.onUpdate = function(actor)
 	console.log(actor.creep.name + ": Job<" + this.jobType + ">(" + this.jobName + ") doesn't require any work!");
 };
 
-Job.prototype.end = function(actor, isDone)
+Job.prototype.end = function(actor)
 {
 	if (actor.doDebug)
-		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".end(" + isDone + ")");
+		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".end()");
 
-	this.hasEnded = true;
-	this.onEnd(actor, isDone);
+	this.onEnd(actor);
 };
 
-Job.prototype.onEnd = function(actor, isDone)
+Job.prototype.onEnd = function(actor)
+{
+	
+}
+
+Job.prototype.finish = function(actor, isDone)
+{
+	if (actor.doDebug)
+		console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".finish()");
+	
+	this.hasFinished = true;
+	this.onFinish(actor, isDone);
+}
+
+Job.prototype.onFinish = function(actor, isDone)
 {
 	if (isDone)
 	{
@@ -100,6 +113,6 @@ Job.prototype.onEnd = function(actor, isDone)
 		// Symbol Dec:10008, Hex:2718, HEAVY BALLOT X, https://www.w3schools.com/charsets/ref_utf_symbols.asp
     	actor.creep.say("✘ Job fail!");
     }
-};
+}
 
 module.exports = Job.prototype;

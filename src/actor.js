@@ -59,7 +59,7 @@ function Actor(creep)
 	}
 	else if (this.doDebug)
         console.log("Actor " + creep.name + ": No jobs in creep memory");
-};
+}
 
 Actor.prototype.setState = function(state)
 {
@@ -70,7 +70,7 @@ Actor.prototype.setState = function(state)
 		console.log("Actor " + this.creep.name + ": state set to " + state);
 
 	this.state = state;
-};
+}
 
 Actor.prototype.addJob = function(job)
 {
@@ -78,16 +78,41 @@ Actor.prototype.addJob = function(job)
 		console.log("Actor " + this.creep.name + ": Adding job " + job.jobName + ":" + job.jobType);
 
 	this.jobs.push(job);
-};
+}
+
+Actor.prototype.init = function(role)
+{
+	if (role == null)
+	{
+		console.log("Actor " + this.creep.name + ": No role assigned on .init()!");
+		return;
+	}
+
+	this.role = role;
+	this.role.init(this);
+}
+
+Actor.prototype.run = function()
+{
+	if (this.role != null)
+    	this.role.run(this);
+    else
+		console.log("Actor " + this.creep.name + ": No role assigned on .run()!");
+}
 
 Actor.prototype.end = function()
 {
-    var jobsToSave = [];
-
 	if (this.doDebug)
 		console.log("Actor " + this.creep.name + ": end()");
 
-    if (this.jobs != undefined && this.jobs != null && this.jobs.length > 0)
+    if (this.role != null)
+    	this.role.end(this);
+    else
+		console.log("Actor " + this.creep.name + ": No role assigned on .end()!");
+
+    var jobsToSave = [];
+
+	if (this.jobs != undefined && this.jobs != null && this.jobs.length > 0)
     {
         var job;
         for (var i = 0; i < this.jobs.length; i++)
@@ -97,7 +122,7 @@ Actor.prototype.end = function()
             if (job == undefined || job == null)
             	continue;
 
-            if (job.hasEnded == true)
+            if (job.hasFinished == true)
             {
             	if (this.doDebug)
             		console.log("Actor(" + this.creep.name + ": Job[" + i + "]: " + job.jobName + ":" + job.jobType + " is finished!");
@@ -128,6 +153,6 @@ Actor.prototype.end = function()
     }
 
     this.creep.memory.jobs = jobsToSave;
-};
+}
 
 module.exports = Actor.prototype;

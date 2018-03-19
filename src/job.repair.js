@@ -64,6 +64,7 @@ Repair.prototype.getRepairTarget = function(room)
         { return s.hits != undefined && s.hitsMax != undefined && s.hits < s.hitsMax; } });
 
     var target = null;
+    var targetHealth;
     var chosenTarget = null;
     var priority = 0.0;
     var highestPriority = 0.0;
@@ -71,24 +72,35 @@ Repair.prototype.getRepairTarget = function(room)
     {
         target = allTarges[i];
 
-        priority = 1.0 - target.hits / target.hitsMax;
+        targetHealth = target.hits / target.hitsMax;
+    	if (targetHealth >= 0.95)
+    		continue;
+
+        priority = 1.0 - targetHealth;
 
         switch (target.structureType)
         {
             case STRUCTURE_RAMPART:
             case STRUCTURE_TOWER:
-                priority *= 2.0;
+            	priority *= (targetHealth < 0.25 ? 2.0 : 1.25);
                 break;
             case STRUCTURE_CONTAINER:
             case STRUCTURE_STORAGE:
             case STRUCTURE_EXTENSION:
-                priority *= 1.5;
-                break;
-            case STRUCTURE_ROAD:
-                priority *= 0.75;
+		    	if (targetHealth >= 0.75)
+		    		continue;
+                priority *= 1.125;
                 break;
             case STRUCTURE_WALL:
-                priority *= 0.5;
+		    	if (targetHealth >= 0.25)
+		    		continue;
+		    	if (targetHealth <= 0.1)
+		    		priority *= 1.5;
+                break;
+            case STRUCTURE_ROAD:
+		    	if (targetHealth >= 0.5)
+		    		continue;
+                priority *= 0.75;
                 break;
         }
 
@@ -106,7 +118,7 @@ Repair.prototype.getRepairTarget = function(room)
         }
     }
 
-    if (chosenTarget == null && allTarges.length > 0)
+    if (chosenTarget == null && highestPriority > 0.0 && allTarges.length > 0)
     {
     	chosenTarget = allTarges[0];
     	console.log("Unable to prioritize Repair targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
@@ -132,7 +144,7 @@ Repair.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": Nothing to repair!");
 
-        this.end(actor, false);
+        this.finish(actor, false);
         return;
     }
 
@@ -141,7 +153,7 @@ Repair.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No energy to repair with!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
 
@@ -153,7 +165,7 @@ Repair.prototype.onUpdate = function(actor)
     			this.target.pos.x + "," + this.target.pos.y + " is fully repaired!");
 		}
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
 	}
 

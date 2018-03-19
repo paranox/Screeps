@@ -11,10 +11,16 @@ function Build(opts)
     this.base = Job;
     this.base.constructor(this);
 
+    this.target = null;
+
 	if (opts != undefined && opts != null)
 	{
 		if (opts.target != null)
+		{
 			this.target = opts.target;
+			this.targetID = opts.target.id;
+			this.targetPos = this.target.pos;
+		}
 	}
 }
 
@@ -26,18 +32,15 @@ Build.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
+	this.targetPos = data.pos;
+
 	if (data.target != undefined && data.target != null)
 	{
-		let target = Game.getObjectById(data.target);
-
-		if (target == null)
-		{
-			console.log("Target id[" + data.target + "] was not found!");
-			return false;
-		}
-
-		this.target = target;
+		this.targetID = data.target;
+		this.target = Game.getObjectById(data.target);
 	}
+	else
+		this.target = null
 
 	//console.log("Target found based on save data: " + data.target);
 	return true;
@@ -49,6 +52,8 @@ Build.prototype.createSaveData = function()
 
 	if (this.target != undefined && this.target != null)
 		data["target"] = this.target.id;
+	if (this.targetPos != undefined)
+		data["pos"] = this.targetPos;
 
 	return data;
 }
@@ -127,16 +132,30 @@ Build.prototype.onUpdate = function(actor)
 
     if (this.target == undefined || this.target == null)
     {
-    	this.target = this.getBuildTarget(actor.room);
+		if (this.targetPos != undefined)
+		{
+			this.finish(actor, true);
+			return;
+		}
+		else
+		{
+			console.log(actor.creep.name + ": Unknown build target, unknown position!");
+			this.finish(actor, false);
+			return;
+		}
+
+    	this.target = this.getBuildTarget(actor.creep.room);
 
     	if (this.target == null)
         {
         	if (actor.doDebug)
             	console.log(actor.creep.name + ": Nothing to build!");
 
-	        this.end(actor, true);
+	        this.finish(actor, true);
 	        return;
         }
+
+    	this.targetPos = this.target.pos;
     }
 
     if (actor.creep.carry.energy <= 0)
@@ -144,21 +163,9 @@ Build.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No energy to build with!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
-
-	if (this.target.progress >= this.target.progressTotal)
-	{
-		if (true)//actor.doDebug)
-        {    
-    		console.log(actor.creep.name + ": Target " + this.target.name + " at " +
-    			this.target.pos.x + "," + this.target.pos.y + " is fully constructed!");
-		}
-
-        this.target = null;
-        return;
-	}
 
 	let status = actor.creep.build(this.target);
 	switch (status)
@@ -168,13 +175,6 @@ Build.prototype.onUpdate = function(actor)
 	        {
 	        	if (actor.doDebug)
 	            	console.log(actor.creep.name + ": Worked to construct target at " + this.target.pos.x + "," + this.target.pos.y);
-	        }
-	        else
-	        {
-	        	if (true)//actor.doDebug)
-	            	console.log(actor.creep.name + ": Finished constructing target at " + this.target.pos.x + "," + this.target.pos.y);
-
-	            this.target = null;
 	        }
 
 			break;
@@ -198,6 +198,19 @@ Build.prototype.onUpdate = function(actor)
 
 			break;
     }
+}
+
+Build.prototype.onFinish = function(actor, isDone)
+{
+	this.target = null;
+
+	this.base.onFinish(actor, isDone);
+
+	if (actor.doDebug)
+	{
+    	console.log(actor.creep.name + ": Finished constructing target at " +
+    		(this.targetPos != undefined ? this.targetPos.x + "," + this.targetPos.y : "undefined"));
+	}
 }
 
 module.exports = Build.prototype;

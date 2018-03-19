@@ -18,7 +18,7 @@ function Upgrader()
 
     this.partWeightMap[WORK] = 1.0;
     this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 1.5;
+    this.partWeightMap[MOVE] = 2.5;
 }
 
 /// Prototype

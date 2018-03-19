@@ -28,13 +28,7 @@ Role.prototype.run = function(actor)
 		console.log("Role->" + this.roleName + ".run(" + actor.creep.name + ")");
 
 	this.tryDoJob(actor);
-};
-
-Role.prototype.end = function(actor)
-{
-	if (actor.doDebug)
-		console.log("Role->" + this.roleName + ".end(" + actor.creep.name + ")");
-};
+}
 
 Role.prototype.tryDoJob = function(actor)
 {
@@ -49,6 +43,26 @@ Role.prototype.tryDoJob = function(actor)
     }
 
     return false;
-};
+}
+
+Role.prototype.end = function(actor)
+{
+	if (actor.doDebug)
+		console.log("Role->" + this.roleName + ".end(" + actor.creep.name + ")");
+
+	this.tryEndJob(actor);
+}
+
+Role.prototype.tryEndJob = function(actor)
+{
+    if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
+    {
+    	var job = actor.jobs[actor.currentJob];
+        job.end(actor);
+        return true;
+    }
+
+    return false;
+}
 
 module.exports = Role.prototype;

@@ -47,7 +47,7 @@ Upgrade.prototype.onUpdate = function(actor)
     {
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 
-        this.end(actor, false);
+        this.finish(actor, false);
         return;
     }
 
@@ -56,7 +56,7 @@ Upgrade.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No energy to upgrade with!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
 

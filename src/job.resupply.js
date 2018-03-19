@@ -95,7 +95,7 @@ Resupply.prototype.onUpdate = function(actor)
         if (actor.doDebug)
             console.log(actor.creep.name + ": No carry capacity left. Resupplied successfully!");
 
-        this.end(actor, true);
+        this.finish(actor, true);
         return;
     }
 
@@ -119,7 +119,7 @@ Resupply.prototype.onUpdate = function(actor)
 	        if (actor.doDebug)
 	            console.log(actor.creep.name + ": No resupply targets found!");
 
-	        this.end(actor, false);
+	        this.finish(actor, false);
 	        return;
 	    }
     }
@@ -155,7 +155,7 @@ Resupply.prototype.onUpdate = function(actor)
             if (actor.doDebug)
                 console.log(actor.creep.name + ": Capacity full, unable to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
 
-            this.end(actor, true);
+            this.finish(actor, true);
 
 			break;
         case ERR_BUSY:

@@ -34,26 +34,50 @@ Supplier.prototype.run = function(actor)
         actor.addJob(job);
 }
 
+Supplier.prototype.tryDoJob = function(actor)
+{
+    if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
+    {
+        var job = actor.jobs[actor.currentJob];
+        if (job.hasStarted == false)
+            job.start(actor);
+
+        if (job.jobType != JobType.Supply)
+        {
+            // Every 10 ticks, check for Supply targets
+            if (job.startTime > Game.time && (Game.time - job.startTime) % 10 == 0)
+            {
+                // Try to find a target for a Supply job
+                var target = JobPrototypeSupply.getSupplyTarget(actor);
+                if (target != null)
+                {
+                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + ", found supply target " +
+                        target.structureType + " at " + target.pos);
+
+                    // No energy, go resupply
+                    if (actor.creep.carry.energy == 0)
+                        job = JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name });
+                    else
+                        job = JobFactory.createFromType(JobType.Supply, { "for": actor.creep.name, "target": target });
+
+                    job.start(actor);
+                }
+            }
+        }
+
+        job.update(actor);
+        return true;
+    }
+
+    return false;
+}
+
 module.exports = Supplier.prototype;
 
 /// Internal functions
 
 function getJob(actor)
 {
-    // Try to find a target for a Supply job
-    var target = JobPrototypeSupply.getSupplyTarget(actor);
-    if (target != null)
-    {
-        // No energy, go resupply
-        if (actor.creep.carry.energy == 0)
-            return JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name });
-
-        return JobFactory.createFromType(JobType.Supply, { "for": actor.creep.name, "target": target });
-    }
-
-    if (actor.doDebug)
-        console.log(actor.creep.name + ": Nothing to supply energy with!");
-
     // No energy, go get some
     if (actor.creep.carry.energy == 0)
     {
@@ -64,12 +88,19 @@ function getJob(actor)
         return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
     }
 
-    // Try to find a target for a Store job
-    var target = JobPrototypeStore.getStoreTarget(actor);
+    // Try to find a target for a Supply job
+    var target = JobPrototypeSupply.getSupplyTarget(actor);
     if (target != null)
-        return JobFactory.createFromType(JobType.Store, { "for": actor.creep.name, "target": target });
+        return JobFactory.createFromType(JobType.Supply, { "for": actor.creep.name, "target": target });
     else if (actor.doDebug)
-        console.log(actor.creep.name + ": Nothing to store energy to to!");
+        console.log(actor.creep.name + ": Nothing to supply energy with!");
+
+    // Get the room's Controller for an Upgrade job
+    var controller = actor.creep.room.controller;
+    if (controller != null)
+        return JobFactory.createFromType(JobType.Upgrade, { "for": actor.creep.name });
+    else
+        console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 
     return null;
 }

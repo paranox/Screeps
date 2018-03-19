@@ -52,7 +52,8 @@ module.exports.loop = function ()
     var allRepairers = [];
     var allSuppliers = [];
 
-    var role;
+    //console.log("Actor phase init!");
+
     for (var i = 0; i < actors.length; i++)
     {
         actor = actors[i];
@@ -83,27 +84,32 @@ module.exports.loop = function ()
         if (actor.creep.spawning)
             continue;
 
-        role = RoleFactory.getPrototype(actor.creep.memory.role);
+        actor.init(RoleFactory.getPrototype(actor.creep.memory.role));
+    }
 
-        if (role != null)
-        {
-            role.init(actor);
-            role.run(actor);
-            role.end(actor);
-        }
+    //console.log("Actor phase run!");
+
+    for (var i = 0; i < actors.length; i++)
+    {
+        actor = actors[i];
+
+        if (actor.creep.spawning)
+            continue;
+
+        actor.run();
+    }
+
+    //console.log("Actor phase end!");
+
+    for (var i = 0; i < actors.length; i++)
+    {
+        actor = actors[i];
+
+        if (actor.creep.spawning)
+            continue;
 
         actor.end();
     }
-
-    if (Memory.roles == undefined)
-        Memory.roles = {};
-
-    Memory.roles[Object.keys(RoleType)[RoleType.Builder + 1]] = allBuilders.length;
-    Memory.roles[Object.keys(RoleType)[RoleType.Harvester + 1]] = allHarvesters.length;
-    Memory.roles[Object.keys(RoleType)[RoleType.Repairer + 1]] = allRepairers.length;
-    Memory.roles[Object.keys(RoleType)[RoleType.Supplier + 1]] = allSuppliers.length;
-    Memory.roles[Object.keys(RoleType)[RoleType.Upgrader + 1]] = allUpgraders.length;
-    Memory.roles["Total"] = actors.length;
 
     var spawn = Game.spawns["Spawn[home]"];
     if (spawn == null)
@@ -111,172 +117,195 @@ module.exports.loop = function ()
         console.log("Unable to find home spawn!");
         return;
     }
-    else if (spawn.spawning)
-        return;
+
+    const doDebug = false;
 
     const energyAvailable = spawn.room.energyAvailable;
     const energyCapacity = spawn.room.energyCapacityAvailable;
 
-    var spawnQueue = spawn.memory.spawnQueue;
-    if (spawnQueue == undefined || spawnQueue == null)
+    const targetBodyPartCount = 60 + Math.floor((energyCapacity - 300) / 3);
+    
+    if (!spawn.spawning)
     {
-        console.log("Initializing spawn queue!");
-        spawnQueue = [];
-    }
-    //else if (spawnQueue.length == 0)
-    //{
-    //    console.log("Spawn queue is empty!");
-    //}
-    //else
-    //{
-    //    console.log("Spawn queue has " + spawnQueue.length + " entries:");
-    //    for (var i = 0; i < spawnQueue.length; i++)
-    //        console.log("[" + i + "]: " + Utils.objectToString(spawnQueue[i]));
-    //}
-
-    const doDebug = false;
-    var newBlueprint = null;
-
-    if (spawnQueue.length > 0)
-    {
-        var nextIndex = spawnQueue.length - 1;
-        var nextBlueprint = spawnQueue[nextIndex];
-        if (nextBlueprint == undefined || nextBlueprint == null)
+        var spawnQueue = spawn.memory.spawnQueue;
+        if (spawnQueue == undefined || spawnQueue == null)
         {
-            console.log("Invalid blueprint " + nextBlueprint + " in spawn queue at position " + nextIndex);
+            console.log("Initializing spawn queue!");
+            spawnQueue = [];
         }
-        else
+        //else if (spawnQueue.length == 0)
+        //{
+        //    console.log("Spawn queue is empty!");
+        //}
+        //else
+        //{
+        //    console.log("Spawn queue has " + spawnQueue.length + " entries:");
+        //    for (var i = 0; i < spawnQueue.length; i++)
+        //        console.log("[" + i + "]: " + Utils.objectToString(spawnQueue[i]));
+        //}
+
+        var newBlueprint = null;
+        if (spawnQueue.length > 0)
         {
-            if (nextBlueprint.cost > energyAvailable)
+            var nextIndex = spawnQueue.length - 1;
+            var nextBlueprint = spawnQueue[nextIndex];
+            if (nextBlueprint == undefined || nextBlueprint == null)
+            {
+                console.log("Invalid blueprint " + nextBlueprint + " in spawn queue at position " + nextIndex);
+                spawnQueue.pop();
+            }
+            else if (nextBlueprint.cost > energyAvailable)
             {
                 //console.log("Blueprint cost " + nextBlueprint.cost + " is higher than available energy " +
                 //    energyAvailable + ", waiting...");
-
-                return;
             }
-
-            if (nextBlueprint.budget < energyCapacity)
+            else
             {
-                console.log("Energy capacity has increased since creating blueprint of " + nextBlueprint.namePrefix +
-                    "! Updating blueprint at spawn queue position " + nextIndex);
-
-                nextBlueprint = CreepFactory.buildBlueprintByRole(nextBlueprint.roleType, energyCapacity, 50);
-            }
-
-            CreepFactory.buildCreepFromBlueprint(spawn, nextBlueprint);
-        }
-
-        spawnQueue.pop();
-    }
-    else // Pick a role to build based on parameters
-    {
-        const targetBodyPartCount = 30 + energyCapacity / 10;
-
-        const minNumBuilders = 1;
-        const minNumHarvesters = 2;
-        const minNumUpgraders = 1;
-        const minNumRepairers = 0;
-        const minNumSuppliers = 0;
-
-        var roleToBuild = -1;
-
-        if (allHarvesters.length < minNumHarvesters)
-        {
-            //if (doDebug)
-                console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
-
-            roleToBuild = RoleType.Harvester;
-        }
-        else if (allSuppliers.length < minNumSuppliers)
-        {
-            //if (doDebug)
-                console.log("Too few Suppliers (" + allSuppliers.length + " < " + minNumSuppliers + ")!");
-
-            roleToBuild = RoleType.Supplier;
-        }
-        else if (allBuilders.length < minNumBuilders)
-        {
-            //if (doDebug)
-                console.log("Too few Builders (" + allBuilders.length + " < " + minNumBuilders + ")!");
-
-            roleToBuild = RoleType.Builder;
-        }
-        else if (allUpgraders.length < minNumUpgraders)
-        {
-            //if (doDebug)
-                console.log("Too few Upgraders (" + allUpgraders.length + " < " + minNumUpgraders + ")!");
-
-            roleToBuild = RoleType.Upgrader;
-        }
-        else if (allRepairers.length < minNumRepairers)
-        {
-            //if (doDebug)
-                console.log("Too few Repairers (" + allRepairers.length + " < " + minNumRepairers + ")!");
-
-            roleToBuild = RoleType.Repairer;
-        }
-        else if (bodyPartCount < targetBodyPartCount)
-        {
-            var weights =
-            [
-                { "role": RoleType.Builder,   "count": allBuilders.length,   "targetRatio": 2.5 },
-                { "role": RoleType.Harvester, "count": allHarvesters.length, "targetRatio": 2.0 },
-                { "role": RoleType.Repairer,  "count": allRepairers.length,  "targetRatio": 1.0 },
-                { "role": RoleType.Supplier,  "count": allSuppliers.length,  "targetRatio": 1.5 },
-                { "role": RoleType.Upgrader,  "count": allUpgraders.length,  "targetRatio": 1.5 },
-            ]
-
-            var roleWeight;
-            var highestWeight = 0.0;
-            for (var i = 0; i < weights.length; i++)
-            {
-                roleWeight = weights[i];
-                roleWeight.ratio = roleWeight.count / actors.length;
-                roleWeight.weight = roleWeight.targetRatio - roleWeight.ratio;
-
-                if (roleWeight.weight > highestWeight)
+                if (nextBlueprint.budget < energyCapacity)
                 {
-                    roleToBuild = roleWeight.role;
-                    highestWeight = roleWeight.weight;
+                    console.log("Energy capacity has increased since creating blueprint of " + nextBlueprint.namePrefix +
+                        "! Updating blueprint at spawn queue position " + nextIndex);
+
+                    nextBlueprint = CreepFactory.buildBlueprintByRole(nextBlueprint.roleType, energyCapacity, 50);
                 }
+
+                CreepFactory.buildCreepFromBlueprint(spawn, nextBlueprint);
+                spawnQueue.pop();
             }
 
-            if (doDebug)
+        }
+        else // Pick a role to build based on parameters
+        {
+            const minNumBuilders = 1;
+            const minNumHarvesters = 2;
+            const minNumUpgraders = 1;
+            const minNumRepairers = 1;
+            const minNumSuppliers = 2;
+
+            var roleToBuild = -1;
+
+            if (allHarvesters.length < minNumHarvesters)
             {
-                var msg = ""; 
+                //if (doDebug)
+                    console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
+
+                roleToBuild = RoleType.Harvester;
+            }
+            else if (allSuppliers.length < minNumSuppliers)
+            {
+                //if (doDebug)
+                    console.log("Too few Suppliers (" + allSuppliers.length + " < " + minNumSuppliers + ")!");
+
+                roleToBuild = RoleType.Supplier;
+            }
+            else if (allBuilders.length < minNumBuilders)
+            {
+                //if (doDebug)
+                    console.log("Too few Builders (" + allBuilders.length + " < " + minNumBuilders + ")!");
+
+                roleToBuild = RoleType.Builder;
+            }
+            else if (allUpgraders.length < minNumUpgraders)
+            {
+                //if (doDebug)
+                    console.log("Too few Upgraders (" + allUpgraders.length + " < " + minNumUpgraders + ")!");
+
+                roleToBuild = RoleType.Upgrader;
+            }
+            else if (allRepairers.length < minNumRepairers)
+            {
+                //if (doDebug)
+                    console.log("Too few Repairers (" + allRepairers.length + " < " + minNumRepairers + ")!");
+
+                roleToBuild = RoleType.Repairer;
+            }
+            else if (bodyPartCount < targetBodyPartCount)
+            {
+                var weights =
+                [
+                    { "role": RoleType.Builder,   "count": allBuilders.length,   "weight": 1.5 },
+                    { "role": RoleType.Harvester, "count": allHarvesters.length, "weight": 2.5 },
+                    { "role": RoleType.Repairer,  "count": allRepairers.length,  "weight": 1.0 },
+                    { "role": RoleType.Supplier,  "count": allSuppliers.length,  "weight": 1.0 },
+                    { "role": RoleType.Upgrader,  "count": allUpgraders.length,  "weight": 1.0 },
+                ]
+
                 var roleWeight;
+
+                var totalWeight = 0.0;
                 for (var i = 0; i < weights.length; i++)
                 {
                     roleWeight = weights[i];
-                    msg += (i > 0 ? "\n" : "") + Object.keys(RoleType)[roleWeight.role + 1] + " count: " + roleWeight.count;
-                    msg += ", weight: " + roleWeight.weight + ", ratio: " + roleWeight.ratio + ", target: " + roleWeight.targetRatio;
+                    totalWeight += roleWeight.weight;
                 }
-                console.log("Creeps: " + actors.length + ", body parts: " + bodyPartCount + "/" + targetBodyPartCount + "\n" +
-                    msg + " of total " + actors.length);
+
+                var highestWeight = 0.0;
+                for (var i = 0; i < weights.length; i++)
+                {
+                    roleWeight = weights[i];
+                    roleWeight.ratio = roleWeight.count / actors.length;
+                    roleWeight.targetRatio = roleWeight.weight / totalWeight;
+                    roleWeight.w = roleWeight.targetRatio / roleWeight.ratio;
+
+                    if (roleWeight.w > highestWeight)
+                    {
+                        roleToBuild = roleWeight.role;
+                        highestWeight = roleWeight.w;
+                    }
+                }
+
+                if (doDebug)
+                {
+                    var msg = "";
+                    var roleWeight;
+                    for (var i = 0; i < weights.length; i++)
+                    {
+                        roleWeight = weights[i];
+                        msg += (i > 0 ? "\n" : "") + Object.keys(RoleType)[roleWeight.role + 1] + " count: " + roleWeight.count;
+                        msg += ", weight: " + roleWeight.w + ", ratio: " + roleWeight.ratio + ", target: " + roleWeight.targetRatio;
+                    }
+                    console.log("Creeps: " + actors.length + ", body parts: " + bodyPartCount + "/" + targetBodyPartCount + "\n" + msg);
+                }
+            }
+            //else
+            //{
+            //    if (doDebug)
+            //        console.log("Body part count target reached: " + bodyPartCount + "/" + targetBodyPartCount);
+            //}
+
+            if (roleToBuild >= 0)
+                newBlueprint = CreepFactory.buildBlueprintByRole(roleToBuild, energyCapacity, 50);
+        }
+
+        if (newBlueprint != null)
+        {
+            spawnQueue.push(newBlueprint);
+
+            if (doDebug)
+            {
+                console.log("Added a creep blueprint " + newBlueprint.namePrefix + " to spawn queue at Spawn('" + spawn.name +
+                    "')[" + spawn.pos + "] in " + spawn.room + ", energy cost: " + newBlueprint.cost + "/" + newBlueprint.budget +
+                    "\nbody parts: [" + newBlueprint.parts + "]");
             }
         }
-        //else
-        //{
-        //    if (doDebug)
-        //        console.log("Body part count target reached: " + bodyPartCount + "/" + targetBodyPartCount);
-        //}
 
-        if (roleToBuild >= 0)
-            newBlueprint = CreepFactory.buildBlueprintByRole(roleToBuild, energyCapacity, 50);
-    }
-
-    if (newBlueprint != null)
-    {
-        spawnQueue.push(newBlueprint);
-
-        if (doDebug)
-        {
-            console.log("Added a creep blueprint " + newBlueprint.namePrefix + " to spawn queue at Spawn('" + spawn.name +
-                "')[" + spawn.pos + "] in " + spawn.room + ", energy cost: " + newBlueprint.cost + "/" + newBlueprint.budget +
-                "\nbody parts: [" + newBlueprint.parts + "]");
-        }
+        spawn.memory.spawnQueue = spawnQueue;
     }
     
     // Commit to memory
-    spawn.memory.spawnQueue = spawnQueue;
+
+    if (Memory.actors == undefined)
+    {
+        console.log("Initializing actors memory object!");
+        Memory.actors = {};
+    }
+
+    Memory.actors["Count"] = actors.length;
+    Memory.actors["BodyPartsTotal"] = bodyPartCount;
+    Memory.actors["BodyPartsTarget"] = targetBodyPartCount;
+    Memory.actors[Object.keys(RoleType)[RoleType.Builder + 1]] = allBuilders.length;
+    Memory.actors[Object.keys(RoleType)[RoleType.Harvester + 1]] = allHarvesters.length;
+    Memory.actors[Object.keys(RoleType)[RoleType.Repairer + 1]] = allRepairers.length;
+    Memory.actors[Object.keys(RoleType)[RoleType.Supplier + 1]] = allSuppliers.length;
+    Memory.actors[Object.keys(RoleType)[RoleType.Upgrader + 1]] = allUpgraders.length;
 }

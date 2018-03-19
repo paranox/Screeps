@@ -19,7 +19,7 @@ function Repairer()
 
     this.partWeightMap[WORK] = 1.0;
     this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 2.0;
+    this.partWeightMap[MOVE] = 2.5;
 }
 
 /// Prototype
@@ -35,6 +35,47 @@ Repairer.prototype.run = function(actor)
     var job = getJob(actor);
     if (job != null)
         actor.addJob(job);
+}
+
+Repairer.prototype.tryDoJob = function(actor)
+{
+    if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
+    {
+        var job = actor.jobs[actor.currentJob];
+        if (job.hasStarted == false)
+            job.start(actor);
+
+        if (job.jobType != JobType.Supply)
+        {
+            // Every 10 ticks, check for repair targets
+            if (job.startTime > Game.time && (Game.time - job.startTime) % 10 == 0)
+            {
+                // Try to find a target for a Repair job
+                var target = JobPrototypeRepair.getRepairTarget(actor.creep.room);
+                if (target != null)
+                {
+                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + ", found supply target " +
+                        target.structureType + " at " + target.pos);
+
+                    job.finish(actor, false);
+
+                    // No energy, go resupply
+                    if (actor.creep.carry.energy == 0)
+                        job = JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name });
+                    else
+                        job = JobFactory.createFromType(JobType.Supply, { "for": actor.creep.name, "target": target });
+
+                    if (job != null)
+                        actor.addJob(job);
+                }
+            }
+        }
+
+        job.update(actor);
+        return true;
+    }
+
+    return false;
 }
 
 module.exports = Repairer.prototype;

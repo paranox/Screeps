@@ -72,7 +72,7 @@ Harvest.prototype.onUpdate = function(actor)
 		if (this.target == null)
         {
         	console.log(actor.creep.name + ": Can't find a Source!");
-	        this.end(actor, false);
+	        this.finish(actor, false);
         	return;
 	    }
     }
@@ -80,7 +80,7 @@ Harvest.prototype.onUpdate = function(actor)
     if (actor.creep.carry.energy >= actor.creep.carryCapacity)
 	{
 		actor.creep.say("█ I'm full!");
-		this.end(actor, true);
+		this.finish(actor, true);
 		return;
 	}
     
@@ -89,7 +89,7 @@ Harvest.prototype.onUpdate = function(actor)
     {
         case OK:
             if (actor.doDebug)
-        		console.log(actor.creep.name + ": Harvested from Source at " + this.target.pos.x + "," + this.target.pos.y);
+        		console.log(actor.creep.name + ": Harvested energy from Source at " + this.target.pos.x + "," + this.target.pos.y);
 
             break;
         case ERR_NOT_IN_RANGE:
@@ -108,7 +108,7 @@ Harvest.prototype.onUpdate = function(actor)
             if (actor.doDebug)
                 console.log(actor.creep.name + ": Source out of resources at " + this.target.pos.x + "," + this.target.pos.y);
 
-			this.end(actor, false);
+			this.finish(actor, false);
 
             break;
         default:

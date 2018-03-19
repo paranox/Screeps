@@ -15,8 +15,8 @@ function Harvester()
     this.base = Object.create(Role);
     this.base.constructor(this, RoleType.Harvester);
 
-    this.partWeightMap[WORK] = 2.0;
-    this.partWeightMap[CARRY] = 1.5;
+    this.partWeightMap[WORK] = 1.5;
+    this.partWeightMap[CARRY] = 1.0;
     this.partWeightMap[MOVE] = 1.0;
 }
 
