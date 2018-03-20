@@ -1,14 +1,14 @@
 var Utils = require('utils');
-var Job = require('jobPrototype');
-var JobType = require('jobTypes');
+var JobBase = require('jobPrototype');
+var Job = require('jobTypes');
 
 function Store(opts)
 {
-	//console.log("Job->Store.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Store.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "Store";
-	this.jobType = JobType.Store;
+	this.jobType = Job.Type.Store;
 	
-    this.base = Job;
+    this.base = JobBase;
     this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
@@ -18,7 +18,7 @@ function Store(opts)
 	}
 }
 
-Store.prototype = Object.create(Job);
+Store.prototype = Object.create(JobBase);
 Store.prototype.constructor = Store;
 
 Store.prototype.readSaveData = function(data)

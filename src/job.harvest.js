@@ -1,14 +1,14 @@
 var Utils = require('utils');
-var Job = require('jobPrototype');
-var JobType = require('jobTypes');
+var JobBase = require('jobPrototype');
+var Job = require('jobTypes');
 
 function Harvest(opts)
 {
-	//console.log("Job->Harvest.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Harvest.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "Harvest";
-	this.jobType = JobType.Harvest;
+	this.jobType = Job.Type.Harvest;
 	
-    this.base = Job;
+    this.base = JobBase;
     this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
@@ -18,7 +18,7 @@ function Harvest(opts)
 	}
 }
 
-Harvest.prototype = Object.create(Job);
+Harvest.prototype = Object.create(JobBase);
 Harvest.prototype.constructor = Harvest;
 
 Harvest.prototype.readSaveData = function(data)

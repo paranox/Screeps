@@ -1,14 +1,14 @@
 var Utils = require('utils');
-var Job = require('jobPrototype');
-var JobType = require('jobTypes');
+var JobBase = require('jobPrototype');
+var Job = require('jobTypes');
 
 function Upgrade(opts)
 {
-	//console.log("Job->Upgrade.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Upgrade.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "Upgrade";
-	this.jobType = JobType.Upgrade;
+	this.jobType = Job.Type.Upgrade;
 	
-    this.base = Job;
+    this.base = JobBase;
     this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
@@ -18,7 +18,7 @@ function Upgrade(opts)
 	}
 }
 
-Upgrade.prototype = Object.create(Job);
+Upgrade.prototype = Object.create(JobBase);
 Upgrade.prototype.constructor = Upgrade;
 
 Upgrade.prototype.readSaveData = function(data)

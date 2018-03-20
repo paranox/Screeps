@@ -1,8 +1,8 @@
-﻿var Role = require('rolePrototype');
-var RoleType = require('roleTypes');
+﻿var Role = require('roleTypes');
+var RoleBase = require('rolePrototype');
 var JobFactory = require('jobFactory');
 var JobPrototypeResupply = require('job.resupply');
-var JobType = require('jobTypes');
+var Job = require('jobTypes');
 
 //var UpgraderState = Object.freeze({ Error: -1, Idle: 0, SeekSource: 1, Harvest: 2, Upgrade: 3 });
 
@@ -13,8 +13,8 @@ function Upgrader()
     //console.log("Upgrader.constructor()");
     this.roleName = "Upgrader";
     
-    this.base = Object.create(Role);
-    this.base.constructor(this, RoleType.Upgrader);
+    this.base = Object.create(RoleBase);
+    this.base.constructor(this, Role.Type.Upgrader);
 
     this.partWeightMap[WORK] = 1.0;
     this.partWeightMap[CARRY] = 2.0;
@@ -23,7 +23,7 @@ function Upgrader()
 
 /// Prototype
 
-Upgrader.prototype = Object.create(Role);
+Upgrader.prototype = Object.create(RoleBase);
 Upgrader.prototype.constructor = Upgrader;
 
 Upgrader.prototype.run = function(actor)
@@ -47,15 +47,15 @@ function getJob(actor)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
         if (target != null)
-            return JobFactory.createFromType(JobType.Resupply, { "for": actor.creep.name, "target": target });
+            return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
 
-        return JobFactory.createFromType(JobType.Harvest, { "for": actor.creep.name });
+        return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
     if (controller != null)
-        return JobFactory.createFromType(JobType.Upgrade, { "for": actor.creep.name });
+        return JobFactory.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 

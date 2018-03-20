@@ -1,5 +1,5 @@
 var Utils = require('utils');
-var JobType = require('jobTypes');
+var Job = require('jobTypes');
 var JobBuild = require('job.build');
 var JobHarvest = require('job.harvest');
 var JobRepair = require('job.repair');
@@ -28,25 +28,25 @@ function createJobFromType(jobType, opts)
 
 	switch (jobType)
 	{
-		case JobType.Build:
+		case Job.Type.Build:
 			job = Object.create(JobBuild);
 			break;
-		case JobType.Harvest:
+		case Job.Type.Harvest:
 			job = Object.create(JobHarvest);
 			break;
-		case JobType.Repair:
+		case Job.Type.Repair:
 			job = Object.create(JobRepair);
 			break;
-		case JobType.Resupply:
+		case Job.Type.Resupply:
 			job = Object.create(JobResupply);
 			break;
-		case JobType.Supply:
+		case Job.Type.Supply:
 			job = Object.create(JobSupply);
 			break;
-		case JobType.Store:
+		case Job.Type.Store:
 			job = Object.create(JobStore);
 			break;
-		case JobType.Upgrade:
+		case Job.Type.Upgrade:
 			job = Object.create(JobUpgrade);
 			break;
 		default:

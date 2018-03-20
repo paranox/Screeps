@@ -2,7 +2,7 @@
 // Role.prototype with specific role prototype objects
 // to simulate inheritance of classes better
 
-function Role(context, roleType)
+function RoleBase(context, roleType)
 {
 	//console.log("Role.constructor(" + context.roleName + ")");
 
@@ -14,15 +14,15 @@ function Role(context, roleType)
 	if (context.run == undefined) context.run = this.run;
 	if (context.tryDoJob == undefined) context.tryDoJob = this.tryDoJob;
 	if (context.end == undefined) context.end = this.end;
-};
+}
 
-Role.prototype.init = function(actor)
+RoleBase.prototype.init = function(actor)
 {
 	if (actor.doDebug)
 		console.log("Role->" + this.roleName + ".init(" + actor.creep.name + ")");
-};
+}
 
-Role.prototype.run = function(actor)
+RoleBase.prototype.run = function(actor)
 {
 	if (actor.doDebug)
 		console.log("Role->" + this.roleName + ".run(" + actor.creep.name + ")");
@@ -30,7 +30,7 @@ Role.prototype.run = function(actor)
 	this.tryDoJob(actor);
 }
 
-Role.prototype.tryDoJob = function(actor)
+RoleBase.prototype.tryDoJob = function(actor)
 {
     if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
     {
@@ -45,7 +45,7 @@ Role.prototype.tryDoJob = function(actor)
     return false;
 }
 
-Role.prototype.end = function(actor)
+RoleBase.prototype.end = function(actor)
 {
 	if (actor.doDebug)
 		console.log("Role->" + this.roleName + ".end(" + actor.creep.name + ")");
@@ -53,7 +53,7 @@ Role.prototype.end = function(actor)
 	this.tryEndJob(actor);
 }
 
-Role.prototype.tryEndJob = function(actor)
+RoleBase.prototype.tryEndJob = function(actor)
 {
     if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
     {
@@ -65,4 +65,4 @@ Role.prototype.tryEndJob = function(actor)
     return false;
 }
 
-module.exports = Role.prototype;
+module.exports = RoleBase.prototype;

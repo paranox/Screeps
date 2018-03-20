@@ -1,14 +1,14 @@
 var Utils = require('utils');
-var Job = require('jobPrototype');
-var JobType = require('jobTypes');
+var JobBase = require('jobPrototype');
+var Job = require('jobTypes');
 
 function Resupply(opts)
 {
-	//console.log("Job->Resupply.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Resupply.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "Resupply";
-	this.jobType = JobType.Resupply;
+	this.jobType = Job.Type.Resupply;
 	
-    this.base = Job;
+    this.base = JobBase;
     this.base.constructor(this);
 
     this.target = null;
@@ -20,7 +20,7 @@ function Resupply(opts)
 	}
 }
 
-Resupply.prototype = Object.create(Job);
+Resupply.prototype = Object.create(JobBase);
 Resupply.prototype.constructor = Resupply;
 
 Resupply.prototype.readSaveData = function(data)

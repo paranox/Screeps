@@ -87,6 +87,8 @@ Actor.prototype.init = function(role)
 		console.log("Actor " + this.creep.name + ": No role assigned on .init()!");
 		return;
 	}
+	else if (this.doDebug)
+		console.log("Actor " + this.creep.name + ": Role: " + Utils.objectToString(role));
 
 	this.role = role;
 	this.role.init(this);

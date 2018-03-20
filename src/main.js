@@ -1,7 +1,7 @@
 var Utils = require('utils');
 var Actor = require('actor');
+var Role = require('roleTypes');
 var RoleFactory = require('roleFactory');
-var RoleType = require('roleTypes');
 var CreepFactory = require('creepFactory');
 
 module.exports.loop = function ()
@@ -61,19 +61,19 @@ module.exports.loop = function ()
 
         switch (actor.creep.memory.role)
         {
-            case RoleType.Builder:
+            case Role.Type.Builder:
                 allBuilders.push(actor);
                 break;
-            case RoleType.Harvester:
+            case Role.Type.Harvester:
                 allHarvesters.push(actor);
                 break;
-            case RoleType.Repairer:
+            case Role.Type.Repairer:
                 allRepairers.push(actor);
                 break;
-            case RoleType.Supplier:
+            case Role.Type.Supplier:
                 allSuppliers.push(actor);
                 break;
-            case RoleType.Upgrader:
+            case Role.Type.Upgrader:
                 allUpgraders.push(actor);
                 break;
             default:
@@ -189,45 +189,45 @@ module.exports.loop = function ()
                 //if (doDebug)
                     console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
 
-                roleToBuild = RoleType.Harvester;
+                roleToBuild = Role.Type.Harvester;
             }
             else if (allSuppliers.length < minNumSuppliers)
             {
                 //if (doDebug)
                     console.log("Too few Suppliers (" + allSuppliers.length + " < " + minNumSuppliers + ")!");
 
-                roleToBuild = RoleType.Supplier;
+                roleToBuild = Role.Type.Supplier;
             }
             else if (allBuilders.length < minNumBuilders)
             {
                 //if (doDebug)
                     console.log("Too few Builders (" + allBuilders.length + " < " + minNumBuilders + ")!");
 
-                roleToBuild = RoleType.Builder;
+                roleToBuild = Role.Type.Builder;
             }
             else if (allUpgraders.length < minNumUpgraders)
             {
                 //if (doDebug)
                     console.log("Too few Upgraders (" + allUpgraders.length + " < " + minNumUpgraders + ")!");
 
-                roleToBuild = RoleType.Upgrader;
+                roleToBuild = Role.Type.Upgrader;
             }
             else if (allRepairers.length < minNumRepairers)
             {
                 //if (doDebug)
                     console.log("Too few Repairers (" + allRepairers.length + " < " + minNumRepairers + ")!");
 
-                roleToBuild = RoleType.Repairer;
+                roleToBuild = Role.Type.Repairer;
             }
             else if (bodyPartCount < targetBodyPartCount)
             {
                 var weights =
                 [
-                    { "role": RoleType.Builder,   "count": allBuilders.length,   "weight": 1.5 },
-                    { "role": RoleType.Harvester, "count": allHarvesters.length, "weight": 2.5 },
-                    { "role": RoleType.Repairer,  "count": allRepairers.length,  "weight": 1.0 },
-                    { "role": RoleType.Supplier,  "count": allSuppliers.length,  "weight": 1.0 },
-                    { "role": RoleType.Upgrader,  "count": allUpgraders.length,  "weight": 1.0 },
+                    { "role": Role.Type.Builder,   "count": allBuilders.length,   "weight": 1.5 },
+                    { "role": Role.Type.Harvester, "count": allHarvesters.length, "weight": 2.5 },
+                    { "role": Role.Type.Repairer,  "count": allRepairers.length,  "weight": 1.5 },
+                    { "role": Role.Type.Supplier,  "count": allSuppliers.length,  "weight": 1.0 },
+                    { "role": Role.Type.Upgrader,  "count": allUpgraders.length,  "weight": 1.0 },
                 ]
 
                 var roleWeight;
@@ -261,7 +261,7 @@ module.exports.loop = function ()
                     for (var i = 0; i < weights.length; i++)
                     {
                         roleWeight = weights[i];
-                        msg += (i > 0 ? "\n" : "") + Object.keys(RoleType)[roleWeight.role + 1] + " count: " + roleWeight.count;
+                        msg += (i > 0 ? "\n" : "") + Object.keys(Role.Type)[roleWeight.role + 1] + " count: " + roleWeight.count;
                         msg += ", weight: " + roleWeight.w + ", ratio: " + roleWeight.ratio + ", target: " + roleWeight.targetRatio;
                     }
                     console.log("Creeps: " + actors.length + ", body parts: " + bodyPartCount + "/" + targetBodyPartCount + "\n" + msg);
@@ -303,9 +303,9 @@ module.exports.loop = function ()
     Memory.actors["Count"] = actors.length;
     Memory.actors["BodyPartsTotal"] = bodyPartCount;
     Memory.actors["BodyPartsTarget"] = targetBodyPartCount;
-    Memory.actors[Object.keys(RoleType)[RoleType.Builder + 1]] = allBuilders.length;
-    Memory.actors[Object.keys(RoleType)[RoleType.Harvester + 1]] = allHarvesters.length;
-    Memory.actors[Object.keys(RoleType)[RoleType.Repairer + 1]] = allRepairers.length;
-    Memory.actors[Object.keys(RoleType)[RoleType.Supplier + 1]] = allSuppliers.length;
-    Memory.actors[Object.keys(RoleType)[RoleType.Upgrader + 1]] = allUpgraders.length;
+    Memory.actors[Object.keys(Role.Type)[Role.Type.Builder + 1]] = allBuilders.length;
+    Memory.actors[Object.keys(Role.Type)[Role.Type.Harvester + 1]] = allHarvesters.length;
+    Memory.actors[Object.keys(Role.Type)[Role.Type.Repairer + 1]] = allRepairers.length;
+    Memory.actors[Object.keys(Role.Type)[Role.Type.Supplier + 1]] = allSuppliers.length;
+    Memory.actors[Object.keys(Role.Type)[Role.Type.Upgrader + 1]] = allUpgraders.length;
 }

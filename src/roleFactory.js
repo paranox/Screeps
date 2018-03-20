@@ -1,4 +1,4 @@
-﻿var RoleType = require('roleTypes');
+﻿var Role = require('roleTypes');
 var roleBuilder = require('role.builder');
 var roleHarvester = require('role.harvester');
 var roleRepairer = require('role.repairer');
@@ -27,19 +27,19 @@ module.exports =
 		//console.log("Getting prototype for role " + role);
 	    switch (role)
 	    {
-	        case RoleType.Builder:
+	        case Role.Type.Builder:
 	            return this.prototypeBuilder;
-	        case RoleType.Harvester:
+	        case Role.Type.Harvester:
 	            return this.prototypeHarvester;
-	        case RoleType.Repairer:
+	        case Role.Type.Repairer:
 	            return this.prototypeRepairer;
-	        case RoleType.Upgrader:
+	        case Role.Type.Upgrader:
 	            return this.prototypeUpgrader;
-            case RoleType.Supplier:
+            case Role.Type.Supplier:
             	return this.prototypeSupplier;
 	    }
 
-	    console.log("Unhandled role " + Object.keys(RoleType)[role + 1] + ", can't find prototype!");
+	    console.log("Unhandled Role[" + role + "]: " + Role.getNameOf(role) + ", can't find prototype!");
 	    return null;
 	}
 };

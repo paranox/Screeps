@@ -1,14 +1,14 @@
 var Utils = require('utils');
-var Job = require('jobPrototype');
-var JobType = require('jobTypes');
+var JobBase = require('jobPrototype');
+var Job = require('jobTypes');
 
 function Repair(opts)
 {
-	//console.log("Job->Repair.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Repair.constructor(opts: " + Utils.objectToString(opts) + ")");
 	this.jobName = "Repair";
-	this.jobType = JobType.Repair;
+	this.jobType = Job.Type.Repair;
 	
-    this.base = Job;
+    this.base = JobBase;
     this.base.constructor(this);
 
 	if (opts != undefined && opts != null)
@@ -18,7 +18,7 @@ function Repair(opts)
 	}
 }
 
-Repair.prototype = Object.create(Job);
+Repair.prototype = Object.create(JobBase);
 Repair.prototype.constructor = Repair;
 
 Repair.prototype.readSaveData = function(data)
