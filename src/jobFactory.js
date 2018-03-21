@@ -68,7 +68,7 @@ module.exports =
         if (job == null)
         {
             console.log("Failed to create job of type " + Object.keys(JobType)[jobType + 1] +
-            	" with opts " + Utils.objectToString(opts));
+            	" with opts " + JSON.stringify(opts));
         }
 
 		return job;
@@ -80,7 +80,7 @@ module.exports =
 		var job = createJobFromData(data);
 
         if (job == null)
-            console.log("Failed to create job from data " + Utils.objectToString(data));
+            console.log("Failed to create job from data " + JSON.stringify(data));
 
 		return job;
 	}

@@ -4,7 +4,7 @@ var Job = require('jobTypes');
 
 function Harvest(opts)
 {
-	//console.log("JobBase->Harvest.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Harvest.constructor(opts: " + JSON.stringify(opts) + ")");
 	this.jobName = "Harvest";
 	this.jobType = Job.Type.Harvest;
 	

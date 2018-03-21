@@ -4,7 +4,7 @@ var Job = require('jobTypes');
 
 function Repair(opts)
 {
-	//console.log("JobBase->Repair.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Repair.constructor(opts: " + JSON.stringify(opts) + ")");
 	this.jobName = "Repair";
 	this.jobType = Job.Type.Repair;
 	
@@ -40,7 +40,7 @@ Repair.prototype.readSaveData = function(data)
 	}
 	else
 	{
-		console.log("Target information was not included in save data: " + Utils.objectToString(data));
+		console.log("Target information was not included in save data: " + JSON.stringify(data));
 		return false;
 	}
 

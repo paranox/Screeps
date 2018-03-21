@@ -20,9 +20,7 @@ function Home(spawn)
 		this.spawnID = spawn.id;
 		this.spawn = spawn;
 
-		this.spawn.memory.home = createHomeMemoryObject(this.name, spawn);
-
-		console.log("Initialized home: " + Utils.objectToString(this, 0, 0));
+		console.log("Initialized home: " + JSON.stringify(this, 0, 0));
 	}
 	else
 		this.name = spawn.memory.home.name;
@@ -50,7 +48,7 @@ Home.prototype.init = function()
             createRoleMemoryObject(Role.Type.Upgrader,  0, 1, 4, 1.0)
         ]
 
-        //console.log(this.spawn.name + ": Initialized default roles: " + Utils.objectToString(this.roles));
+        //console.log(this.spawn.name + ": Initialized default roles: " + JSON.stringify(this.roles));
     }
 }
 
@@ -77,7 +75,7 @@ Home.prototype.end = function()
 	if (this.spawn != null)
 	{
 		if (this.spawn.memory.home == undefined)
-			this.spawn.memory.home = createHomeMemoryObject(this.name, this.spawn, this.roles);
+			this.spawn.memory.home = { "name": this.name, "spawn": this.spawnID, "roles": this.roles };
 		else
 			this.spawn.memory.home.roles = this.roles;
 	}
@@ -86,11 +84,6 @@ Home.prototype.end = function()
 module.exports = Home.prototype;
 
 // Internal functions
-
-function createHomeMemoryObject(name, spawn, roles)
-{
-	return { "name": name, "spawn": spawn.id, "roles": roles };
-}
 
 function createRoleMemoryObject(roleType, count, min, max, priority, weight)
 {

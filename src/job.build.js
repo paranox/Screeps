@@ -4,7 +4,7 @@ var Job = require('jobTypes');
 
 function Build(opts)
 {
-	//console.log("JobBase->Build.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Build.constructor(opts: " + JSON.stringify(opts) + ")");
 	this.jobName = "Build";
 	this.jobType = Job.Type.Build;
 	

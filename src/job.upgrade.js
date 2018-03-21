@@ -4,7 +4,7 @@ var Job = require('jobTypes');
 
 function Upgrade(opts)
 {
-	//console.log("JobBase->Upgrade.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Upgrade.constructor(opts: " + JSON.stringify(opts) + ")");
 	this.jobName = "Upgrade";
 	this.jobType = Job.Type.Upgrade;
 	

@@ -177,7 +177,7 @@ module.exports.loop = function ()
         //{
         //    console.log("Spawn queue has " + spawnQueue.length + " entries:");
         //    for (var i = 0; i < spawnQueue.length; i++)
-        //        console.log("[" + i + "]: " + Utils.objectToString(spawnQueue[i]));
+        //        console.log("[" + i + "]: " + JSON.stringify(spawnQueue[i]));
         //}
 
         var newBlueprint = null;

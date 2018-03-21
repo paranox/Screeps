@@ -1,7 +1,6 @@
 function Job(context)
 {
 	//console.log("Job.constructor(" + context.jobName + "|" + context.jobType + ")");
-	this.context = context;
 
 	context.hasStarted = false;
 	context.hasFinished = false;

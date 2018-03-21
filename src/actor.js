@@ -88,7 +88,7 @@ Actor.prototype.init = function(role)
 		return;
 	}
 	else if (this.doDebug)
-		console.log("Actor " + this.creep.name + ": Role: " + Utils.objectToString(role));
+		console.log("Actor " + this.creep.name + ": Role: " + JSON.stringify(role));
 
 	this.role = role;
 	this.role.init(this);
@@ -134,7 +134,7 @@ Actor.prototype.end = function()
     			if (this.doDebug)
     			{
             		console.log("Actor(" + this.creep.name + ": Job[" + i + "]: " + job.jobName + ":" + job.jobType + " is unfinished!");
-            		console.log("Creating save data from job: " + Utils.objectToString(job));
+            		console.log("Creating save data from job: " + JSON.stringify(job));
     			}
 
             	jobsToSave.push(job.createSaveData());
@@ -151,7 +151,7 @@ Actor.prototype.end = function()
     {
         console.log("Actor(" + this.creep.name + "): Saving " + jobsToSave.length + " jobs to memory");
         for (var i = 0; i < jobsToSave.length; i++)
-        	console.log("Job[" + i + "]: " + Utils.objectToString(jobsToSave[i]));
+        	console.log("Job[" + i + "]: " + JSON.stringify(jobsToSave[i]));
     }
 
     this.creep.memory.jobs = jobsToSave;

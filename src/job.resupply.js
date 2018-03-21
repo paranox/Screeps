@@ -4,7 +4,7 @@ var Job = require('jobTypes');
 
 function Resupply(opts)
 {
-	//console.log("JobBase->Resupply.constructor(opts: " + Utils.objectToString(opts) + ")");
+	//console.log("JobBase->Resupply.constructor(opts: " + JSON.stringify(opts) + ")");
 	this.jobName = "Resupply";
 	this.jobType = Job.Type.Resupply;
 	
