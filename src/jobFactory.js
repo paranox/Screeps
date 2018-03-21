@@ -18,7 +18,7 @@ function createJobFromData(data)
 			return job;
 	}
 
-	console.log("Failed to create job of type " + Object.keys(JobType)[data.jobType + 1] + " from data!");
+	console.log("Failed to create job of type " + Object.keys(Job.Type)[data.jobType + 1] + " from data!");
 	return null;
 }
 

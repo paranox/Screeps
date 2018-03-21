@@ -1,4 +1,5 @@
 var Utils = require('utils');
+var Home = require('home');
 var Actor = require('actor');
 var Role = require('roleTypes');
 var RoleFactory = require('roleFactory');
@@ -6,6 +7,31 @@ var CreepFactory = require('creepFactory');
 
 module.exports.loop = function ()
 {
+    const doDebug = false;
+
+    for (var name in Memory.spawns)
+    {
+        if (!Game.spawns[name])
+        {
+            console.log('Should remove non-existing spawn from memory: ' + name);
+            continue;
+        }
+    }
+
+    if (Memory.homes == undefined)
+        Memory.homes = [];
+
+    var home;
+    var homes = [];
+    for (var name in Game.spawns)
+    {
+        home = Object.create(Home);
+        home.constructor(Game.spawns[name]);
+        home.init();
+
+        homes.push(home);
+    }
+
     RoleFactory.initPrototypes();
 
     for (var name in Memory.creeps)
@@ -14,7 +40,6 @@ module.exports.loop = function ()
         {
             delete Memory.creeps[name];
             console.log('Removed non-existing creep from memory: ' + name);
-            continue;
         }
     }
 
@@ -87,6 +112,13 @@ module.exports.loop = function ()
         actor.init(RoleFactory.getPrototype(actor.creep.memory.role));
     }
 
+    home = homes[0];
+    home.setRoleCount(Role.Type.Builder, allBuilders.length);
+    home.setRoleCount(Role.Type.Harvester, allHarvesters.length);
+    home.setRoleCount(Role.Type.Repairer, allRepairers.length);
+    home.setRoleCount(Role.Type.Supplier, allSuppliers.length);
+    home.setRoleCount(Role.Type.Upgrader, allUpgraders.length);
+
     //console.log("Actor phase run!");
 
     for (var i = 0; i < actors.length; i++)
@@ -111,14 +143,18 @@ module.exports.loop = function ()
         actor.end();
     }
 
+    for (var i = 0; i < homes.length; i++)
+    {
+        home = homes[i];
+        home.end();
+    }
+
     var spawn = Game.spawns["Spawn[home]"];
     if (spawn == null)
     {
         console.log("Unable to find home spawn!");
         return;
     }
-
-    const doDebug = false;
 
     const energyAvailable = spawn.room.energyAvailable;
     const energyCapacity = spawn.room.energyCapacityAvailable;
@@ -184,19 +220,19 @@ module.exports.loop = function ()
 
             var roleToBuild = -1;
 
-            if (allHarvesters.length < minNumHarvesters)
-            {
-                //if (doDebug)
-                    console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
-
-                roleToBuild = Role.Type.Harvester;
-            }
-            else if (allSuppliers.length < minNumSuppliers)
+            if (allSuppliers.length < minNumSuppliers)
             {
                 //if (doDebug)
                     console.log("Too few Suppliers (" + allSuppliers.length + " < " + minNumSuppliers + ")!");
 
                 roleToBuild = Role.Type.Supplier;
+            }
+            else if (allHarvesters.length < minNumHarvesters)
+            {
+                //if (doDebug)
+                    console.log("Too few Harvesters (" + allHarvesters.length + " < " + minNumHarvesters + ")!");
+
+                roleToBuild = Role.Type.Harvester;
             }
             else if (allBuilders.length < minNumBuilders)
             {
