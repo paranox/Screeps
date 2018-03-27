@@ -64,25 +64,67 @@ Resupply.prototype.createSaveData = function()
 
 Resupply.prototype.getResupplyTarget = function(actor, typeFilter)
 {
-	var targets = actor.creep.room.find(FIND_STRUCTURES,
-    {
-        filter: (structure) =>
-        {
-        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
-        	{
-        		if (actor.doDebug)
-        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from resupply targets!");
-        		
-        		return false;	
-        	}
+	var target;
+	var targets = [];
 
-            return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) &&
-            	structure.store[RESOURCE_ENERGY] > 0;
-        }
-    });
+	if (this.targets != null && Object.keys(this.targets).length > 0)
+	{
+		for (var id in this.targets)
+		{
+			target = this.targets[id];
+			if (target.energyCapacity != undefined)
+			{
+				if (target.energy > 0)
+				{
+					if (actor.doDebug)
+						console.log("Object " + id + " " + target + " has " + target.energy + "/" + target.energyCapacity + " energy!");
+
+					targets.push(target);
+				}
+				else if (actor.doDebug)
+					console.log("Object " + id + " " + target + " is out of energy!");
+			}
+			else if (target.storeCapacity != undefined)
+			{
+				if (target.store[RESOURCE_ENERGY] > 0)
+				{
+					if (actor.doDebug)
+						console.log("Object " + id + " " + target + " has " + target.store[RESOURCE_ENERGY] + "/" + target.storeCapacity + " energy!");
+
+					targets.push(target);
+				}
+				else if (actor.doDebug)
+					console.log("Object " + id + " " + target + " store is out of energy!");
+			}
+			else if (actor.doDebug)
+				console.log("Object " + id + " " + target + " is ineligible for Supply target");
+		}
+	}
+	else
+	{
+		targets = actor.creep.room.find(FIND_STRUCTURES,
+	    {
+	        filter: (structure) =>
+	        {
+	        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
+	        	{
+	        		if (actor.doDebug)
+	        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from resupply targets!");
+	        		
+	        		return false;	
+	        	}
+
+	            return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) &&
+	            	structure.store[RESOURCE_ENERGY] > 0;
+	        }
+	    });
+	}
 
     if (targets.length > 0)
     	return actor.creep.pos.findClosestByPath(targets);
+
+    if (actor.doDebug)
+    	console.log(actor.creep.name + ": Unable to pick Resupply job target!");
 
     return null;
 }

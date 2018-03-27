@@ -100,6 +100,9 @@ Actor.prototype.setOperation = function(operation)
 		console.log("Actor " + this.creep.name + ": operation set to " + operation.opName);
 
 	this.operation = operation;
+    
+    if (this.creep.memory.operationID == undefined)
+        this.creep.memory.operationID = operation.id;
 }
 
 Actor.prototype.addJob = function(job)
@@ -159,8 +162,8 @@ Actor.prototype.end = function()
     else
 		console.log("Actor " + this.creep.name + ": No role assigned on .end()!");
 
-    if (this.operation != null)
-        this.creep.memory.operationID = this.operation.id;
+    //if (this.operation != null)
+    //    this.creep.memory.operationID = this.operation.id;
 
     var jobsToSave = [];
 
