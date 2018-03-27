@@ -63,5 +63,4 @@ Temporary Items
 # =========================
 
 # Sublime Text
-.sublime-workspace
-.sublime-project
+.sublime*
