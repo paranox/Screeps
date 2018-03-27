@@ -2,10 +2,19 @@
 {
     objectToString: function(obj, depth, maxDepth)
     {
+        if (obj == undefined)
+            return "<" + depth + "/" + maxDepth + ">undefined";
+        if (obj == null)
+            return "<" + depth + "/" + maxDepth + ">null";
+
         if (depth == undefined) depth = 0;
         if (maxDepth == undefined) maxDepth = 3;
 
-        return "<" + depth + "/" + maxDepth + ">{" + (Object.keys(obj).map(key => {
+        let keys = (Object.keys(obj));
+        if (keys.length == 0)
+            return "<" + depth + "/" + maxDepth + ">{}";
+
+        return "<" + depth + "/" + maxDepth + ">{" + keys.map(key => {
             if (Array.isArray(obj[key]) && depth < maxDepth)
                 return " " + key + ": " + this.arrayToString(obj[key], depth + 1, maxDepth);
             if (typeof obj[key] == "object" && depth < maxDepth)
@@ -13,7 +22,7 @@
             if (typeof obj[key] == "function")
                 return " " + key + ": function()";
             return " " + key + ": " + obj[key];
-        })) + " }";
+        }) + " }";
     },
 
     arrayToString: function(array, depth, maxDepth)

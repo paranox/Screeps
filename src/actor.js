@@ -184,7 +184,7 @@ Actor.prototype.end = function()
     			if (this.doDebug)
     			{
             		console.log("Actor(" + this.creep.name + ": Job[" + i + "]: " + job.jobName + ":" + job.jobType + " is unfinished!");
-            		console.log("Creating save data from job: " + JSON.stringify(job));
+            		console.log("Creating save data from job: " + Utils.objectToString(job, 0, 2));
     			}
 
             	jobsToSave.push(job.createSaveData());
