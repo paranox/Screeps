@@ -12,12 +12,24 @@ function Actor(creep)
 	this.creep = creep;
 
     if (creep.spawning)
+    {
     	creep.memory.isSpawning = true;
+        return;
+    }
     else if (creep.memory.isSpawning)
     {
     	delete creep.memory.isSpawning;
+        creep.memory.home = creep.room.name;
     	creep.say("HelloWorld");
     }
+
+    if (creep.memory.home == undefined)
+    {
+        console.log("Actor " + creep.name + ": Home room set to " + creep.room);
+        creep.memory.home = creep.room.name;
+    }
+
+    this.home = Game.rooms[creep.memory.home];
 
     this.state = 0;
     if (creep.memory.state != undefined)

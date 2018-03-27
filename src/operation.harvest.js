@@ -30,8 +30,8 @@ Harvest.prototype.readSaveData = function(data)
 
 	if (data != null)
 	{
-		if (data.targetID != null)
-			this.target = Game.getObjectById(data.targetID);
+		if (data.target != undefined)
+			this.target = Game.getObjectById(data.target);
 	}
 
 	return true;
@@ -42,7 +42,7 @@ Harvest.prototype.createSaveData = function()
 	var data = this.base.createSaveData(this);
 	
 	if (this.target != null)
-		data["targetID"] = this.target.id;
+		data["target"] = this.target.id;
 
 	return data;
 }
@@ -83,7 +83,7 @@ Harvest.prototype.getJob = function(actor)
 Harvest.prototype.createDefaultRoles = function()
 {
 	var roles = {};
-	roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 1, 3, 1.0);
+	roles[Role.Type.Harvester] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 1, 3, 1.0);
 	return roles;
 }
 

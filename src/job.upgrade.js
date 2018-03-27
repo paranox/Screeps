@@ -23,13 +23,35 @@ Upgrade.prototype.constructor = Upgrade;
 
 Upgrade.prototype.readSaveData = function(data)
 {
-	return this.base.readSaveData(this, data);
-};
+	if (!this.base.readSaveData(this, data))
+		return false;
+
+	if (data.target != undefined)
+	{
+		let target = Game.getObjectById(data.target);
+
+		if (target == null)
+		{
+			console.log("Target id[" + data.target + "] was not found!");
+			return false;
+		}
+
+		this.target = target;
+	}
+
+	//console.log("Target found based on save data: " + data.target);
+	return true;
+}
 
 Upgrade.prototype.createSaveData = function()
 {
-	return this.base.createSaveData(this);
-};
+	var data = this.base.createSaveData(this);
+
+	if (this.target != undefined && this.target != null)
+		data["target"] = this.target.id;
+
+	return data;
+}
 
 Upgrade.prototype.onStart = function(actor)
 {
@@ -42,7 +64,7 @@ Upgrade.prototype.onUpdate = function(actor)
 	if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    this.target = actor.creep.room.controller;
+    this.target = actor.home.controller;
     if (this.target == null)
     {
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
@@ -82,10 +104,10 @@ Upgrade.prototype.onUpdate = function(actor)
             break;
 		default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to upgrade Controller at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to upgrade Controller " + this.target.id + " in " + this.target.room + " at " + this.target.pos.x + "," + this.target.pos.y);
 
 			break;
     }
-};
+}
 
 module.exports = Upgrade.prototype;
