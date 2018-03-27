@@ -128,10 +128,10 @@ module.exports =
 	            target: spawn.pos.findClosestByPath(FIND_SOURCES)
 	        };
 
-	        op = OperationFactory.createFromType(Operation.Type.Harvest, opts);
+	        op = OperationFactory.createFromType(Operation.Type.Home, opts);
 	        Game.empire.operations[op.id] = op;
 
-	        console.log("Initialized initial harvest operation on " + opts.target + "!");
+	        console.log("Initialized initial home operation on " + opts.target + "!");
 	    }
 	    else
 	    {

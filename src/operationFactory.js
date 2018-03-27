@@ -2,6 +2,7 @@ var Utils = require('utils');
 var Operation = require('operationTypes');
 var OperationHome = require('operation.home');
 var OperationHarvest = require('operation.harvest');
+var OperationHaul = require('operation.haul');
 
 function createOperationFromData(data)
 {
@@ -28,6 +29,9 @@ function createOperationFromType(opType, opts)
 			break;
 		case Operation.Type.Harvest:
 			op = Object.create(OperationHarvest);
+			break;
+		case Operation.Type.Haul:
+			op = Object.create(OperationHaul);
 			break;
 		default:
 	    	console.log("Failed to create operation, unhandled operation type: " + Operation.getNameOf(opType));

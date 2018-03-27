@@ -2,7 +2,7 @@ var Role = require('roleTypes');
 
 module.exports =
 {
-	Type: Type = Object.freeze( { Home: 0, Harvest: 1 } ),
+	Type: Type = Object.freeze( { Home:0, Harvest:1, Haul:2 } ),
 	isDefined: function(type) { return type >= 0 && type < Object.keys(this.Type).length; },
 	getNameOf: function(index) { return Object.keys(this.Type)[index]; },
 

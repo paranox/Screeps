@@ -138,7 +138,8 @@ Repair.prototype.getRepairTarget = function(room, actor)
     if (chosenTarget == null && allTarges.length > 0)
     {
         chosenTarget = allTarges[0];
-        console.log("Unable to prioritize Repair targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+        if (actor.doDebug == true)
+            console.log("Unable to prioritize Repair targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
     }
     else if (actor.doDebug == true)
     {

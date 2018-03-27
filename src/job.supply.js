@@ -11,11 +11,23 @@ function Supply(opts)
     this.base = JobBase;
     this.base.constructor(this);
 
-	if (opts != undefined && opts != null)
+    this.targets = {};
+
+	if (opts == null)
+		return;
+	
+	if (opts.targets != undefined)
 	{
-		if (opts.target != null)
-			this.target = opts.target;
+		if (Array.isArray(opts.targets))
+		{
+			for (var id in opts.targets)
+				this.targets[id] = opts.targets[id];
+		}
+		else
+			this.targets = opts.targets;
 	}
+	if (opts.target != null)
+		this.targets[opts.target.id] = opts.target;
 }
 
 Supply.prototype = Object.create(JobBase);
@@ -26,17 +38,12 @@ Supply.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	if (data.target != undefined && data.target != null)
+	if (data.target != null)
+		this.target = Game.getObjectById(data.target);
+	if (Array.isArray(data.targets))
 	{
-		let target = Game.getObjectById(data.target);
-
-		if (target == null)
-		{
-			console.log("Target id[" + data.target + "] was not found!");
-			return false;
-		}
-
-		this.target = target;
+		for (var i = 0; i < data.targets.length; i++)
+			this.targets[data.targets[i]] = Game.getObjectById(data.targets[i]);
 	}
 
 	//console.log("Target found based on save data: " + data.target);
@@ -47,8 +54,15 @@ Supply.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
-	if (this.target != undefined && this.target != null)
+	if (this.target != null)
 		data["target"] = this.target.id;
+	if (this.targets != null)
+	{
+		var targets = [];
+		for (var id in this.targets)
+			 targets.push(this.targets[id].id);
+		data["targets"] = targets;
+	}
 
 	return data;
 };
@@ -61,29 +75,45 @@ Supply.prototype.onStart = function(actor)
 
 Supply.prototype.getSupplyTarget = function(actor, typeFilter)
 {
-	var targets = actor.creep.room.find(FIND_STRUCTURES,
-    {
-        filter: (structure) =>
-        {
-        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
-        	{
-        		if (actor.doDebug)
-        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from supply targets!");
+	var targets = [];
 
-        		return false;	
-        	}
+	var target;
+	for (var id in this.targets)
+	{
+		target = this.targets[id];
+		if ((target.hasOwnProperty("energyCapacity") && target.energy < target.energyCapacity) ||
+			(target.hasOwnProperty("storeCapacity") && target.store[RESOURCE_ENERGY] < target.storeCapacity))
+		{
+			targets.push(this.targets[id]);
+		}
+	}
 
-        	if (structure.structureType == STRUCTURE_STORAGE)
-        		return structure.store[RESOURCE_ENERGY] < structure.storeCapacity;
+	if (targets.length == 0)
+	{
+		targets = actor.creep.room.find(FIND_STRUCTURES,
+	    {
+	        filter: (structure) =>
+	        {
+	        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
+	        	{
+	        		if (actor.doDebug)
+	        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from supply targets!");
 
-            return (structure.structureType == STRUCTURE_EXTENSION ||
-                structure.structureType == STRUCTURE_SPAWN ||
-                structure.structureType == STRUCTURE_TOWER) &&
-            	structure.energy < structure.energyCapacity;
-        }
-    });
+	        		return false;	
+	        	}
 
-	var target, priority;
+	        	if (structure.structureType == STRUCTURE_STORAGE)
+	        		return structure.store[RESOURCE_ENERGY] < structure.storeCapacity;
+
+	            return (structure.structureType == STRUCTURE_EXTENSION ||
+	                structure.structureType == STRUCTURE_SPAWN ||
+	                structure.structureType == STRUCTURE_TOWER) &&
+	            	structure.energy < structure.energyCapacity;
+	        }
+	    });
+	}
+
+	var priority;
 	var highestPriority = 0;
     var chosenTargetType = null;
     for (var i = 0; i < targets.length; i++)

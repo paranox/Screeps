@@ -84,6 +84,15 @@ module.exports = Supplier.prototype;
 
 function getJob(actor)
 {
+    if (actor.operation != null)
+    {
+        var job = actor.operation.getJob(actor);
+        if (job != null)
+            return job;
+        //else
+        //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
+    }
+    
     var room = actor.creep.room;
 
     if (actor.creep.carry.energy > 0)
