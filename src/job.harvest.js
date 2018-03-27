@@ -45,7 +45,7 @@ Harvest.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
-	if (this.target != undefined && this.target != null)
+	if (this.target != null)
 		data["target"] = this.target.id;
 
 	return data;
@@ -63,18 +63,40 @@ Harvest.prototype.onUpdate = function(actor)
 
     if (this.target == undefined || this.target == null)
     {
-		this.target = actor.creep.pos.findClosestByPath(FIND_SOURCES, { filter : (source) =>
-			{
-				return source.energy > 0;
-			}
-		});
+    	var targets = actor.creep.room.find(FIND_SOURCES);
 
-		if (this.target == null)
-        {
+    	if (targets.length > 0)
+    	{
+    		var chosenSource = null;
+    		var highestWeight = 0.0;
+    		var source, path, weight;
+    		for (var i = 0; i < targets.length; i++)
+    		{
+    			source = targets[i];
+    			path = PathFinder.search(actor.creep.pos, { pos: source.pos, range: 1 });
+    			weight = (source.energy / source.energyCapacity) * (10 / path.cost);
+
+    			if (weight > highestWeight)
+    			{
+    				chosenSource = source;
+    				highestWeight = weight;
+    			}
+    		}
+
+			if (chosenSource == null)
+	        {
+		        this.finish(actor, false);
+	        	return;
+		    }
+
+    		this.target = chosenSource;
+    	}
+    	else
+    	{
         	console.log(actor.creep.name + ": Can't find a Source!");
 	        this.finish(actor, false);
         	return;
-	    }
+    	}
     }
 
     if (actor.creep.carry.energy >= actor.creep.carryCapacity)

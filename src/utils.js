@@ -32,6 +32,12 @@
         }) + " ]";
     },
 
+    roundTo: function(value, decimalPlaces)
+    {
+        let mult = Math.pow(10, decimalPlaces);
+        return Math.round(value * mult) / mult;
+    },
+
     getBodyCost: function(bodyParts)
     {
         let cost = 0;

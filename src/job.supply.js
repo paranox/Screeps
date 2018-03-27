@@ -59,12 +59,23 @@ Supply.prototype.onStart = function(actor)
 	actor.creep.say("⚡ Supply!");
 }
 
-Supply.prototype.getSupplyTarget = function(actor)
+Supply.prototype.getSupplyTarget = function(actor, typeFilter)
 {
 	var targets = actor.creep.room.find(FIND_STRUCTURES,
     {
         filter: (structure) =>
         {
+        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
+        	{
+        		if (actor.doDebug)
+        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from supply targets!");
+
+        		return false;	
+        	}
+
+        	if (structure.structureType == STRUCTURE_STORAGE)
+        		return structure.store[RESOURCE_ENERGY] < structure.storeCapacity;
+
             return (structure.structureType == STRUCTURE_EXTENSION ||
                 structure.structureType == STRUCTURE_SPAWN ||
                 structure.structureType == STRUCTURE_TOWER) &&
@@ -72,8 +83,55 @@ Supply.prototype.getSupplyTarget = function(actor)
         }
     });
 
-    if (targets.length > 0)
-    	return targets[0];
+	var target, priority;
+	var highestPriority = 0;
+    var chosenTargetType = null;
+    for (var i = 0; i < targets.length; i++)
+    {
+    	target = targets[i];
+    	switch (target.structureType)
+    	{
+    		case STRUCTURE_EXTENSION:
+    		case STRUCTURE_SPAWN:
+    			priority = 3.0;
+    			break;
+			case STRUCTURE_STORAGE:
+				priority = 2.0;
+				break;
+			case STRUCTURE_TOWER:
+				priority = 1.5;
+				break;
+			default:
+				priority = 1.0;
+				break;
+    	}
+
+    	if (priority > highestPriority)
+    	{
+    		chosenTargetType = target.structureType;
+
+    		if (actor.doDebug)
+    		{
+    			console.log(actor.creep.name + ": Highest priority target is now of type " + chosenTargetType +
+	    			" priority: " + priority + " > " + highestPriority + ", from target " + target.name +
+	    			", energy: " + target.energy + "/" + target.energyCapacity);
+    		}
+
+    		highestPriority = priority;
+    	}
+    }
+
+    if (chosenTargetType != null)
+    {
+    	target = actor.creep.pos.findClosestByPath(targets.filter(target => target.structureType == chosenTargetType ));
+    	
+    	if (actor.doDebug)
+    		console.log(actor.creep.name + ": Closest target of type " + chosenTargetType + " is at " + target.pos);
+    	
+    	return target;
+    }
+    else if (targets.length > 0)
+    	return actor.creep.pos.findClosestByPath(targets);
 
     return null;
 }

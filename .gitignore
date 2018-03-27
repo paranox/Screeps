@@ -57,3 +57,11 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# =========================
+# Project Solution Files
+# =========================
+
+# Sublime Text
+.sublime-workspace
+.sublime-project

@@ -62,19 +62,27 @@ Resupply.prototype.createSaveData = function()
 	return data;
 }
 
-Resupply.prototype.getResupplyTarget = function(actor)
+Resupply.prototype.getResupplyTarget = function(actor, typeFilter)
 {
 	var targets = actor.creep.room.find(FIND_STRUCTURES,
     {
         filter: (structure) =>
         {
-            return (structure.structureType == STRUCTURE_STORAGE || structure.structureType == STRUCTURE_CONTAINER) &&
+        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
+        	{
+        		if (actor.doDebug)
+        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from resupply targets!");
+        		
+        		return false;	
+        	}
+
+            return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) &&
             	structure.store[RESOURCE_ENERGY] > 0;
         }
     });
 
     if (targets.length > 0)
-    	return targets[0];
+    	return actor.creep.pos.findClosestByPath(targets);
 
     return null;
 }

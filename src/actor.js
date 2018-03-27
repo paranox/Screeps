@@ -1,5 +1,6 @@
 var Utils = require('utils');
 var JobFactory = require('jobFactory');
+var Role = require('roleTypes');
 
 function Actor(creep)
 {
@@ -21,11 +22,26 @@ function Actor(creep)
     this.state = 0;
     if (creep.memory.state != undefined)
     {
-    	this.state = creep.memory.state;
-
         if (this.doDebug)
-            console.log("Actor " + creep.name + ": State[" + this.state + "] read from creep memory");
+            console.log("Actor " + creep.name + ": State[" + creep.memory.state + "] read from creep memory");
+
+        this.state = creep.memory.state;
     }
+
+    this.roleType = -1;
+    this.roleName = "Unknown";
+    if (creep.memory.role != undefined)
+    {
+        if (Role.isDefined(creep.memory.role))
+        {
+            this.roleType = creep.memory.role;
+            this.roleName = Role.getNameOf(this.roleType);   
+        }
+        else
+            console.log("Actor " + creep.name + ": Unhandled role parameter: " + creep.memory.role);
+    }
+    else
+        console.log("Actor " + creep.name + ": No role parameter!");
 
     this.jobs = [];
 
@@ -61,15 +77,17 @@ function Actor(creep)
         console.log("Actor " + creep.name + ": No jobs in creep memory");
 }
 
-Actor.prototype.setState = function(state)
+Actor.prototype.setOperation = function(operation)
 {
-	if (state == undefined)
-		state = 0;
+	if (operation == null) // Catches both undefined and null
+	{
+        if (this.doDebug)
+            console.log("Actor " + this.creep.name + ": operation cleared");
+    }
+    else if (this.doDebug)
+		console.log("Actor " + this.creep.name + ": operation set to " + operation.opName);
 
-	if (this.state != state && this.doDebug)
-		console.log("Actor " + this.creep.name + ": state set to " + state);
-
-	this.state = state;
+	this.operation = operation;
 }
 
 Actor.prototype.addJob = function(job)
@@ -96,6 +114,23 @@ Actor.prototype.init = function(role)
 
 Actor.prototype.run = function()
 {
+
+    /*if (creep.memory.operationID != undefined)
+    {
+        if (this.doDebug)
+            console.log("Actor " + creep.name + ": Operation ID[" + creep.memory.operationID + "] read from creep memory");
+
+        var op = Game.empire.operations[creep.memory.operationID];
+        if (op != null)
+        {
+            console.log("Actor " + creep.name + ": Assigned to operation " + op.id + " " + op.opName + " of type " + op.opType);
+            op.addActor(this);
+        }
+        else
+            console.log("Actor " + creep.name + ": Could not find operation by the id of " + creep.memory.operationID);
+    }*/
+
+    
 	if (this.role != null)
     	this.role.run(this);
     else
@@ -111,6 +146,9 @@ Actor.prototype.end = function()
     	this.role.end(this);
     else
 		console.log("Actor " + this.creep.name + ": No role assigned on .end()!");
+
+    if (this.operation != null)
+        this.creep.memory.operationID = this.operation.id;
 
     var jobsToSave = [];
 

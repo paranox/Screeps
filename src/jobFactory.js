@@ -18,7 +18,7 @@ function createJobFromData(data)
 			return job;
 	}
 
-	console.log("Failed to create job of type " + Object.keys(Job.Type)[data.jobType + 1] + " from data!");
+	console.log("Failed to create job of type " + Job.getNameOf(data.jobType) + " from data!");
 	return null;
 }
 
@@ -50,7 +50,7 @@ function createJobFromType(jobType, opts)
 			job = Object.create(JobUpgrade);
 			break;
 		default:
-	    	console.log("Failed to create job, unhandled job type: " + Object.keys(JobType)[jobType + 1]);
+	    	console.log("Failed to create job, unhandled job type: " + Job.getNameOf(jobType));
 	    	return null;
 	}
 
@@ -62,12 +62,12 @@ module.exports =
 {
 	createFromType: function(jobType, opts)
 	{
-		//console.log("Creating Job from type: " + Object.keys(JobType)[jobType + 1]);
+		//console.log("Creating Job from type: " + Job.getNameOf(jobType));
 		var job = createJobFromType(jobType, opts);
 
         if (job == null)
         {
-            console.log("Failed to create job of type " + Object.keys(JobType)[jobType + 1] +
+            console.log("Failed to create job of type " + Job.getNameOf(jobType) +
             	" with opts " + JSON.stringify(opts));
         }
 

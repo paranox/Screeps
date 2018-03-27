@@ -45,16 +45,19 @@ Repairer.prototype.tryDoJob = function(actor)
         if (job.hasStarted == false)
             job.start(actor);
 
-        if (job.jobType != Job.Type.Supply)
+        if (job.jobType != Job.Type.Repair && job.jobType != Job.Type.Resupply)
         {
             // Every 10 ticks, check for repair targets
-            if (job.startTime > Game.time && (Game.time - job.startTime) % 10 == 0)
+            if (job.startTime < Game.time && (Game.time - job.startTime) % 10 == 0)
             {
+                //console.log(actor.creep.name + ": Working on " + job.jobType +
+                //  "(" + Job.getNameOf(job.jobType) + "), checking for repair targets..");
+
                 // Try to find a target for a Repair job
-                var target = JobPrototypeRepair.getRepairTarget(actor.creep.room);
+                var target = JobPrototypeRepair.getRepairTarget(actor.creep.room, actor);
                 if (target != null)
                 {
-                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + ", found supply target " +
+                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + "(" + Job.getNameOf(job.jobType) + "), found repair target " +
                         target.structureType + " at " + target.pos);
 
                     job.finish(actor, false);
@@ -63,7 +66,7 @@ Repairer.prototype.tryDoJob = function(actor)
                     if (actor.creep.carry.energy == 0)
                         job = JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name });
                     else
-                        job = JobFactory.createFromType(Job.Type.Supply, { "for": actor.creep.name, "target": target });
+                        job = JobFactory.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
 
                     if (job != null)
                         actor.addJob(job);
@@ -95,7 +98,7 @@ function getJob(actor)
     }
 
     // Try to find a target for a Repair job
-    var target = JobPrototypeRepair.getRepairTarget(actor.creep.room);
+    var target = JobPrototypeRepair.getRepairTarget(actor.creep.room, actor);
     if (target != null)
         return JobFactory.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
     else if (actor.doDebug)

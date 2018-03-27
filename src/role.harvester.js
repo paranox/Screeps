@@ -41,6 +41,15 @@ module.exports = Harvester.prototype;
 
 function getJob(actor)
 {
+    if (actor.operation != null)
+    {
+        var job = actor.operation.getJob(actor);
+        if (job != null)
+            return job;
+        //else
+        //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
+    }
+
     // No energy, go harvest
     if (actor.creep.carry.energy == 0)
         return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
