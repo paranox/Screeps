@@ -1,3 +1,4 @@
+var Utils = require('utils');
 var Operation = require('operationTypes');
 var OperationBase = require('operationBase');
 var Role = require('roleTypes');
@@ -79,7 +80,18 @@ Home.prototype.onUpdate = function()
     }
 
     if (spawn.spawning)
+    {
+    	//console.log("Spawn " + spawn.name + " is spawning: " + Utils.objectToString(spawn.spawning, 0, 2));
     	return;
+    }
+    else
+    {
+    	if (spawn.memory.spawning != null)
+    	{
+    		console.log("Spawn " + spawn.name + " is done spawning: " + Utils.objectToString(spawn.spawning, 0, 2));
+            spawn.memory.spawning = null;
+    	}
+    }
 
     const energyAvailable = spawn.room.energyAvailable;
     const energyCapacity = spawn.room.energyCapacityAvailable;
@@ -96,12 +108,14 @@ Home.prototype.onUpdate = function()
         }
         else
         {
-            CreepFactory.tryRemoveBlueprintFromSpawnQueue(spawn);
+        	CreepFactory.tryRemoveBlueprintFromSpawnQueue(spawn);
 
-            if (nextBlueprint.budget < energyCapacity)
+            if (nextBlueprint.allowUpdate == true && energyAvailable > nextBlueprint.budget)
             {
-                console.log("Energy capacity has increased since creating blueprint:\n" + JSON.stringify(nextBlueprint));
-                chosenBlueprint = CreepFactory.buildBlueprintByRole(nextBlueprint.opts.memory.role, energyCapacity, 50);
+                console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
+            		JSON.stringify(nextBlueprint));
+
+                chosenBlueprint = CreepFactory.buildBlueprintByRole(nextBlueprint.opts.memory.role, energyAvailable, 50);
                 console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
             }
             else
@@ -110,7 +124,10 @@ Home.prototype.onUpdate = function()
     }
 
     if (chosenBlueprint != null)
+    {
+    	spawn.memory.spawning = chosenBlueprint;
         CreepFactory.buildCreepFromBlueprint(spawn, chosenBlueprint);
+    }
 }
 
 Home.prototype.getJob = function(actor)

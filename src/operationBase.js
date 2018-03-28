@@ -70,8 +70,7 @@ OperationBase.prototype.readSaveData = function(context, data)
 		context.home =
 		{
 			room:Game.rooms[data.home.roomName],
-			spawn:Game.getObjectById(data.home.spawnID),
-			hasCreepInSpawnQueue:(data.home.hasCreepInSpawnQueue == true)
+			spawn:Game.getObjectById(data.home.spawnID)
 		};
 	}
 
@@ -91,22 +90,31 @@ OperationBase.prototype.readSaveData = function(context, data)
 		context.roles = context.createDefaultRoles();
 	}
 
-	if (data.actors != null && data.actors.length > 0)
+	if (data.actors != null)
 	{
-		var actor;
-		for (var i = 0; i < data.actors.length; i++)
+		var actor, dataActor;
+		for (var id in data.actors)
 		{
-			actor = Game.empire.actors[data.actors[i]];
+			dataActor = data.actors[id];
+			actor = Game.empire.actors[id];
 			if (actor != null)
 			{
-				if (context.doDebug)
-					console.log("Operation " + context.opName + "[" + context.id + "]: found actor[" + i + "] by the id of " + data.actors[i]);
+				if (actor.creep.memory.operationID == context.id)
+				{
+					if (context.doDebug)
+						console.log("Operation " + context.opName + "[" + context.id + "]: found actor by the id of " + id);
 
-				context.actors.push(actor);
-				actor.setOperation(context);
+					context.actors.push(actor);
+				}
+				else
+				{
+					console.log("Operation " + context.opName + "[" + context.id + "]: found actor by the id of " +
+						id + " but it's enlisted in another Operation: " + actor.creep.memory.operationID);
+				}
+				//actor.setOperation(context); // This disallows editing Operation assignments from creep memory
 			}
 			else
-				console.log("Operation " + context.opName + "[" + context.id + "]: unable to find actor[" + i + "] by the id of " + data.actors[i]);
+				console.log("Operation " + context.opName + "[" + context.id + "]: unable to find actor by the id of " + id);
 		}
 	}
 
@@ -118,9 +126,13 @@ OperationBase.prototype.createSaveData = function(context)
 	if (context == undefined)
 		context = this;
 
-	var memoryObject = { id:context.id, opName:context.opName, opType:context.opType };
+	var memoryObject = Memory.empire.operations[context.id] != undefined ? Memory.empire.operations[context.id] : {};
 
-	memoryObject["home"] =
+	memoryObject.id = context.id;
+	memoryObject.opName = context.opName;
+	memoryObject.opType = context.opType;
+	
+	memoryObject.home =
 	{
 		roomName:context.home.room.name,
 		spawnID:context.home.spawn.id,
@@ -137,20 +149,17 @@ OperationBase.prototype.createSaveData = function(context)
 	}
 
 	if (Object.keys(roles).length > 0)
-		memoryObject["roles"] = roles;
+		memoryObject.roles = roles;
 
-	if (Array.isArray(context.actors))
+	memoryObject.actors = {};
+	if (context.actors != null)
 	{
-		var ids = [];
 		var actor;
 		for (var i = 0; i < context.actors.length; i++)
 		{
 			actor = context.actors[i];
-			ids.push(actor.creep.id);
+			memoryObject.actors[actor.creep.id] = actor.creep.name;
 		}
-
-		if (ids.length > 0)
-			memoryObject["actors"] = ids;
 	}
 
 	return memoryObject;
@@ -266,6 +275,36 @@ OperationBase.prototype.update = function()
 		}
 		else
 			console.log("Operation " + this.opName + "[" + this.id + "]: Needed role has no roleType property: " + JSON.stringify(neededRole));
+	}
+
+	this.home.hasCreepInSpawnQueue = false;
+	if (this.home.spawn != null)
+	{
+		if (this.home.spawn.memory.spawning != null)
+		{
+			if (this.home.spawn.memory.spawning.opts.memory.orderedByOp == this.id)
+			{
+				this.home.hasCreepInSpawnQueue = true;
+				//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn is spawning blueprint " +
+				//	JSON.stringify(this.home.spawn.memory.spawning));
+			}
+		}
+
+		if (Array.isArray(this.home.spawn.memory.spawnQueue))
+		{
+			var blueprint;
+			for (var i = 0; i < this.home.spawn.memory.spawnQueue.length; i++)
+			{
+				blueprint = this.home.spawn.memory.spawnQueue[i];
+				if (blueprint.opts.memory.orderedByOp == this.id)
+				{
+					//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn has blueprint in spawn queue: " +
+					//	JSON.stringify(blueprint));
+					this.home.hasCreepInSpawnQueue = true;
+					break;
+				}
+			}
+		}
 	}
 
 	if (neededRole != null && !this.home.hasCreepInSpawnQueue && this.home.spawn != null)

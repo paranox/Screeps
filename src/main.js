@@ -28,18 +28,6 @@ module.exports.loop = function ()
 
     var actor, op;
 
-    for (var id in Game.empire.actors)
-    {
-        actor = Game.empire.actors[id];
-        if (actor.creep.memory.orderedByOp != undefined)
-        {
-            op = Game.empire.operations[actor.creep.memory.orderedByOp];
-            actor.setOperation(op);
-            op.addActor(actor);
-            delete actor.creep.memory.orderedByOp;
-        }
-    }
-
     for (var id in Game.empire.operations)
     {
         op = Game.empire.operations[id];

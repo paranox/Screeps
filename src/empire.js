@@ -146,6 +146,25 @@ module.exports =
 	onTickStart: function()
 	{
 		//console.log("Empire.onTickStart()");
+
+		var actor, op;
+	    for (var id in Game.empire.actors)
+	    {
+	        actor = Game.empire.actors[id];
+	        if (actor.creep.memory.orderedByOp != undefined)
+	        {
+	            op = Game.empire.operations[actor.creep.memory.orderedByOp];
+	            actor.setOperation(op);
+	            op.addActor(actor);
+	            delete actor.creep.memory.orderedByOp;
+	        }
+	        else if (actor.creep.memory.operationID != undefined)
+	        {
+	            op = Game.empire.operations[actor.creep.memory.operationID];
+	            actor.setOperation(op);
+	            op.addActor(actor);
+	        }
+	    }
 	},
 
 	onTickEnd: function()
@@ -165,6 +184,6 @@ module.exports =
 
 	    Memory.empire.nextOpID = Game.empire.nextOpID;
 	    for (const id in Game.empire.operations)
-	    	Memory.empire.operations[id] = Game.empire.operations[id].createSaveData();
+	    	/*Memory.empire.operations[id] = */Game.empire.operations[id].createSaveData();
 	}
 }
