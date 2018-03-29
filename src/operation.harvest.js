@@ -83,7 +83,7 @@ Harvest.prototype.getJob = function(actor)
 Harvest.prototype.createDefaultRoles = function()
 {
 	var roles = {};
-	roles[Role.Type.Harvester] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 1, 3, 1.0);
+	roles[Role.Type.Harvester] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 1, 3, [2.5, 1.0]);
 	return roles;
 }
 

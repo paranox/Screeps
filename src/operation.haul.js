@@ -113,7 +113,7 @@ Haul.prototype.getJob = function(actor)
 Haul.prototype.createDefaultRoles = function()
 {
 	var roles = {};
-	roles[Role.Type.Supplier] = Operation.createRolePositionObject(Role.Type.Supplier, 0, 1, 3, 1.0);
+	roles[Role.Type.Supplier] = Operation.createRolePositionObject(Role.Type.Supplier, 0, 1, 3, [2.0, 1.0]);
 	return roles;
 }
 

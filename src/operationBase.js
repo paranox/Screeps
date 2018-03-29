@@ -452,11 +452,7 @@ OperationBase.prototype.modifyRoleActorCount = function(roleType, amount)
 OperationBase.prototype.createDefaultRoles = function()
 {
 	var roles = {};
-    roles[Role.Type.Builder]    = Operation.createRolePositionObject(Role.Type.Builder,   0, 1, 4, [4.0, 3.5, 3.2, 1.0]);
-    roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 6, [5.0, 4.5, 3.3, 2.5, 1.0]);
-    roles[Role.Type.Repairer]   = Operation.createRolePositionObject(Role.Type.Repairer,  0, 1, 4, [1.7, 1.6, 1.0]);
-    roles[Role.Type.Supplier]   = Operation.createRolePositionObject(Role.Type.Supplier,  0, 2, 3, [3.0, 2.8, 1.0]);
-    roles[Role.Type.Upgrader]   = Operation.createRolePositionObject(Role.Type.Upgrader,  0, 1, 2, [1.8, 1.0]);
+    roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 4, 1.0);
     return roles;
 }
 
