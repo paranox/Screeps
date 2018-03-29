@@ -20,6 +20,8 @@ function Repairer()
     this.partWeightMap[WORK] = 1.0;
     this.partWeightMap[CARRY] = 2.0;
     this.partWeightMap[MOVE] = 2.5;
+
+    this.opts.memory.resupplyThreshold = 0.25;
 }
 
 /// Prototype

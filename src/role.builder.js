@@ -20,6 +20,8 @@ function Builder()
     this.partWeightMap[WORK] = 1.0;
     this.partWeightMap[CARRY] = 1.0;
     this.partWeightMap[MOVE] = 1.0;
+
+    this.opts.memory.resupplyThreshold = 0.25;
 }
 
 /// Prototype
@@ -61,7 +63,7 @@ function getJob(actor)
     }
 
     // Try to find a target for a Build job
-    var target = JobPrototypeBuild.getBuildTarget(actor.creep.room);
+    var target = JobPrototypeBuild.getBuildTarget(actor);
     if (target != null)
         return JobFactory.createFromType(Job.Type.Build, { "for": actor.creep.name, "target": target });
     else if (actor.doDebug)

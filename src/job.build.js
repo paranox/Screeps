@@ -58,9 +58,9 @@ Build.prototype.createSaveData = function()
 	return data;
 }
 
-Build.prototype.getBuildTarget = function(room)
+Build.prototype.getBuildTarget = function(actor)
 {
-    var allTarges = room.find(FIND_CONSTRUCTION_SITES);
+    var allTarges = actor.creep.room.find(FIND_CONSTRUCTION_SITES);
 
     var target = null;
     var chosenTarget = null;
@@ -84,14 +84,17 @@ Build.prototype.getBuildTarget = function(room)
                 priority = 1.5;
                 break;
             case STRUCTURE_WALL:
-                priority = 0.5;
+                priority = 0.75;
                 break;
             case STRUCTURE_ROAD:
-                priority = 0.25;
+                priority = 0.5;
                 break;
+            default:
+                priority = 1.0;
         }
 
-        priority += Math.max(1, target.progress) / target.progressTotal;
+        priority += target.progress / target.progressTotal;
+        priority -= actor.creep.pos.getRangeTo(target) / 20.0;
 
         //console.log("Build Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
         //	" has priority " + priority + ", " + (Math.round(100 * target.progress / target.progressTotal) / 100) +

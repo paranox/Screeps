@@ -241,55 +241,71 @@ module.exports =
         return null;
     },
 
-    addBlueprintToSpawnQueue: function(spawn, blueprint)
+    addBlueprintToSpawnQueue: function(spawn, id, priority, blueprint)
     {
         if (blueprint == null)
             return;
 
-        var spawnQueue = spawn.memory.spawnQueue;
-        if (spawnQueue == null)
-            spawnQueue = [ blueprint ];
-        else
-            spawnQueue.splice(0, 0, blueprint);
+        //if (spawn.memory.spawnQueue == null)
+        //    spawn.memory.spawnQueue = {};
 
-        if (true)//doDebug)
+        if (spawn.memory.spawnQueue.hasOwnProperty(id))
         {
-            console.log("Added a creep blueprint " + blueprint.namePrefix + " to spawn queue at Spawn('" + spawn.name +
-                "')[" + spawn.pos + "] in " + spawn.room + ", energy cost: " + blueprint.cost + "/" + blueprint.budget +
-                "\n" + JSON.stringify(blueprint));
+            console.log("Spawn " + spawn.name + "')[" + spawn.pos + "] in " + spawn.room +
+                ", already contained blueprint with id " + id + ", replacing!");
         }
 
-        spawn.memory.spawnQueue = spawnQueue;
+        spawn.memory.spawnQueue[id] = { id:id, priority:priority, blueprint:blueprint };
+
+        console.log("Added a creep blueprint " + id + " for to spawn queue at Spawn('" + spawn.name +
+            "')[" + spawn.pos + "] in " + spawn.room + ", energy cost: " + blueprint.cost + "/" + blueprint.budget +
+            "\n" + JSON.stringify(blueprint));
     },
 
     getBlueprintFromSpawnQueue: function(spawn)
     {
-        if (spawn.memory.spawnQueue == null || spawn.memory.spawnQueue.length < 1)
+        if (!spawn.memory.spawnQueue)
             return null;
 
-        return spawn.memory.spawnQueue[spawn.memory.spawnQueue.length - 1];
-        //var blueprint = spawn.memory.spawnQueue[spawn.memory.spawnQueue.length - 1];
-        //console.log("Peeked from spawn queue(" + spawn.memory.spawnQueue.length + ")\ngot blueprint: " + JSON.stringify(blueprint));
-        //return blueprint;
+        var entry;
+        var highestPriority = 0;
+        var chosenEntry = null;
+        for (var id in spawn.memory.spawnQueue)
+        {
+            entry = spawn.memory.spawnQueue[id];
+            if (entry.priority == undefined)
+            {
+                console.log("Spawn queue entry " + id + " has no priority defined!");
+                continue;
+            }
+
+            if (entry.priority > highestPriority)
+            {
+                chosenEntry = entry;
+                highestPriority = entry.priority;
+            }
+        }
+        
+        //console.log("Peeked from spawn queue, got blueprint:\n" + JSON.stringify(chosenEntry));
+        return chosenEntry;
     },
 
-    tryRemoveBlueprintFromSpawnQueue: function(spawn)
+    tryRemoveBlueprintFromSpawnQueue: function(spawn, id)
     {
-        if (spawn.memory.spawnQueue == null || spawn.memory.spawnQueue.length < 1)
+        if (!spawn.memory.spawnQueue || !spawn.memory.spawnQueue.hasOwnProperty(id))
             return false;
 
-        spawn.memory.spawnQueue.splice(spawn.memory.spawnQueue.length - 1, 1);
-        //var ret = spawn.memory.spawnQueue.splice(spawn.memory.spawnQueue.length - 1, 1);
-        //console.log("Removed from spawn queue, " + spawn.memory.spawnQueue.length + " entrie(s) remain: " + ret);
+        console.log("Removed entry " + id + " from spawn queue, " + Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
+        delete spawn.memory.spawnQueue[id];
         return true;
     },
 
-    buildCreepFromBlueprint: function (spawn, blueprint)
+    tryBuildCreepFromBlueprint: function (spawn, blueprint)
     {
         if (blueprint == undefined || blueprint == null)
         {
             console.log("Invalid blueprint provided: " + blueprint);
-            return;
+            return false;
         }
 
         //console.log("Build blueprint: " + Object.keys(blueprint));
@@ -302,15 +318,17 @@ module.exports =
             console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " +
                 spawn.room + ", energy cost: " + Utils.getBodyCost(blueprint.parts) + "/" + spawn.room.energyCapacityAvailable +
                 "\n" + JSON.stringify(blueprint));
+
+            return true;
         }
         else
         {
             if (status == ERR_NOT_ENOUGH_ENERGY)
             {
-                /*console.log("Unable to build creep, cost too high: " + Utils.getBodyCost(blueprint.parts) + "/" +
+                console.log("Unable to build creep, cost too high: " + Utils.getBodyCost(blueprint.parts) + "/" +
                 spawn.room.energyCapacityAvailable + "\nTried to build creep: '" + newName +
                 "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " + spawn.room +
-                ", energy cost: " + Utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");*/
+                ", energy cost: " + Utils.getBodyCost(blueprint.parts) + "\nbody parts: [" + blueprint.parts + "]");
             }
             else
             {
@@ -319,5 +337,7 @@ module.exports =
                 ", energy cost: " + Utils.getBodyCost(blueprint.parts) + "\n" + JSON.stringify(blueprint));
             }
         }
+
+        return false;
     }
 }

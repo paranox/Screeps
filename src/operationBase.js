@@ -203,8 +203,8 @@ OperationBase.prototype.update = function()
 		}
 	}
 
-	var need;
-	var highestNeed = 0.0;
+	var priority;
+	var highestpriority = 0.0;
 	var neededRole = null;
 
 	for (i = 0; i < roleKeys.length; i++)
@@ -225,27 +225,27 @@ OperationBase.prototype.update = function()
 		if (role.priority == undefined)
 		{
 			if (role.current < role.min)
-				need = 100;
+				priority = 100;
 		}
 		else
 		{
 			if (!Array.isArray(role.priority))
-				need = role.priority;
+				priority = role.priority;
 			else if (role.current < role.priority.length)
-				need = role.priority[role.current];
+				priority = role.priority[role.current];
 			else
-				need = role.priority[role.priority.length - 1];
+				priority = role.priority[role.priority.length - 1];
 		}
 
-		if (need > highestNeed)
+		if (priority > highestpriority)
 		{
 			if (this.doDebug)
 			{
 				console.log("Operation " + this.opName + "[" + this.id + "]: Role " + Role.getNameOf(role.roleType) +
-					" is needed with priority " + need);
+					" is priorityed with priority " + priority);
 			}
 
-			highestNeed = need;
+			highestpriority = priority;
 			neededRole = role;
 		}
 	}
@@ -296,27 +296,35 @@ OperationBase.prototype.update = function()
 	{
 		if (this.home.spawn.memory.spawning != null)
 		{
-			if (this.home.spawn.memory.spawning.opts.memory.orderedByOp == this.id)
+			var spawningBlueprint = this.home.spawn.memory.spawning;
+			if (spawningBlueprint.opts != null && spawningBlueprint.opts.memory != null && spawningBlueprint.opts.memory.orderedByOp == this.id)
 			{
-				this.home.hasCreepInSpawnQueue = true;
 				//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn is spawning blueprint " +
 				//	JSON.stringify(this.home.spawn.memory.spawning));
+
+				this.home.hasCreepInSpawnQueue = true;
 			}
 		}
 
-		if (Array.isArray(this.home.spawn.memory.spawnQueue))
+		if (!this.home.hasCreepInSpawnQueue)
 		{
-			var blueprint;
-			for (var i = 0; i < this.home.spawn.memory.spawnQueue.length; i++)
+			var entry, priority;
+			for (const id in this.home.spawn.memory.spawnQueue)
 			{
-				blueprint = this.home.spawn.memory.spawnQueue[i];
-				if (blueprint.opts.memory.orderedByOp == this.id)
+				entry = this.home.spawn.memory.spawnQueue[id];
+				if (entry.blueprint != null && entry.blueprint.opts != null && entry.blueprint.opts.memory != null)
 				{
-					//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn has blueprint in spawn queue: " +
-					//	JSON.stringify(blueprint));
-					this.home.hasCreepInSpawnQueue = true;
-					break;
+					if (entry.blueprint.opts.memory.orderedByOp == this.id)
+					{
+						//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn has blueprint in spawn queue: " +
+						//	JSON.stringify(blueprint));
+
+						this.home.hasCreepInSpawnQueue = true;
+						break;
+					}
 				}
+				else
+					console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn has an invalid blueprint in spawn queue with id " + id);
 			}
 		}
 	}
@@ -333,7 +341,8 @@ OperationBase.prototype.update = function()
 		else
 			nextBlueprint.opts.memory = { orderedByOp: this.id };
 
-		CreepFactory.addBlueprintToSpawnQueue(this.home.spawn, nextBlueprint);
+		var id = neededRole.roleName + "_" + this.id + "_" + Game.time;
+		CreepFactory.addBlueprintToSpawnQueue(this.home.spawn, id, highestpriority, nextBlueprint);
 	}
 
 	this.onUpdate();

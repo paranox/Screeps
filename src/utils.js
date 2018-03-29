@@ -49,6 +49,9 @@
 
     getBodyCost: function(bodyParts)
     {
+        if (!bodyParts)
+            return 0;
+
         let cost = 0;
         bodyParts.forEach((bodyPart) =>
         {
