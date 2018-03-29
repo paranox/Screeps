@@ -48,12 +48,19 @@ function getJob(actor)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
         if (target != null)
-            return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+        {
+            if (actor.creep.memory.resupplyThreshold == undefined ||
+                (target.energy != undefined && actor.creep.memory.resupplyThreshold < target.energy / target.energyCapacity ||
+                 target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold < target.store[RESOURCE_ENERGY] / target.storeCapacity))
+            {
+                return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+            }
+        }
 
         return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }
 
-    // Try to find a target for a Supply job
+    // Try to find a target for a Build job
     var target = JobPrototypeBuild.getBuildTarget(actor.creep.room);
     if (target != null)
         return JobFactory.createFromType(Job.Type.Build, { "for": actor.creep.name, "target": target });

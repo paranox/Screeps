@@ -84,14 +84,14 @@ Haul.prototype.getJob = function(actor)
 	{
 		if (this.source == null)
 		{
-			console.log("Operation " + this.opName + ": No source specified!");
+			console.log("Operation " + this.opName + "[" + this.id + "]: No source specified!");
 			return null;
 		}
 
 		//if (this.target.energy == 0)
 		//{
 		//	if (this.doDebug)
-		//		console.log("Operation " + this.opName + ": Target " + this.target + " at " + this.target.pos + " has no energy left!");
+		//		console.log("Operation " + this.opName + "[" + this.id + "]: Target " + this.target + " at " + this.target.pos + " has no energy left!");
 		//
 		//	return null;
 		//}
@@ -100,13 +100,13 @@ Haul.prototype.getJob = function(actor)
 		return JobFactory.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:this.source } );
 	}
 
-	if (this.targets == null)
+	if (this.targets == null || Object.keys(this.targets).length == 0)
 	{
-		console.log("Operation " + this.opName + ": No targets specified!");
+		console.log("Operation " + this.opName + "[" + this.id + "]: No targets specified!");
 		return null;
 	}
 
-	//console.log("Operation " + this.opName + ": Giving Supply job to " + actor.creep.name + ", target: " + this.target);
+	//console.log("Operation " + this.opName + "[" + this.id + "]: Giving Supply job to " + actor.creep.name + ", target: " + this.target);
 	return JobFactory.createFromType(Job.Type.Supply, { for:actor.creep.name, targets:this.targets } );
 }
 

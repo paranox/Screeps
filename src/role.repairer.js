@@ -92,7 +92,16 @@ function getJob(actor)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
         if (target != null)
-            return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+        {
+            if (actor.creep.memory.resupplyThreshold != undefined &&
+                ((target.energy != undefined && actor.creep.memory.resupplyThreshold > target.energy / target.energyCapacity) ||
+                 (target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold > target.store[RESOURCE_ENERGY] / target.storeCapacity)))
+            {
+                console.log(actor.creep.name + ": Target energy level too low!");
+            }
+            else
+                return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+        }
 
         return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }

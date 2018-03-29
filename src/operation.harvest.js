@@ -65,14 +65,14 @@ Harvest.prototype.getJob = function(actor)
 
 	if (this.target == null)
 	{
-		console.log("Operation " + this.opName + ": No target specified!");
+		console.log("Operation " + this.opName + "[" + this.id + "]: No target specified!");
 		return null;
 	}
 
 	if (this.target.energy == 0)
 	{
 		if (this.doDebug)
-			console.log("Operation " + this.opName + ": Target " + this.target + " at " + this.target.pos + " has no energy left!");
+			console.log("Operation " + this.opName + "[" + this.id + "]: Target " + this.target + " at " + this.target.pos + " has no energy left!");
 
 		return null;
 	}

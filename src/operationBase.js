@@ -90,6 +90,7 @@ OperationBase.prototype.readSaveData = function(context, data)
 		context.roles = context.createDefaultRoles();
 	}
 
+	/*context.actors = [];
 	if (data.actors != null)
 	{
 		var actor, dataActor;
@@ -118,6 +119,8 @@ OperationBase.prototype.readSaveData = function(context, data)
 		}
 	}
 
+	console.log("Operation " + context.opName + "[" + context.id + "]: " + context.actors.length + " actors enlisted!");*/
+
 	return true;
 }
 
@@ -132,13 +135,18 @@ OperationBase.prototype.createSaveData = function(context)
 	memoryObject.opName = context.opName;
 	memoryObject.opType = context.opType;
 	
-	memoryObject.home =
+	if (context.home != null)
 	{
-		roomName:context.home.room.name,
-		spawnID:context.home.spawn.id,
-		hasCreepInSpawnQueue:context.home.hasCreepInSpawnQueue
-	};
-	
+		memoryObject.home =
+		{
+			roomName:(context.home.room != undefined ? context.home.room.name : "undefined"),
+			spawnID:(context.home.spawn != null ? context.home.spawn.id : "undefined"),
+			hasCreepInSpawnQueue:context.home.hasCreepInSpawnQueue
+		};
+	}
+	else
+		console.log("Operation " + context.opName + "[" + context.id + "]: No home defined in context!");
+
 	var roles = {};
 	var roleKeys = context.roles != null ? Object.keys(context.roles) : [];
 	var roleData;
@@ -172,7 +180,7 @@ OperationBase.prototype.update = function()
 {
 	if (this.home == null)
 	{
-		console.log("Operation " + this.opName + "[" + this.id + "]:has no home!");
+		console.log("Operation " + this.opName + "[" + this.id + "]: Has no home!");
 		return;
 	}
 
@@ -231,6 +239,12 @@ OperationBase.prototype.update = function()
 
 		if (need > highestNeed)
 		{
+			if (this.doDebug)
+			{
+				console.log("Operation " + this.opName + "[" + this.id + "]: Role " + Role.getNameOf(role.roleType) +
+					" is needed with priority " + need);
+			}
+
 			highestNeed = need;
 			neededRole = role;
 		}
@@ -438,10 +452,10 @@ OperationBase.prototype.modifyRoleActorCount = function(roleType, amount)
 OperationBase.prototype.createDefaultRoles = function()
 {
 	var roles = {};
-    roles[Role.Type.Builder]    = Operation.createRolePositionObject(Role.Type.Builder,   0, 1, 4, [3.5, 2.8, 1.0]);
-    roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 6, [5.0, 4.5, 2.5]);
-    roles[Role.Type.Repairer]   = Operation.createRolePositionObject(Role.Type.Repairer,  0, 1, 4, [1.7, 1.6, 1.5]);
-    roles[Role.Type.Supplier]   = Operation.createRolePositionObject(Role.Type.Supplier,  0, 2, 3, [4.0, 3.0, 1.5]);
+    roles[Role.Type.Builder]    = Operation.createRolePositionObject(Role.Type.Builder,   0, 1, 4, [4.0, 3.5, 3.2, 1.0]);
+    roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 6, [5.0, 4.5, 3.3, 2.5, 1.0]);
+    roles[Role.Type.Repairer]   = Operation.createRolePositionObject(Role.Type.Repairer,  0, 1, 4, [1.7, 1.6, 1.0]);
+    roles[Role.Type.Supplier]   = Operation.createRolePositionObject(Role.Type.Supplier,  0, 2, 3, [3.0, 2.8, 1.0]);
     roles[Role.Type.Upgrader]   = Operation.createRolePositionObject(Role.Type.Upgrader,  0, 1, 2, [1.8, 1.0]);
     return roles;
 }
