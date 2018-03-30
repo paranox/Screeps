@@ -151,14 +151,7 @@ module.exports =
 	    for (var id in Game.empire.actors)
 	    {
 	        actor = Game.empire.actors[id];
-	        if (actor.creep.memory.orderedByOp != undefined)
-	        {
-	            op = Game.empire.operations[actor.creep.memory.orderedByOp];
-	            actor.setOperation(op);
-	            op.addActor(actor);
-	            delete actor.creep.memory.orderedByOp;
-	        }
-	        else if (actor.creep.memory.operationID != undefined)
+	        if (actor.creep.memory.operationID != undefined)
 	        {
 	            op = Game.empire.operations[actor.creep.memory.operationID];
 	            actor.setOperation(op);
@@ -179,6 +172,8 @@ module.exports =
 	    for (const part in Game.empire.bodies.countPerType)
 	    	Memory.empire.actors.bodyParts[part] = Game.empire.bodies.countPerType[part];
 
+	    for (const type in Memory.empire.roles)
+	    	Memory.empire.roles[type] = 0;
 	    for (const role in Game.empire.roles.countPerType)
 	    	Memory.empire.roles[Role.getNameOf(role)] = Game.empire.roles.countPerType[role];
 

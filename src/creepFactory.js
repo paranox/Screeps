@@ -246,19 +246,19 @@ module.exports =
         if (blueprint == null)
             return;
 
-        //if (spawn.memory.spawnQueue == null)
-        //    spawn.memory.spawnQueue = {};
+        if (spawn.memory.spawnQueue == null)
+            spawn.memory.spawnQueue = {};
 
         if (spawn.memory.spawnQueue.hasOwnProperty(id))
         {
-            console.log("Spawn " + spawn.name + "')[" + spawn.pos + "] in " + spawn.room +
+            console.log("Spawn('" + spawn.name + "') " + spawn.pos +
                 ", already contained blueprint with id " + id + ", replacing!");
         }
 
-        spawn.memory.spawnQueue[id] = { id:id, priority:priority, blueprint:blueprint };
+        spawn.memory.spawnQueue[id] = { id:id, time:Game.time, priority:priority, blueprint:blueprint };
 
-        console.log("Added a creep blueprint " + id + " for to spawn queue at Spawn('" + spawn.name +
-            "')[" + spawn.pos + "] in " + spawn.room + ", energy cost: " + blueprint.cost + "/" + blueprint.budget +
+        console.log("Added a creep blueprint " + id + " at priority " + priority + " to queue at Spawn('" + spawn.name +
+            "')" + spawn.pos + ", energy cost: " + blueprint.cost + "/" + blueprint.budget +
             "\n" + JSON.stringify(blueprint));
     },
 
@@ -295,8 +295,9 @@ module.exports =
         if (!spawn.memory.spawnQueue || !spawn.memory.spawnQueue.hasOwnProperty(id))
             return false;
 
-        console.log("Removed entry " + id + " from spawn queue, " + Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
         delete spawn.memory.spawnQueue[id];
+        console.log("Removed entry " + id + " from spawn queue, " + Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
+        
         return true;
     },
 

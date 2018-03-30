@@ -92,7 +92,7 @@ function getJob(actor)
         //else
         //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
     }
-    
+
     var room = actor.creep.room;
 
     if (actor.creep.carry.energy > 0)
@@ -128,7 +128,7 @@ function getJob(actor)
             console.log(actor.creep.name + ": Nothing to supply energy with!");
     }
 
-    if (actor.creep.carry.energy < actor.creep.carryCapacity)// == 0)
+    if (actor.creep.carry.energy < actor.creep.carryCapacity)
     {
         // Try to find a target for Resupply job, but don't allow taking from storage only to supply back in storage
         var typeFilter = {};
