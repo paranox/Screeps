@@ -146,6 +146,7 @@ Home.prototype.onUpdate = function()
             if (closestDamagedStructure != null)
                 tower.repair(closestDamagedStructure);*/
 
+            tower = towers[i];
             closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
 
             if (closestHostile != null)
