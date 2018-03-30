@@ -315,6 +315,20 @@ OperationBase.prototype.update = function()
 				}
 			}
 		}
+		else
+		{
+			var id;
+			var orders = Object.keys(this.home.spawnOrdersPlaced)
+			for (var i = 0; i < orders.length; i++)
+			{
+				id = orders[i];
+				if (!this.home.spawn.memory.spawnQueue[id])
+				{
+					console.log("Operation " + this.opName + "[" + this.id + "]: Spawn order " + id + " wasn't found in queue!");
+					delete this.home.spawnOrdersPlaced[id];
+				}
+			}
+		}
 	}
 
 	this.onUpdate();
