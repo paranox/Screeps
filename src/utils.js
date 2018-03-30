@@ -27,16 +27,21 @@
 
     arrayToString: function(array, depth, maxDepth)
     {
+        if (array == undefined)
+            return "<" + depth + "/" + maxDepth + ">undefined";
+        if (array == null)
+            return "<" + depth + "/" + maxDepth + ">null";
+        
         if (depth == undefined) depth = 0;
         if (maxDepth == undefined) maxDepth = 3;
 
         return "<" + depth + "/" + maxDepth + ">[" + array.map(index => {
-            if (Array.isArray(obj[key]) && depth < maxDepth)
+            if (Array.isArray(array[index]) && depth < maxDepth)
                 return this.arrayToString(array[index], depth + 1, maxDepth);
-            if (typeof obj[key] == "object" && depth < maxDepth)
+            if (typeof array[index] == "object" && depth < maxDepth)
                 return this.objectToString(array[index], depth + 1, maxDepth);
-            if (typeof obj[key] == "function")
-                return " " + key + ": function()";
+            if (typeof array[index] == "function")
+                return " " + index + ": function()";
             return " " + array[index];
         }) + " ]";
     },
