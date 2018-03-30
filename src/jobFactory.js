@@ -7,6 +7,7 @@ var JobResupply = require('job.resupply');
 var JobSupply = require('job.supply');
 var JobStore = require('job.store');
 var JobUpgrade = require('job.upgrade');
+var JobWait = require('job.wait');
 
 function createJobFromData(data)
 {
@@ -48,6 +49,9 @@ function createJobFromType(jobType, opts)
 			break;
 		case Job.Type.Upgrade:
 			job = Object.create(JobUpgrade);
+			break;
+		case Job.Type.Wait:
+			job = Object.create(JobWait);
 			break;
 		default:
 	    	console.log("Failed to create job, unhandled job type: " + Job.getNameOf(jobType));

@@ -84,7 +84,7 @@ Home.prototype.onUpdate = function()
     }
     else if (spawn.memory.spawning != null)
 	{
-		console.log("Spawn " + spawn.name + " is done spawning: " + Utils.objectToString(spawn.spawning, 0, 2));
+		console.log("Spawn " + spawn.name + " is done spawning: " + Utils.objectToString(spawn.memory.spawning, 0, 2));
         spawn.memory.spawning = null;
 	}
 
