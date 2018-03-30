@@ -314,7 +314,7 @@ OperationBase.prototype.update = function()
 				}
 			}
 		}
-		else
+		else if (this.home.spawn.memory.spawnQueue != null)
 		{
 			var id;
 			var orders = Object.keys(this.home.spawnOrdersPlaced)
