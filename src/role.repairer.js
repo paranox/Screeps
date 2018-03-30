@@ -1,6 +1,5 @@
 var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
-var JobFactory = require('jobFactory');
 var JobPrototypeRepair = require('job.repair');
 var JobPrototypeResupply = require('job.resupply');
 var Job = require('jobTypes');
@@ -66,9 +65,9 @@ Repairer.prototype.tryDoJob = function(actor)
 
                     // No energy, go resupply
                     if (actor.creep.carry.energy == 0)
-                        job = JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name });
                     else
-                        job = JobFactory.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
 
                     if (job != null)
                         actor.addJob(job);
@@ -102,23 +101,23 @@ function getJob(actor)
                 console.log(actor.creep.name + ": Target energy level too low!");
             }
             else
-                return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+                return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
         }
 
-        return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }
 
     // Try to find a target for a Repair job
     var target = JobPrototypeRepair.getRepairTarget(actor.creep.room, actor);
     if (target != null)
-        return JobFactory.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
+        return Game.empire.factories.job.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
     else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to repair!");
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
     if (controller != null)
-        return JobFactory.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 

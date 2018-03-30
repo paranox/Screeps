@@ -11,11 +11,17 @@ function Repair(opts)
     this.base = JobBase;
     this.base.constructor(this);
 
-    if (opts != undefined && opts != null)
-    {
-        if (opts.target != null)
-            this.target = opts.target;
-    }
+    this.target = null;
+
+    if (!opts)
+        return;
+    
+    if (opts.target != null)
+        this.target = opts.target;
+    if (opts.pos != undefined)
+        this.targetPos = opts.pos;
+    if (opts.structureType != undefined)
+        this.targetStructureType = opts.structureType;
 }
 
 Repair.prototype = Object.create(JobBase);
@@ -26,34 +32,73 @@ Repair.prototype.readSaveData = function(data)
     if (!this.base.readSaveData(this, data))
         return false;
 
-    if (data.target != undefined && data.target != null)
+    if (data.target != undefined)
+        this.target = Game.getObjectById(data.target);
+    else
+        this.target = null;
+
+    if (this.target != null)
     {
-        let target = Game.getObjectById(data.target);
-
-        if (target == null)
-        {
-            console.log("Target id[" + data.target + "] was not found!");
-            return false;
-        }
-
-        this.target = target;
+        this.targetStructureType = this.target.structureType;
+        this.targetPos = this.target.pos;
     }
     else
     {
-        console.log("Target information was not included in save data: " + JSON.stringify(data));
-        return false;
+        this.targetStructureType = data.targetStructureType;
+
+        if (data.pos != undefined)
+        {
+            this.targetPos = new RoomPosition(data.pos.x, data.pos.y, data.pos.roomName);
+            var targets = this.targetPos.lookFor(LOOK_STRUCTURES);
+            for (var i = 0; i < targets.length; i++)
+            {
+                if (targets[i].structureType == undefined)
+                    continue;
+
+                if (this.targetStructureType == undefined)
+                {
+                    this.target = targets[i];
+
+                    if (actor.doDebug)
+                        console.log("Repair target determined by position " + this.targetPos + ": " + this.target);
+
+                    break;
+                }
+                else if (targets[i].structureType == this.targetStructureType)
+                {
+                    this.target = targets[i];
+
+                    if (actor.doDebug)
+                    {
+                        console.log("Repair target determined by position " + this.targetPos +
+                            " and structure type " + this.targetStructureType + ": " + this.target);
+                    }
+
+                    break;
+                }
+            }
+        }
     }
 
     //console.log("Target found based on save data: " + data.target);
     return true;
-};
+} //5abe8325aab5c9419b849bc8
 
 Repair.prototype.createSaveData = function()
 {
     var data = this.base.createSaveData(this);
 
-    if (this.target != undefined && this.target != null)
-        data["target"] = this.target.id;
+    if (this.target != null)
+    {
+        data.target = this.target.id;
+        data.pos = this.target.pos;
+        data.targetStructureType = this.target.structureType;
+    }
+    else
+    {
+        data.pos = this.targetPos;
+        data.targetStructureType = this.targetStructureType;
+    }
 
     return data;
 }
@@ -160,7 +205,7 @@ Repair.prototype.onUpdate = function(actor)
     if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    if (this.target == undefined || this.target == null)
+    if (!this.target)
     {
         if (actor.doDebug)
             console.log(actor.creep.name + ": Nothing to repair!");
@@ -183,7 +228,7 @@ Repair.prototype.onUpdate = function(actor)
         if (actor.doDebug)
         {    
             console.log(actor.creep.name + ": Target " + this.target.name + " at " +
-                this.target.pos.x + "," + this.target.pos.y + " is fully repaired!");
+                this.target.pos + " is fully repaired!");
         }
 
         this.finish(actor, true);
@@ -195,12 +240,12 @@ Repair.prototype.onUpdate = function(actor)
     {
         case OK:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Repaired target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Repaired target at " + this.target.pos);
 
             break;
         case ERR_NOT_IN_RANGE:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Moving to repair target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Moving to repair target at " + this.target.pos);
 
             actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
@@ -211,7 +256,7 @@ Repair.prototype.onUpdate = function(actor)
             break;
         default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to repair target at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to repair target at " + this.target.pos);
 
             break;
     }

@@ -1,7 +1,6 @@
 var Operation = require('operationTypes');
 var OperationBase = require('operationBase');
 var Role = require('roleTypes');
-var JobFactory = require('jobFactory');
 var JobWait = require('job.wait');
 var Job = require('jobTypes');
 
@@ -79,7 +78,7 @@ Harvest.prototype.getJob = function(actor)
 		if (actor.creep.carry.energy > 0)
 			return null;
 
-		return JobFactory.createFromType(Job.Type.Wait,
+		return Game.empire.factories.job.createFromType(Job.Type.Wait,
 		{
 			for:actor.creep.name,
 			target:this.target,
@@ -89,7 +88,7 @@ Harvest.prototype.getJob = function(actor)
 		});
 	}
 
-	return JobFactory.createFromType(Job.Type.Harvest, { for:actor.creep.name, target:this.target } );
+	return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name, target:this.target } );
 }
 
 Harvest.prototype.createDefaultRoles = function()

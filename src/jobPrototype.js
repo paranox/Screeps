@@ -19,6 +19,13 @@ function Job(context)
 		context.run = this.run;
 	if (context.end == undefined)
 		context.end = this.end;
+
+	if (context.onStart == undefined)
+		context.onStart = this.onStart;
+	if (context.onEnd == undefined)
+		context.onEnd = this.onEnd;
+	if (context.onFinish == undefined)
+		context.onFinish = this.onFinish;
 }
 
 /// Memory functions, should always be called via context's override

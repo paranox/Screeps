@@ -1,5 +1,4 @@
 ﻿var Utils = require('utils');
-var RoleFactory = require('roleFactory');
 
 /// Internal functions
 
@@ -215,7 +214,7 @@ module.exports =
 {
     getPrototypeByRole: function (role)
     {
-        return RoleFactory.getPrototype(role);
+        return Game.empire.factories.role.getPrototype(role);
     },
 
     buildPartList: function (minimumParts, partWeights, energyCapacityAvailable, maxParts)
@@ -230,7 +229,7 @@ module.exports =
 
     buildBlueprintByRole: function (role, energyCapacityAvailable, maxParts)
     {
-        var prototype = RoleFactory.getPrototype(role);
+        var prototype = Game.empire.factories.role.getPrototype(role);
         if (prototype != undefined && prototype != null)
         {
             //console.log("Prototype[" + role + "]: " + prototype.roleName + "(" + (typeof prototype) + ")");
@@ -297,7 +296,7 @@ module.exports =
 
         delete spawn.memory.spawnQueue[id];
         console.log("Removed entry " + id + " from spawn queue, " + Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
-        
+
         return true;
     },
 

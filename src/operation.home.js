@@ -2,9 +2,7 @@ var Utils = require('utils');
 var Operation = require('operationTypes');
 var OperationBase = require('operationBase');
 var Role = require('roleTypes');
-var JobFactory = require('jobFactory');
 var Job = require('jobTypes');
-var CreepFactory = require('creepFactory');
 
 function Home(opts)
 {
@@ -94,7 +92,7 @@ Home.prototype.onUpdate = function()
     var chosenQueueID = null;
     var chosenBlueprint = null;
 
-    var spawnQueueEntry = CreepFactory.getBlueprintFromSpawnQueue(spawn);
+    var spawnQueueEntry = Game.empire.factories.creep.getBlueprintFromSpawnQueue(spawn);
     if (spawnQueueEntry != null)
     {
         if (spawnQueueEntry.blueprint.cost > energyAvailable)
@@ -109,7 +107,9 @@ Home.prototype.onUpdate = function()
                 console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
             		JSON.stringify(spawnQueueEntry));
 
-                chosenBlueprint = CreepFactory.buildBlueprintByRole(spawnQueueEntry.opts.memory.role, energyAvailable, 50);
+                chosenBlueprint = Game.empire.factories.creep.buildBlueprintByRole(
+                    spawnQueueEntry.opts.memory.role, energyAvailable, 50);
+                
                 console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
             }
             else
@@ -121,11 +121,11 @@ Home.prototype.onUpdate = function()
 
     if (chosenBlueprint != null)
     {
-        if (CreepFactory.tryBuildCreepFromBlueprint(spawn, chosenBlueprint))
+        if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, chosenBlueprint))
         {
             spawn.memory.spawning = chosenBlueprint;
 
-            if (chosenQueueID != null && !CreepFactory.tryRemoveBlueprintFromSpawnQueue(spawn, chosenQueueID))
+            if (chosenQueueID != null && !Game.empire.factories.creep.tryRemoveBlueprintFromSpawnQueue(spawn, chosenQueueID))
                 console.log("Unable to remove entry " + chosenQueueID + " from spawn queue!");
         }
     }
@@ -206,7 +206,7 @@ Home.prototype.getJob = function(actor)
 	//	return null;
 	//}
 	//
-	//return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name, "target": this.target } );
+	//return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name, "target": this.target } );
 	return null;
 }
 

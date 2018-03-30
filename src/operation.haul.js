@@ -1,7 +1,6 @@
 var Operation = require('operationTypes');
 var OperationBase = require('operationBase');
 var Role = require('roleTypes');
-var JobFactory = require('jobFactory');
 var Job = require('jobTypes');
 
 function Haul(opts)
@@ -97,7 +96,7 @@ Haul.prototype.getJob = function(actor)
 		//}
 
 		//console.log("Operation " + this.opName + ": Giving resupply job to " + actor.creep.name + ", target: " + this.source);
-		return JobFactory.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:this.source } );
+		return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:this.source } );
 	}
 
 	if (this.targets == null || Object.keys(this.targets).length == 0)
@@ -107,7 +106,7 @@ Haul.prototype.getJob = function(actor)
 	}
 
 	//console.log("Operation " + this.opName + "[" + this.id + "]: Giving Supply job to " + actor.creep.name + ", target: " + this.target);
-	return JobFactory.createFromType(Job.Type.Supply, { for:actor.creep.name, targets:this.targets } );
+	return Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, targets:this.targets } );
 }
 
 Haul.prototype.createDefaultRoles = function()

@@ -1,7 +1,6 @@
 var Utils = require('utils');
 var Operation = require('operationTypes');
 var Role = require('roleTypes');
-var CreepFactory = require('creepFactory');
 
 function OperationBase(context, opts)
 {
@@ -283,7 +282,7 @@ OperationBase.prototype.update = function()
 			var orderID = role.roleName + "_" + this.id;
 			if (this.home.spawnOrdersPlaced[orderID] == undefined)
 			{
-				var nextBlueprint = CreepFactory.buildBlueprintByRole(Role.Type[role.roleName],
+				var nextBlueprint = Game.empire.factories.creep.buildBlueprintByRole(Role.Type[role.roleName],
 					this.home.room.energyCapacityAvailable, 50);
 
 				if (nextBlueprint.opts.memory != null)
@@ -295,7 +294,7 @@ OperationBase.prototype.update = function()
 					nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
 
 				this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
-				CreepFactory.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint);
+				Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint);
 			}
 		}
 	}

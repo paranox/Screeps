@@ -3,14 +3,14 @@ var OperationFactory = require('operationFactory');
 var Operation = require('operationTypes');
 var RoleFactory = require('roleFactory');
 var Role = require('roleTypes');
+var JobFactory = require('jobFactory');
+var CreepFactory = require('creepFactory');
 var Actor = require('actor');
 
 module.exports =
 {
 	init: function()
 	{
-		/// Initialize global empire object ///
-
 		Game.empire =
 	    {
 	        actors: {},
@@ -25,6 +25,13 @@ module.exports =
 	        getNextOperationID: function() { return "Op" + this.nextOpID; },
 	        consumeNewOperationID: function() { var id = this.getNextOperationID(); this.nextOpID++; return id; }
 	    }
+
+		Game.empire.factories = { creep:CreepFactory, operation:OperationFactory, role:RoleFactory, job:JobFactory };
+	},
+
+	readData: function()
+	{
+		/// Initialize global empire object data ///
 
 	    for (const id in BODYPART_COST)
 	    	Game.empire.bodies.countPerType[id] = 0;

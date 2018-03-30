@@ -1,8 +1,6 @@
 var Utils = require('utils');
 var Empire = require('empire');
 var Role = require('roleTypes');
-var RoleFactory = require('roleFactory');
-var CreepFactory = require('creepFactory');
 
 module.exports.loop = function ()
 {
@@ -18,9 +16,11 @@ module.exports.loop = function ()
         }
     }
 
-    RoleFactory.initPrototypes();
-
     Empire.init();
+
+    Game.empire.factories.role.initPrototypes();
+
+    Empire.readData();
 
     Empire.onTickStart();
 
