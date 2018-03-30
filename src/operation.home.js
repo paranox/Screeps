@@ -109,7 +109,7 @@ Home.prototype.onUpdate = function()
 
                 chosenBlueprint = Game.empire.factories.creep.buildBlueprintByRole(
                     spawnQueueEntry.opts.memory.role, energyAvailable, 50);
-                
+
                 console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
             }
             else
@@ -125,7 +125,8 @@ Home.prototype.onUpdate = function()
         {
             spawn.memory.spawning = chosenBlueprint;
 
-            if (chosenQueueID != null && !Game.empire.factories.creep.tryRemoveBlueprintFromSpawnQueue(spawn, chosenQueueID))
+            let result = Game.empire.factories.creep.tryRemoveBlueprintFromSpawnQueue(spawn, chosenQueueID);
+            if (chosenQueueID != null && !result)
                 console.log("Unable to remove entry " + chosenQueueID + " from spawn queue!");
         }
     }

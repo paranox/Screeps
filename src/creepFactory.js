@@ -295,7 +295,9 @@ module.exports =
             return false;
 
         delete spawn.memory.spawnQueue[id];
-        console.log("Removed entry " + id + " from spawn queue, " + Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
+        
+        //console.log("Removed entry " + id + " from spawn queue, " +
+        //  Object.keys(spawn.memory.spawnQueue).length + " entrie(s) remain");
 
         return true;
     },

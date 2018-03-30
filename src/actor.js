@@ -24,7 +24,9 @@ function Actor(creep)
 
     if (creep.memory.home == undefined)
     {
-        console.log("Actor " + creep.name + ": Home room set to " + creep.room);
+        if (this.doDebug)
+            console.log("Actor " + creep.name + ": Home room set to " + creep.room);
+        
         creep.memory.home = creep.room.name;
     }
 

@@ -137,7 +137,11 @@ Build.prototype.getBuildTarget = function(actor)
     if (chosenTarget == null && allTarges.length > 0)
     {
     	chosenTarget = allTarges[0];
-    	console.log("Unable to prioritize Build targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+    	if (actor.doDebug)
+        {
+            console.log("Unable to prioritize Build targets. Target " +
+                chosenTarget.structureType + " at " + target.pos + " was picked!");
+        }
     }
     //else
     //    console.log("Target " + chosenTarget.structureType + " at " + target.pos + " was chosen!");

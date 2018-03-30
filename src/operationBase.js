@@ -366,7 +366,9 @@ OperationBase.prototype.addActor = function(actor)
 	{
 		if (!this.home.spawnOrdersPlaced)
 		{
-			console.log("initializing spawn orders");
+			if (true)//this.doDebug)
+				console.log("Operation " + this.opName + "[" + this.id + "]: Initializing spawn orders (addActor)");
+
 			this.home.spawnOrdersPlaced = {};
 		}
 
@@ -376,9 +378,10 @@ OperationBase.prototype.addActor = function(actor)
 			console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
 				" was marked as ordered for this operation but it was unexpected.");
 		}
-		else if (true)//this.doDebug)
+		else
 		{
-			console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name);
+			if (true)//this.doDebug)
+				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name);
 
 			delete this.home.spawnOrdersPlaced[spawnOrderID];
 		}
