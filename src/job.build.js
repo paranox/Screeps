@@ -26,7 +26,6 @@ function Build(opts)
 	if (opts.target != null)
 	{
 		this.target = opts.target;
-		this.targetID = opts.target.id;
 		this.targetPos = opts.target.pos;
         this.targetStructureType = opts.target.structureType;
 	}

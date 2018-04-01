@@ -68,11 +68,8 @@ Repair.prototype.readSaveData = function(data)
                 {
                     this.target = targets[i];
 
-                    if (actor.doDebug)
-                    {
-                        console.log("Repair target determined by position " + this.targetPos +
-                            " and structure type " + this.targetStructureType + ": " + this.target);
-                    }
+                    //console.log("Repair target determined by position " + this.targetPos +
+                    //    " and structure type " + this.targetStructureType + ": " + this.target);
 
                     break;
                 }
