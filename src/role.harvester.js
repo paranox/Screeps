@@ -1,4 +1,5 @@
-﻿var Role = require('roleTypes');
+﻿var BodyPartMap = require('creepBodyPartMap');
+var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
 var JobPrototypeSupply = require('job.supply');
 var JobPrototypeStore = require('job.store');
@@ -14,9 +15,9 @@ function Harvester()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Harvester);
 
-    this.partWeightMap[WORK] = 1.5;
-    this.partWeightMap[CARRY] = 1.0;
-    this.partWeightMap[MOVE] = 1.0;
+    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:1.5 };
+    this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:1, opts: { part:WORK } };
 }
 
 /// Prototype

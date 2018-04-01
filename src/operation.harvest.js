@@ -42,7 +42,7 @@ Harvest.prototype.createSaveData = function()
 	var data = this.base.createSaveData(this);
 	
 	if (this.target != null)
-		data["target"] = this.target.id;
+		data.target = this.target.id;
 
 	return data;
 }

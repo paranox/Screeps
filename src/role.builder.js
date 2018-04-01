@@ -1,3 +1,4 @@
+var BodyPartMap = require('creepBodyPartMap');
 var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
 var JobPrototypeBuild = require('job.build');
@@ -16,11 +17,11 @@ function Builder()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Builder);
 
-    this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 1.0;
-    this.partWeightMap[MOVE] = 1.0;
+    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:2 };
+    this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:3 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:1 };
 
-    this.opts.memory.resupplyThreshold = 0.25;
+    this.opts.memory.resupplyThreshold = 0.5;
 }
 
 /// Prototype

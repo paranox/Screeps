@@ -15,9 +15,9 @@ function Upgrader()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Upgrader);
 
-    this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 2.5;
+    this.partMap[WORK] = 1.0;
+    this.partMap[CARRY] = 2.0;
+    this.partMap[MOVE] = 2.5;
 
     this.opts.memory.resupplyThreshold = 0.25;
 }

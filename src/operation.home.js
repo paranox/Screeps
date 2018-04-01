@@ -89,45 +89,54 @@ Home.prototype.onUpdate = function()
     const energyAvailable = spawn.room.energyAvailable;
     const energyCapacity = spawn.room.energyCapacityAvailable;
 
-    var chosenQueueID = null;
-    var chosenBlueprint = null;
-
-    var spawnQueueEntry = Game.empire.factories.creep.getBlueprintFromSpawnQueue(spawn);
+    var spawnQueueEntry = Game.empire.factories.creep.getEntryFromSpawnQueue(spawn);
     if (spawnQueueEntry != null)
     {
-        if (spawnQueueEntry.blueprint.cost > energyAvailable)
+        //var chosenQueueID = null;
+        //var chosenBlueprint = null;
+
+        if (spawnQueueEntry.cost > energyAvailable)
         {
-            //console.log("Blueprint cost " + spawnQueueEntry.blueprint.cost + " is higher than available energy " +
-            //    energyAvailable + ", waiting...");
+            console.log("Blueprint cost " + spawnQueueEntry.cost + " is higher than available energy " +
+               energyAvailable + ", waiting...");
+            
+            spawnQueueEntry = null;
+        }
+        if (spawnQueueEntry.minCost > energyAvailable)
+        {
+            console.log("Blueprint minimum cost " + spawnQueueEntry.minCost + " is higher than available energy " +
+               energyAvailable + ", waiting...");
+
+            spawnQueueEntry = null;
         }
         else
         {
-            if (spawnQueueEntry.allowUpdate == true && energyAvailable > spawnQueueEntry.budget)
-            {
-                console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
-            		JSON.stringify(spawnQueueEntry));
-
-                chosenBlueprint = Game.empire.factories.creep.buildBlueprintByRole(
-                    spawnQueueEntry.opts.memory.role, energyAvailable, 50);
-
-                console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
-            }
-            else
-                chosenBlueprint = spawnQueueEntry.blueprint;
-
-            chosenQueueID = spawnQueueEntry.id;
+            //if (spawnQueueEntry.allowUpdate == true && energyAvailable > spawnQueueEntry.cost)
+            //{
+            //    console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
+            //		JSON.stringify(spawnQueueEntry));
+            //    
+            //    spawnQueueEntry.blueprint =
+            //        Game.empire.factories.creep.buildBlueprintFromRole(spawnQueueEntry.opts.memory.role);
+            //        
+            //    console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
+            //}
+            //
+            //chosenBlueprint = spawnQueueEntry.blueprint;
+            //chosenQueueID = spawnQueueEntry.id;
         }
-    }
 
-    if (chosenBlueprint != null)
-    {
-        if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, chosenBlueprint))
+        if (spawnQueueEntry != null)
         {
-            spawn.memory.spawning = chosenBlueprint;
+            var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
+            if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, spawnQueueEntry.blueprint, maxCost))
+            {
+                spawn.memory.spawning = spawnQueueEntry.blueprint;
 
-            let result = Game.empire.factories.creep.tryRemoveBlueprintFromSpawnQueue(spawn, chosenQueueID);
-            if (chosenQueueID != null && !result)
-                console.log("Unable to remove entry " + chosenQueueID + " from spawn queue!");
+                let result = Game.empire.factories.creep.tryRemoveEntryFromSpawnQueue(spawn, spawnQueueEntry.id);
+                if (!result)
+                    console.log("Unable to remove entry " + spawnQueueEntry.id + " from spawn queue!");
+            }
         }
     }
 

@@ -13,9 +13,9 @@ function Supplier()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Supplier);
 
-    this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 6.0;
-    this.partWeightMap[MOVE] = 6.5;
+    this.partMap[WORK] = 1.0;
+    this.partMap[CARRY] = 6.0;
+    this.partMap[MOVE] = 6.5;
 }
 
 /// Prototype
@@ -53,8 +53,8 @@ Supplier.prototype.tryDoJob = function(actor)
                 var target = JobPrototypeSupply.getSupplyTarget(actor);
                 if (target != null)
                 {
-                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + "(" + Job.getNameOf(job.jobType) + "), found supply target " +
-                        target.structureType + " at " + target.pos);
+                    //console.log(actor.creep.name + ": Interrupting job " + job.jobType + "(" + Job.getNameOf(job.jobType) + "), found supply target " +
+                    //    target.structureType + " at " + target.pos);
 
                     job.finish(actor, false);
 

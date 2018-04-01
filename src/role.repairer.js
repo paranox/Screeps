@@ -16,11 +16,11 @@ function Repairer()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Repairer);
 
-    this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 2.5;
+    this.partMap[WORK] = 1.0;
+    this.partMap[CARRY] = 2.0;
+    this.partMap[MOVE] = 2.5;
 
-    this.opts.memory.resupplyThreshold = 0.25;
+    this.opts.memory.resupplyThreshold = 0.5;
 }
 
 /// Prototype
@@ -58,8 +58,8 @@ Repairer.prototype.tryDoJob = function(actor)
                 var target = JobPrototypeRepair.getRepairTarget(actor.creep.room, actor);
                 if (target != null)
                 {
-                    console.log(actor.creep.name + ": Interrupting job " + job.jobType + "(" + Job.getNameOf(job.jobType) + "), found repair target " +
-                        target.structureType + " at " + target.pos);
+                    //console.log(actor.creep.name + ": Interrupting job " + job.jobType + "(" + Job.getNameOf(job.jobType) + "), found repair target " +
+                    //    target.structureType + " at " + target.pos);
 
                     job.finish(actor, false);
 

@@ -282,13 +282,12 @@ OperationBase.prototype.update = function()
 			var orderID = role.roleName + "_" + this.id;
 			if (this.home.spawnOrdersPlaced[orderID] == undefined)
 			{
-				var nextBlueprint = Game.empire.factories.creep.buildBlueprintByRole(Role.Type[role.roleName],
-					this.home.room.energyCapacityAvailable, 50);
+				var nextBlueprint = Game.empire.factories.creep.buildBlueprintFromRole(Role.Type[role.roleName]);
 
 				if (nextBlueprint.opts.memory != null)
 				{
-					nextBlueprint.opts.memory.operationID = this.id;
 					nextBlueprint.opts.memory.spawnOrderID = orderID;
+					nextBlueprint.opts.memory.operationID = this.id;
 				}
 				else
 					nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
