@@ -9,7 +9,7 @@ function Upgrade(opts)
 	this.jobType = Job.Type.Upgrade;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
 	if (opts != undefined && opts != null)
 	{

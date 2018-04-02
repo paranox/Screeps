@@ -9,7 +9,7 @@ function Repair(opts)
     this.jobType = Job.Type.Repair;
     
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
     this.target = null;
 

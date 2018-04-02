@@ -9,7 +9,7 @@ function Store(opts)
 	this.jobType = Job.Type.Store;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
 	if (opts != undefined && opts != null)
 	{

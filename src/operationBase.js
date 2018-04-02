@@ -294,7 +294,7 @@ OperationBase.prototype.update = function()
 
 				this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
 				Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
-					0.75 * this.home.room.energyCapacityAvailable, this.home.room.energyCapacityAvailable);
+					this.home.room.energyCapacityAvailable - 200, this.home.room.energyCapacityAvailable);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-function Job(context)
+function Job(context, opts)
 {
 	//console.log("Job.constructor(" + context.jobName + "|" + context.jobType + ")");
 
@@ -26,6 +26,12 @@ function Job(context)
 		context.onEnd = this.onEnd;
 	if (context.onFinish == undefined)
 		context.onFinish = this.onFinish;
+
+	if (!opts)
+		return;
+
+	if (opts.endTime != undefined)
+		context.endTime = opts.endTime;
 }
 
 /// Memory functions, should always be called via context's override
@@ -49,12 +55,19 @@ Job.prototype.readSaveData = function(context, data)
 	else
 		context.hasStarted = false;
 
+	if (data.endTime != undefined)
+		context.endTime = data.endTime;
+
 	return true;
 }
 
 Job.prototype.createSaveData = function(context)
 {
-	return { "jobType": context.jobType, "startTime": context.startTime };
+	var data = { jobType: context.jobType, startTime: context.startTime };
+	if (context.endTime != undefined)
+		data.endTime = context.endTime;
+
+	return data;
 }
 
 /// Job functions, can be overridden
@@ -82,6 +95,13 @@ Job.prototype.onStart = function(actor)
 
 Job.prototype.update = function(actor)
 {
+	if (this.endTime != undefined && Game.time >= this.endTime)
+	{
+		//console.log(actor.creep.name + ": Job<" + this.jobType + ">(" + this.jobName + ") reached end time " + this.endTime);
+		this.finish(actor, true);
+		return;
+	}
+
 	//console.log(actor.creep.name + ": Job->" + this.jobName + "|" + this.jobType + ".update()");
 	this.onUpdate(actor);
 }

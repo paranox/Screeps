@@ -9,7 +9,7 @@ function Supply(opts)
 	this.jobType = Job.Type.Supply;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
     this.targets = {};
 

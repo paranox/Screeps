@@ -9,7 +9,7 @@ function Build(opts)
 	this.jobType = Job.Type.Build;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
     this.target = null;
 
@@ -244,7 +244,7 @@ Build.prototype.onFinish = function(actor, isDone)
     if (this.targetStructureType == STRUCTURE_RAMPART || this.targetStructureType == STRUCTURE_WALL)
     {
         actor.addJob(Game.empire.factories.job.createFromType(Job.Type.Repair,
-            { for: actor.creep.name, pos:this.targetPos, structureType:this.targetStructureType }));
+            { for: actor.creep.name, pos:this.targetPos, structureType:this.targetStructureType, endTime:(Game.time + 10) }));
     }
 
     this.target = null;

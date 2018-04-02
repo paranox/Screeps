@@ -9,7 +9,7 @@ function Wait(opts)
 	this.jobType = Job.Type.Wait;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
 	if (!opts)
 		return;

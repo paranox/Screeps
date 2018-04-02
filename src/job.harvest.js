@@ -9,7 +9,7 @@ function Harvest(opts)
 	this.jobType = Job.Type.Harvest;
 	
     this.base = JobBase;
-    this.base.constructor(this);
+    this.base.constructor(this, opts);
 
 	if (opts != undefined && opts != null)
 	{
