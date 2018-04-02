@@ -1,6 +1,6 @@
-﻿var Role = require('roleTypes');
+﻿var BodyPartMap = require('creepBodyPartMap');
+var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
-var JobFactory = require('jobFactory');
 var JobPrototypeResupply = require('job.resupply');
 var Job = require('jobTypes');
 
@@ -16,9 +16,11 @@ function Upgrader()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Upgrader);
 
-    this.partWeightMap[WORK] = 1.0;
-    this.partWeightMap[CARRY] = 2.0;
-    this.partWeightMap[MOVE] = 2.5;
+    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:2.5 };
+    this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:1, opts: { part:WORK } };
+
+    this.opts.memory.resupplyThreshold = 0.25;
 }
 
 /// Prototype
@@ -47,15 +49,15 @@ function getJob(actor)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
         if (target != null)
-            return JobFactory.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
 
-        return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
     if (controller != null)
-        return JobFactory.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 

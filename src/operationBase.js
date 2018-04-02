@@ -1,14 +1,13 @@
 var Utils = require('utils');
 var Operation = require('operationTypes');
 var Role = require('roleTypes');
-var CreepFactory = require('creepFactory');
 
 function OperationBase(context, opts)
 {
 	//console.log("Operation.constructor(" + context.opName + " | " +
 	//	Operation.getNameOf(context.opType) + "[" + context.opType + "])");
 
-	context.home = {};
+	context.home = { spawnOrdersPlaced:{} };
 	context.roles = {};
 	context.actors = [];
 
@@ -73,6 +72,9 @@ OperationBase.prototype.readSaveData = function(context, data)
 			spawn:Game.getObjectById(data.home.spawnID)
 		};
 	}
+
+	if (data.home.spawnOrdersPlaced != null)
+		context.home.spawnOrdersPlaced = data.home.spawnOrdersPlaced;
 
 	var roleKeys = data.roles != null ? Object.keys(data.roles) : [];
 	var rolePosition;
@@ -141,7 +143,7 @@ OperationBase.prototype.createSaveData = function(context)
 		{
 			roomName:(context.home.room != undefined ? context.home.room.name : "undefined"),
 			spawnID:(context.home.spawn != null ? context.home.spawn.id : "undefined"),
-			hasCreepInSpawnQueue:context.home.hasCreepInSpawnQueue
+			spawnOrdersPlaced:context.home.spawnOrdersPlaced
 		};
 	}
 	else
@@ -203,10 +205,13 @@ OperationBase.prototype.update = function()
 		}
 	}
 
-	var need;
-	var highestNeed = 0.0;
-	var neededRole = null;
+	if (!this.home.spawnOrdersPlaced)
+	{
+		console.log("initializing spawn orders");
+		this.home.spawnOrdersPlaced = {};
+	}
 
+	var priority;
 	for (i = 0; i < roleKeys.length; i++)
 	{
 		role = this.roles[roleKeys[i]];
@@ -222,43 +227,17 @@ OperationBase.prototype.update = function()
 			continue;
 		}
 
-		if (role.priority == undefined)
+		if (role.roleType == undefined)
 		{
-			if (role.current < role.min)
-				need = 100;
+			console.log("Operation " + this.opName + "[" + this.id + "]: Needed role has no roleType property: " +
+				JSON.stringify(role));
+
+			continue;
 		}
 		else
 		{
-			if (!Array.isArray(role.priority))
-				need = role.priority;
-			else if (role.current < role.priority.length)
-				need = role.priority[role.current];
-			else
-				need = role.priority[role.priority.length - 1];
-		}
-
-		if (need > highestNeed)
-		{
 			if (this.doDebug)
-			{
-				console.log("Operation " + this.opName + "[" + this.id + "]: Role " + Role.getNameOf(role.roleType) +
-					" is needed with priority " + need);
-			}
-
-			highestNeed = need;
-			neededRole = role;
-		}
-	}
-
-	if (neededRole != null)
-	{
-		if (this.doDebug)
-			console.log("Operation " + this.opName + "[" + this.id + "]: Needs role " + JSON.stringify(neededRole));
-
-		if (neededRole.roleType != undefined)
-		{
-        	//if (this.doDebug)
-			//	console.log("Global actors (in op obj) before role enlistment:\n" + Utils.objectToString(Game.empire.actors, 0, 0));
+				console.log("Operation " + this.opName + "[" + this.id + "]: Needs role " + JSON.stringify(role));
 
 			var creep, actor;
 			for (var id in Game.empire.actors)
@@ -277,63 +256,78 @@ OperationBase.prototype.update = function()
 				if (actor.creep.spawning || actor.operation != null)
 					continue;
 
-				if (actor.roleType == neededRole.roleType)
+				if (actor.roleType == role.roleType)
 				{
 					console.log("Operation " + this.opName + "[" + this.id + "]:Enlisting " + actor.creep.name + ", id[" + id + "]");
 					actor.setOperation(this);
 					this.addActor(actor);
-					neededRole = null;
+					role = null;
 					break;
 				}
 			}
+
+			if (role == null)
+				continue;
 		}
+
+		if (!Array.isArray(role.priority))
+			priority = role.priority;
+		else if (role.current < role.priority.length)
+			priority = role.priority[role.current];
 		else
-			console.log("Operation " + this.opName + "[" + this.id + "]: Needed role has no roleType property: " + JSON.stringify(neededRole));
+			priority = role.priority[role.priority.length - 1];
+
+		if (this.home.spawn != null)
+		{
+			var orderID = role.roleName + "_" + this.id;
+			if (this.home.spawnOrdersPlaced[orderID] == undefined)
+			{
+				var nextBlueprint = Game.empire.factories.creep.buildBlueprintFromRole(Role.Type[role.roleName]);
+
+				if (nextBlueprint.opts.memory != null)
+				{
+					nextBlueprint.opts.memory.spawnOrderID = orderID;
+					nextBlueprint.opts.memory.operationID = this.id;
+				}
+				else
+					nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
+
+				this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
+				Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
+					0.75 * this.home.room.energyCapacityAvailable, this.home.room.energyCapacityAvailable);
+			}
+		}
 	}
 
-	this.home.hasCreepInSpawnQueue = false;
 	if (this.home.spawn != null)
 	{
 		if (this.home.spawn.memory.spawning != null)
 		{
-			if (this.home.spawn.memory.spawning.opts.memory.orderedByOp == this.id)
+			var spawningBlueprint = this.home.spawn.memory.spawning;
+			if (spawningBlueprint.opts != null && spawningBlueprint.opts.memory != null &&
+				spawningBlueprint.opts.memory.operationID == this.id)
 			{
-				this.home.hasCreepInSpawnQueue = true;
-				//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn is spawning blueprint " +
-				//	JSON.stringify(this.home.spawn.memory.spawning));
-			}
-		}
-
-		if (Array.isArray(this.home.spawn.memory.spawnQueue))
-		{
-			var blueprint;
-			for (var i = 0; i < this.home.spawn.memory.spawnQueue.length; i++)
-			{
-				blueprint = this.home.spawn.memory.spawnQueue[i];
-				if (blueprint.opts.memory.orderedByOp == this.id)
+				if (this.doDebug)
 				{
-					//console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn has blueprint in spawn queue: " +
-					//	JSON.stringify(blueprint));
-					this.home.hasCreepInSpawnQueue = true;
-					break;
+					console.log("Operation " + this.opName + "[" + this.id + "]: Home spawn is spawning blueprint " +
+						JSON.stringify(this.home.spawn.memory.spawning));
 				}
 			}
 		}
-	}
-
-	if (neededRole != null && !this.home.hasCreepInSpawnQueue && this.home.spawn != null)
-	{
-		this.home.hasCreepInSpawnQueue = true;
-
-		var nextBlueprint = CreepFactory.buildBlueprintByRole(Role.Type[neededRole.roleName],
-			this.home.room.energyCapacityAvailable, 50);
-
-		if (nextBlueprint.opts.memory != null)
-			nextBlueprint.opts.memory.orderedByOp = this.id;
-		else
-			nextBlueprint.opts.memory = { orderedByOp: this.id };
-
-		CreepFactory.addBlueprintToSpawnQueue(this.home.spawn, nextBlueprint);
+		else if (this.home.spawn.memory.spawnQueue != null)
+		{
+			var id;
+			var orders = Object.keys(this.home.spawnOrdersPlaced)
+			for (var i = 0; i < orders.length; i++)
+			{
+				id = orders[i];
+				if (!this.home.spawn.memory.spawnQueue[id])
+				{
+					console.log("Operation " + this.opName + "[" + this.id + "]: Spawn order " + id + " wasn't found in queue!");
+					delete this.home.spawnOrdersPlaced[id];
+				}
+			}
+		}
 	}
 
 	this.onUpdate();
@@ -368,28 +362,39 @@ OperationBase.prototype.addActor = function(actor)
 			" by id of " + actor.creep.id);
 	}
 
-	if (actor.creep.memory.orderedByOp != undefined)
+	if (actor.creep.memory.spawnOrderID != undefined)
 	{
-		if (actor.creep.memory.orderedByOp == this.id)
+		if (!this.home.spawnOrdersPlaced)
 		{
-			if (!this.home.hasCreepInSpawnQueue)
-			{
-				console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
-					" was marked as order by this operation but it was unexpected.");
-			}
-			else if (this.doDebug)
-				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name);
+			if (true)//this.doDebug)
+				console.log("Operation " + this.opName + "[" + this.id + "]: Initializing spawn orders (addActor)");
 
-			this.home.hasCreepInSpawnQueue = false;
+			this.home.spawnOrdersPlaced = {};
+		}
+
+		var spawnOrderID = actor.creep.memory.spawnOrderID;
+		if (!this.home.spawnOrdersPlaced.hasOwnProperty(spawnOrderID))
+		{
+			console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
+				" was marked as ordered for this operation but it was unexpected.");
 		}
 		else
 		{
-			console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
-				" was marked as order by another operation " + actor.creep.memory.orderedByOp +
-				"! Canceled adding to this operation!");
+			if (true)//this.doDebug)
+				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name);
 
-			return;
+			delete this.home.spawnOrdersPlaced[spawnOrderID];
 		}
+		//else
+		//{
+		//	console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
+		//		" was marked as order by another operation " + actor.creep.memory.orderedByOp +
+		//		"! Canceled adding to this operation!");
+		//	
+		//	return;
+		//}
+
+		delete actor.creep.memory.spawnOrderID;
 	}
 
 	this.actors.push(actor);

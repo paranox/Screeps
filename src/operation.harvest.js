@@ -1,7 +1,7 @@
 var Operation = require('operationTypes');
 var OperationBase = require('operationBase');
 var Role = require('roleTypes');
-var JobFactory = require('jobFactory');
+var JobWait = require('job.wait');
 var Job = require('jobTypes');
 
 function Harvest(opts)
@@ -42,7 +42,7 @@ Harvest.prototype.createSaveData = function()
 	var data = this.base.createSaveData(this);
 	
 	if (this.target != null)
-		data["target"] = this.target.id;
+		data.target = this.target.id;
 
 	return data;
 }
@@ -74,10 +74,21 @@ Harvest.prototype.getJob = function(actor)
 		if (this.doDebug)
 			console.log("Operation " + this.opName + "[" + this.id + "]: Target " + this.target + " at " + this.target.pos + " has no energy left!");
 
-		return null;
+		// This is supposed to force a Store type job
+		if (actor.creep.carry.energy > 0)
+			return null;
+
+		return Game.empire.factories.job.createFromType(Job.Type.Wait,
+		{
+			for:actor.creep.name,
+			target:this.target,
+			waitType:JobWait.WaitType.EnergyLevel,
+			testType:JobWait.TestType.Greater,
+			testValue:0
+		});
 	}
 
-	return JobFactory.createFromType(Job.Type.Harvest, { "for": actor.creep.name, "target": this.target } );
+	return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name, target:this.target } );
 }
 
 Harvest.prototype.createDefaultRoles = function()

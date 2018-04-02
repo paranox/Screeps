@@ -1,5 +1,4 @@
 var Utils = require('utils');
-var JobFactory = require('jobFactory');
 var Role = require('roleTypes');
 
 function Actor(creep)
@@ -25,7 +24,9 @@ function Actor(creep)
 
     if (creep.memory.home == undefined)
     {
-        console.log("Actor " + creep.name + ": Home room set to " + creep.room);
+        if (this.doDebug)
+            console.log("Actor " + creep.name + ": Home room set to " + creep.room);
+        
         creep.memory.home = creep.room.name;
     }
 
@@ -65,7 +66,7 @@ function Actor(creep)
 	    var job;
 	    for (let i = 0; i < creep.memory.jobs.length; i++)
 	    {
-	        job = JobFactory.createFromData(creep.memory.jobs[i]);
+	        job = Game.empire.factories.job.createFromData(creep.memory.jobs[i]);
 
 	        if (job != null)
 	        {

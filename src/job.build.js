@@ -13,14 +13,21 @@ function Build(opts)
 
     this.target = null;
 
-	if (opts != undefined && opts != null)
+	if (!opts)
+        return;
+    
+    if (opts.target != null)
+        this.target = opts.target;
+    if (opts.pos != undefined)
+        this.targetPos = opts.pos;
+    if (opts.structureType != undefined)
+        this.targetStructureType = opts.structureType;
+	
+	if (opts.target != null)
 	{
-		if (opts.target != null)
-		{
-			this.target = opts.target;
-			this.targetID = opts.target.id;
-			this.targetPos = this.target.pos;
-		}
+		this.target = opts.target;
+		this.targetPos = opts.target.pos;
+        this.targetStructureType = opts.target.structureType;
 	}
 }
 
@@ -32,15 +39,23 @@ Build.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	this.targetPos = data.pos;
-
-	if (data.target != undefined && data.target != null)
-	{
-		this.targetID = data.target;
+	if (data.target != undefined)
 		this.target = Game.getObjectById(data.target);
-	}
 	else
-		this.target = null
+		this.target = null;
+
+    if (this.target != null)
+    {
+        this.targetPos = this.target.pos;
+        this.targetStructureType = this.target.structureType;
+    }
+    else
+    {
+        if (data.pos != undefined)
+            this.targetPos = new RoomPosition(data.pos.x, data.pos.y, data.pos.roomName);
+
+        this.targetStructureType = data.targetStructureType;
+    }
 
 	//console.log("Target found based on save data: " + data.target);
 	return true;
@@ -50,17 +65,24 @@ Build.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
-	if (this.target != undefined && this.target != null)
-		data["target"] = this.target.id;
-	if (this.targetPos != undefined)
-		data["pos"] = this.targetPos;
+    if (this.target != null)
+    {
+        data.target = this.target.id;
+        data.pos = this.target.pos;
+        data.targetStructureType = this.target.structureType;
+    }
+    else
+    {
+        data.pos = this.targetPos;
+        data.targetStructureType = this.targetStructureType;
+    }
 
 	return data;
 }
 
-Build.prototype.getBuildTarget = function(room)
+Build.prototype.getBuildTarget = function(actor)
 {
-    var allTarges = room.find(FIND_CONSTRUCTION_SITES);
+    var allTarges = actor.creep.room.find(FIND_CONSTRUCTION_SITES);
 
     var target = null;
     var chosenTarget = null;
@@ -84,14 +106,17 @@ Build.prototype.getBuildTarget = function(room)
                 priority = 1.5;
                 break;
             case STRUCTURE_WALL:
-                priority = 0.5;
+                priority = 0.75;
                 break;
             case STRUCTURE_ROAD:
-                priority = 0.25;
+                priority = 0.5;
                 break;
+            default:
+                priority = 1.0;
         }
 
-        priority += Math.max(1, target.progress) / target.progressTotal;
+        priority += target.progress / target.progressTotal;
+        priority -= actor.creep.pos.getRangeTo(target) / 20.0;
 
         //console.log("Build Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
         //	" has priority " + priority + ", " + (Math.round(100 * target.progress / target.progressTotal) / 100) +
@@ -111,7 +136,11 @@ Build.prototype.getBuildTarget = function(room)
     if (chosenTarget == null && allTarges.length > 0)
     {
     	chosenTarget = allTarges[0];
-    	console.log("Unable to prioritize Build targets. Target " + chosenTarget.structureType + " at " + target.pos + " was picked!");
+    	if (actor.doDebug)
+        {
+            console.log("Unable to prioritize Build targets. Target " +
+                chosenTarget.structureType + " at " + target.pos + " was picked!");
+        }
     }
     //else
     //    console.log("Target " + chosenTarget.structureType + " at " + target.pos + " was chosen!");
@@ -130,8 +159,9 @@ Build.prototype.onUpdate = function(actor)
 	if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    if (this.target == undefined || this.target == null)
+    if (!this.target)
     {
+        // If there was a target position, there was a target at some point
 		if (this.targetPos != undefined)
 		{
 			this.finish(actor, true);
@@ -144,6 +174,7 @@ Build.prototype.onUpdate = function(actor)
 			return;
 		}
 
+        // Try to immediately get a new target
     	this.target = this.getBuildTarget(actor.creep.room);
 
     	if (this.target == null)
@@ -174,27 +205,27 @@ Build.prototype.onUpdate = function(actor)
 			if (this.target.progress < this.target.progressTotal)
 	        {
 	        	if (actor.doDebug)
-	            	console.log(actor.creep.name + ": Worked to construct target at " + this.target.pos.x + "," + this.target.pos.y);
+	            	console.log(actor.creep.name + ": Worked to construct target at " + this.targetPos);
 	        }
 
 			break;
 		case ERR_NOT_IN_RANGE:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Moving to construct target at " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Moving to construct target at " + this.targetPos);
 
 	        actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
 			break;
 		case ERR_NOT_ENOUGH_RESOURCES:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Out of energy to construct " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Out of energy to construct " + this.targetPos);
 
 	        actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
 			break;
 		default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to construct target at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to construct target at " + this.targetPos);
 
 			break;
     }
@@ -202,15 +233,21 @@ Build.prototype.onUpdate = function(actor)
 
 Build.prototype.onFinish = function(actor, isDone)
 {
-	this.target = null;
-
 	this.base.onFinish(actor, isDone);
 
 	if (actor.doDebug)
 	{
     	console.log(actor.creep.name + ": Finished constructing target at " +
-    		(this.targetPos != undefined ? this.targetPos.x + "," + this.targetPos.y : "undefined"));
+    		(this.targetPos != undefined ? this.targetPos : "undefined"));
 	}
+
+    if (this.targetStructureType == STRUCTURE_RAMPART || this.targetStructureType == STRUCTURE_WALL)
+    {
+        actor.addJob(Game.empire.factories.job.createFromType(Job.Type.Repair,
+            { for: actor.creep.name, pos:this.targetPos, structureType:this.targetStructureType }));
+    }
+
+    this.target = null;
 }
 
 module.exports = Build.prototype;
