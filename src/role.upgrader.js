@@ -1,4 +1,5 @@
-﻿var Role = require('roleTypes');
+﻿var BodyPartMap = require('creepBodyPartMap');
+var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
 var JobPrototypeResupply = require('job.resupply');
 var Job = require('jobTypes');
@@ -15,9 +16,9 @@ function Upgrader()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Upgrader);
 
-    this.partMap[WORK] = 1.0;
-    this.partMap[CARRY] = 2.0;
-    this.partMap[MOVE] = 2.5;
+    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:2.5 };
+    this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:1, opts: { part:WORK } };
 
     this.opts.memory.resupplyThreshold = 0.25;
 }

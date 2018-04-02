@@ -163,8 +163,11 @@ var getPartMap = function (minimumParts, partMap, maxCost, maxParts)
 
             if (doDebug)
             {
-                console.log("* Additional parts of type " + entry.opts.part + " defined per " + t +
-                    " part. Target ratio: " + entry.value);
+                for (const b in entry)
+                {
+                    console.log("* Additional parts of types " + b + " defined per " + t +
+                        " part. Target ratio: " + entry[b]);
+                }
             }
                     
             if (!bodyMap.hasOwnProperty(t))
@@ -292,7 +295,7 @@ var getPartMap = function (minimumParts, partMap, maxCost, maxParts)
                     if (doDebug)
                     {
                         console.log("** Additional parts of type " + perPartDefinitions[t].opts.part + " defined per " + t +
-                            " part. Target ratio: " + perPartDefinitions[t].value);
+                            " part. Target ratio: " + perPartDefinitions[t]);
                     }
 
                     partsToAdd = getPartsToAddPerPart(bodyMap, perPartDefinitions[t], t, bodyMap[t]);
@@ -481,8 +484,11 @@ var getPartMap = function (minimumParts, partMap, maxCost, maxParts)
             {
                 if (doDebug)
                 {
-                    console.log("*** Additional parts of type " + perPartDefinitions[t].opts.part + " defined per " + selectedType +
-                        " part. Ratio: " + perPartDefinitions[selectedType].value);
+                    for (const b in perPartDefinitions[selectedType])
+                    {
+                        console.log("*** Additional parts of types " + b + " defined per " + selectedType +
+                            " part. Target ratio: " + perPartDefinitions[selectedType][b]);
+                    }
                 }
 
                 partsToAdd = getPartsToAddPerPart(bodyMap, perPartDefinitions[selectedType], selectedType, 1 + bodyMap[selectedType]);
@@ -679,7 +685,7 @@ module.exports =
         return order;
     },
 
-    addBlueprintToSpawnQueue: function(spawn, id, priority, blueprint, maxCost)
+    addBlueprintToSpawnQueue: function(spawn, id, priority, blueprint, minCost, maxCost)
     {
         if (blueprint == null)
             return;
@@ -692,11 +698,19 @@ module.exports =
             console.log("Spawn('" + spawn.name + "') " + spawn.pos +
                 ", already contained blueprint with id " + id + ", replacing!");
         }
-        var opts = { maxCost:(maxCost != undefined ? maxCost : spawn.room.energyCapacityAvailable) };
-        spawn.memory.spawnQueue[id] = this.createSpawnOrder(id, priority, blueprint, opts);
 
-        console.log("Added a creep blueprint " + id + " at priority " + priority + " to queue at Spawn('" + spawn.name +
-            "')" + spawn.pos + "\n" + JSON.stringify(blueprint));
+        var opts =
+        {
+            minCost:(minCost != undefined ? minCost : 300),
+            maxCost:(maxCost != undefined ? maxCost : spawn.room.energyCapacityAvailable)
+        };
+
+        var spawnOrder = this.createSpawnOrder(id, priority, blueprint, opts);
+        spawn.memory.spawnQueue[id] = spawnOrder;
+
+        console.log("Added a creep spawn order " + id + " at priority " + priority + ", cost range " +
+            opts.minCost + "<->" + opts.maxCost + " to queue at Spawn('" + spawn.name +
+            "')" + spawn.pos + "\n" + JSON.stringify(spawnOrder));
     },
 
     getEntryFromSpawnQueue: function(spawn)
@@ -740,7 +754,7 @@ module.exports =
         return true;
     },
 
-    tryBuildCreepFromBlueprint: function (spawn, blueprint, maxCost)
+    tryBuildCreepFromBlueprint: function (spawn, blueprint, minCost, maxCost)
     {
         if (!blueprint)
         {
@@ -750,34 +764,61 @@ module.exports =
 
         if (!spawn)
         {
-            console.log("Invalid Spawn provided: " + spawn + ", can't build blueprint:\n" + JSON.stringify(blueprint));
+            console.log("Invalid Spawn provided: " + spawn + ", can't build creep from blueprint:\n" + JSON.stringify(blueprint));
             return false;
         }
 
-        console.log("Trying to build from blueprint: " + JSON.stringify(blueprint));
+        if (minCost == undefined)
+            minCost = 300;
+
+        if (spawn.room.energyAvailable < minCost)
+        {
+            //console("Energy available " + spawn.room.energyAvailable + " is less than minimum cost " + minCost +
+            //     ". Unable to build creep from blueprint:\n" + JSON.stringify(blueprint));
+
+            return false;
+        }
 
         var newName = blueprint.namePrefix + "[" + Game.time + "]";
 
         if (maxCost == undefined)
-            maxCost = spawn.room.energyCapacityAvailable;
+            maxCost = spawn.room.energyAvailable;
+        else
+            maxCost = Math.min(maxCost, spawn.room.energyAvailable);
+
+        //console.log("Trying to build creep with a budget of " + minCost + "<->" + maxCost +
+        //    " from blueprint:\n" + JSON.stringify(blueprint));
 
         var partList = [];
+
         if (Array.isArray(blueprint.parts))
             partList = blueprint.parts;
         else if (blueprint.partMap != null)
         {
             var partMap = getPartMap(blueprint.minimumParts, blueprint.partMap, maxCost, blueprint.maxBodySize);
-            partList = this.buildPartListFromMap(partMap);
 
-            console.log("Part map " + JSON.stringify(partMap) + " converted into a list:\n" + partList);
+            var cost = 0;
+            for (const part in partMap)
+                cost += partMap[part] * BODYPART_COST[part];
+
+            if (cost < minCost)
+            {
+                //console.log("Part map " + JSON.stringify(partMap) + " costs " + cost + " which is less than minimum cost " +
+                //    minCost + ". Unable to build creep from blueprint:\n" + JSON.stringify(blueprint));
+
+                return false;
+            }
+
+            partList = this.buildPartListFromMap(partMap);
+            //console.log("Part map " + JSON.stringify(partMap) + " converted into a list:\n" + partList);
         }
 
         var status = spawn.spawnCreep(partList, newName, blueprint.opts);
         if (status == 0)
         {
-            console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')[" + spawn.pos.x + "," + spawn.pos.y + "] in " +
-                spawn.room + ", energy cost: " + Utils.getBodyCost(partList) + "/" + maxCost +
-                "\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
+            console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')" + spawn.pos +
+                ", energy cost: " + Utils.getBodyCost(partList) + "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " +
+                JSON.stringify(blueprint) + "\nParts: " + partList);
 
             return true;
         }
@@ -788,13 +829,13 @@ module.exports =
                 console.log("Unable to build creep, cost too high: " + Utils.getBodyCost(partList) + "/" +
                     spawn.room.energyAvailable + "\nTried to build creep: '" + newName +
                     "' at Spawn('" + spawn.name + "') in " + spawn.pos + ", energy cost: " + Utils.getBodyCost(partList) +
-                    "/" + maxCost + "\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
+                    "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
             }
             else
             {
                 console.log("Unable to build creep, error code: " + status + "\nTried to build creep: '" + newName +
                     "' at Spawn('" + spawn.name + "') in " + spawn.pos + ", energy cost: " + Utils.getBodyCost(partList) +
-                    "/" + maxCost + "\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
+                    "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
             }
         }
 

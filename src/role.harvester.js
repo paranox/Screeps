@@ -17,7 +17,7 @@ function Harvester()
 
     this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:1.5 };
     this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
-    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:1, opts: { part:WORK } };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:0.5, opts: { part:WORK } };
 }
 
 /// Prototype

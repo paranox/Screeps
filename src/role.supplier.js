@@ -1,3 +1,4 @@
+var BodyPartMap = require('creepBodyPartMap');
 var Role = require('roleTypes');
 var RoleBase = require('rolePrototype');
 var JobPrototypeSupply = require('job.supply');
@@ -13,9 +14,8 @@ function Supplier()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Supplier);
 
-    this.partMap[WORK] = 1.0;
-    this.partMap[CARRY] = 6.0;
-    this.partMap[MOVE] = 6.5;
+    this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:0.5 };
 }
 
 /// Prototype

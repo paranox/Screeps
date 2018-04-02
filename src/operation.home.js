@@ -97,15 +97,21 @@ Home.prototype.onUpdate = function()
 
         if (spawnQueueEntry.cost > energyAvailable)
         {
-            console.log("Blueprint cost " + spawnQueueEntry.cost + " is higher than available energy " +
-               energyAvailable + ", waiting...");
-            
+            if (this.doDebug)
+            {
+                console.log("Blueprint cost " + spawnQueueEntry.cost + " is higher than available energy " +
+                   energyAvailable + ", waiting...");
+            }
+
             spawnQueueEntry = null;
         }
         if (spawnQueueEntry.minCost > energyAvailable)
         {
-            console.log("Blueprint minimum cost " + spawnQueueEntry.minCost + " is higher than available energy " +
-               energyAvailable + ", waiting...");
+            if (this.doDebug)
+            {
+                console.log("Blueprint minimum cost " + spawnQueueEntry.minCost + " is higher than available energy " +
+                   energyAvailable + ", waiting...");
+            }
 
             spawnQueueEntry = null;
         }
@@ -128,8 +134,9 @@ Home.prototype.onUpdate = function()
 
         if (spawnQueueEntry != null)
         {
+            var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
             var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
-            if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, spawnQueueEntry.blueprint, maxCost))
+            if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, spawnQueueEntry.blueprint, minCost, maxCost))
             {
                 spawn.memory.spawning = spawnQueueEntry.blueprint;
 

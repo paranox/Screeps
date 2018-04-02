@@ -8,7 +8,7 @@ function RoleBase(context, roleType)
 
 	context.roleType = roleType;
     context.opts = { memory: { "role": roleType } };
-	context.minimumParts = [WORK, CARRY, MOVE];
+	context.minimumParts = [WORK, CARRY, MOVE, MOVE];
     context.partMap = {};
 
 	if (context.run == undefined) context.run = this.run;
