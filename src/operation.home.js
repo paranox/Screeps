@@ -14,16 +14,6 @@ function Home(opts)
     this.base.constructor(this, opts);
 
 	this.home.roomLevel = 0;
-
-    if (!opts) return;
-
-    if (opts.home != null)
-    {
-    	if (opts.home.room != undefined)
-    		this.home.room = opts.home.room;
-    	if (opts.home.spawn != undefined)
-    		this.home.spawn = opts.home.spawn;
-	}
 }
 
 /// Memory functions, should always be called via context's override
@@ -63,6 +53,11 @@ Home.prototype.createSaveData = function()
 /// Operation functions, can be overridden
 /// NOTE: These must be set to the context in the constructor
 
+Home.prototype.getConstructorOptsHelpString = function()
+{
+    return OperationBase.getConstructorOptsHelpString();
+}
+
 Home.prototype.onUpdate = function()
 {
     // Make sure we're not losing vital roles
@@ -94,11 +89,13 @@ Home.prototype.onUpdate = function()
                             newMinCost = Utils.getBodyCost(rolePrototype.minimumParts);
 
                         if (spawnQueueEntry.minCost > newMinCost)
+                        {
                             spawnQueueEntry.minCost = newMinCost;
 
-                        console.log("Vital spawn order for " + roleType + " (" + Role.getNameOf(roleType) +
-                            ") has too few current actors enlisted " + this.roles[roleType].current + " < " +
-                            this.roles[roleType].min + ", set minimum cost to " + spawnQueueEntry.minCost);
+                            console.log("Vital spawn order for " + roleType + " (" + Role.getNameOf(roleType) +
+                                ") has too few current actors enlisted " + this.roles[roleType].current + " < " +
+                                this.roles[roleType].min + ", set minimum cost to " + spawnQueueEntry.minCost);
+                        }
                     }
                 }
             }
@@ -285,7 +282,7 @@ Home.prototype.spawnUpdate = function()
         {
             var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
             var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
-            
+
             console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
                 "\n" + JSON.stringify(spawnQueueEntry));
 

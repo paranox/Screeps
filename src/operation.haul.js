@@ -72,6 +72,11 @@ Haul.prototype.createSaveData = function()
 /// Operation functions, can be overridden
 /// NOTE: These must be set to the context in the constructor
 
+Haul.prototype.getConstructorOptsHelpString = function()
+{
+    return OperationBase.getConstructorOptsHelpString() + ", source, target, targets[]";
+}
+
 Haul.prototype.onUpdate = function()
 {
 	

@@ -3,6 +3,7 @@ var Operation = require('operationTypes');
 var OperationHome = require('operation.home');
 var OperationHarvest = require('operation.harvest');
 var OperationHaul = require('operation.haul');
+var OperationExpand = require('operation.expand');
 
 function createOperationFromData(data)
 {
@@ -34,6 +35,9 @@ function createOperationFromType(opType, opts)
 		case Operation.Type.Haul:
 			op = Object.create(OperationHaul);
 			break;
+		case Operation.Type.Expand:
+			op = Object.create(OperationExpand);
+			break;
 		default:
 	    	console.log("Failed to create operation, unhandled operation type: " + Operation.getNameOf(opType));
 	    	return null;
@@ -45,6 +49,16 @@ function createOperationFromType(opType, opts)
 
 module.exports =
 {
+	help: function()
+	{
+		return ".addOperation(operation)\n" +
+			".addOperationFromType(opType, opts)\n" +
+			"  " + Operation.Type.Home + ":    " + Operation.getNameOf(Operation.Type.Home) +    ", opts: { " + OperationHome.getConstructorOptsHelpString() +    " }\n" +
+			"  " + Operation.Type.Harvest + ": " + Operation.getNameOf(Operation.Type.Harvest) + ", opts: { " + OperationHarvest.getConstructorOptsHelpString() + " }\n" +
+			"  " + Operation.Type.Haul + ":    " + Operation.getNameOf(Operation.Type.Haul) +    ", opts: { " + OperationHaul.getConstructorOptsHelpString() +    " }\n" +
+			"  " + Operation.Type.Expand + ":  " + Operation.getNameOf(Operation.Type.Expand) +  ", opts: { " + OperationExpand.getConstructorOptsHelpString() +  " }";
+	},
+
 	createFromType: function(opType, opts)
 	{
 		//console.log("Creating Operation from type: " + Operation.getNameOf(opType));

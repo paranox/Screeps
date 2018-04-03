@@ -23,6 +23,11 @@ function Harvest(opts)
 /// Memory functions, should always be called via context's override
 /// NOTE: These require a context reference and are usually
 
+Harvest.prototype.getConstructorOptsHelpString = function()
+{
+    return OperationBase.getConstructorOptsHelpString() + ", target";
+}
+
 Harvest.prototype.readSaveData = function(data)
 {
 	if (!this.base.readSaveData(this, data))

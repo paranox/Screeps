@@ -32,6 +32,9 @@ function OperationBase(context, opts)
 	if (context.createSaveData == undefined)
 		context.createSaveData = this.createSaveData;
 
+	if (context.getConstructorOptsHelpString == undefined)
+		context.getConstructorOptsHelpString = this.getConstructorOptsHelpString;
+
 	//if (context.start == undefined)
 	//	context.start = this.start;
 	if (context.update == undefined)
@@ -101,8 +104,10 @@ OperationBase.prototype.readSaveData = function(context, data)
 	}
 	else
 	{
-		console.log("Operation " + context.opName + "[" + context.id + "]: No roles object was defined in save data!");
 		context.roles = context.createDefaultRoles();
+
+		console.log("Operation " + context.opName + "[" + context.id +
+			"]: No roles object was defined in save data! Defaults created:\n" + JSON.stringify(context.roles));
 	}
 
 	/*context.actors = [];
@@ -198,6 +203,11 @@ OperationBase.prototype.createSaveData = function(context)
 /// Operation functions, can be overridden
 /// NOTE: These must be set to the context in the constructor
 
+OperationBase.prototype.getConstructorOptsHelpString = function()
+{
+	return "id, home{}, roles{}, actors[]";
+}
+
 OperationBase.prototype.update = function()
 {
 	if (this.home == null)
@@ -229,10 +239,10 @@ OperationBase.prototype.update = function()
 	}
 
 	if (!this.home.spawnOrdersPlaced)
-	{
-		console.log("initializing spawn orders");
 		this.home.spawnOrdersPlaced = {};
-	}
+
+	if (this.isHalted)
+		return;
 
 	var priority;
 	for (i = 0; i < roleKeys.length; i++)
