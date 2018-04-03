@@ -10,6 +10,7 @@ function OperationBase(context, opts)
 	context.home = { spawnOrdersPlaced:{} };
 	context.roles = {};
 	context.actors = [];
+    context.jobs = [];
 
 	if (opts != null)
 	{
@@ -63,6 +64,17 @@ OperationBase.prototype.readSaveData = function(context, data)
 	context.opName = (data.opName != undefined && data.opName != null ? data.opName : "Unnamed");
 	context.opType = (data.opType != undefined && data.opType != null ? data.opType : -1);
 	context.id = (data.id != undefined && data.id != null ? data.id : Game.empire.consumeNewOperationID());
+
+	if (Array.isArray(data.jobs))
+	{
+		var job;
+		for (var i = 0; i < data.jobs.length; i++)
+		{
+			job = Game.empire.factories.job.createFromData(data.jobs[i]);
+			if (job != null)
+				context.jobs.push(job);
+		}
+	}
 
 	if (data.home != null)
 	{
@@ -136,6 +148,13 @@ OperationBase.prototype.createSaveData = function(context)
 	memoryObject.id = context.id;
 	memoryObject.opName = context.opName;
 	memoryObject.opType = context.opType;
+
+    if (context.jobs.length > 0)
+    {
+        data.jobs = [];
+        for (var i = 0; i < context.jobs.length; i++)
+            data.jobs.push(context.jobs[i].createSaveData());
+    }
 	
 	if (context.home != null)
 	{
@@ -280,22 +299,35 @@ OperationBase.prototype.update = function()
 		if (this.home.spawn != null)
 		{
 			var orderID = role.roleName + "_" + this.id;
-			if (this.home.spawnOrdersPlaced[orderID] == undefined)
+
+			// Check if order has been placed
+			if (this.home.spawn.memory.spawnQueue && this.home.spawn.memory.spawnQueue[orderID])
 			{
-				var nextBlueprint = Game.empire.factories.creep.buildBlueprintFromRole(Role.Type[role.roleName]);
-
-				if (nextBlueprint.opts.memory != null)
+				if (!this.home.spawn.memory.spawnQueue[orderID].priority ||
+					this.home.spawn.memory.spawnQueue[orderID].priority < priority)
 				{
-					nextBlueprint.opts.memory.spawnOrderID = orderID;
-					nextBlueprint.opts.memory.operationID = this.id;
-				}
-				else
-					nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
+					console.log("Operation " + this.opName + "[" + this.id + "]: Updating priority of spawn order " + orderID +
+						" from " + this.home.spawn.memory.spawnQueue[orderID].priority + " to " + priority);
 
-				this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
-				Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
-					this.home.room.energyCapacityAvailable - 200, this.home.room.energyCapacityAvailable);
+					this.home.spawn.memory.spawnQueue[orderID].priority = priority;
+				}
+
+				continue;
 			}
+
+			var nextBlueprint = Game.empire.factories.creep.buildBlueprintFromRole(Role.Type[role.roleName]);
+
+			if (nextBlueprint.opts.memory != null)
+			{
+				nextBlueprint.opts.memory.spawnOrderID = orderID;
+				nextBlueprint.opts.memory.operationID = this.id;
+			}
+			else
+				nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
+
+			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
+			Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
+				this.home.room.energyCapacityAvailable - 200, this.home.room.energyCapacityAvailable);
 		}
 	}
 
