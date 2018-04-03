@@ -21,7 +21,7 @@ function Repairer()
     this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
     this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:1 };
 
-    this.opts.memory.resupplyThreshold = 0.5;
+    this.opts.memory.resupplyThreshold = 750;
 }
 
 /// Prototype
@@ -99,7 +99,8 @@ function getJob(actor)
                 ((target.energy != undefined && actor.creep.memory.resupplyThreshold > target.energy / target.energyCapacity) ||
                  (target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold > target.store[RESOURCE_ENERGY] / target.storeCapacity)))
             {
-                console.log(actor.creep.name + ": Target energy level too low!");
+                if (actor.doDebug)
+                    console.log(actor.creep.name + ": Target energy level too low!");
             }
             else
                 return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });

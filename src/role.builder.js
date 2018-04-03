@@ -21,7 +21,7 @@ function Builder()
     this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:3 };
     this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:1 };
 
-    this.opts.memory.resupplyThreshold = 0.5;
+    this.opts.memory.resupplyThreshold = 1000;
 }
 
 /// Prototype
@@ -51,9 +51,9 @@ function getJob(actor)
         var target = JobPrototypeResupply.getResupplyTarget(actor);
         if (target != null)
         {
-            if (actor.creep.memory.resupplyThreshold == undefined ||
-                (target.energy != undefined && actor.creep.memory.resupplyThreshold < target.energy / target.energyCapacity ||
-                 target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold < target.store[RESOURCE_ENERGY] / target.storeCapacity))
+            if (!actor.creep.memory.resupplyThreshold ||
+                (target.energy != undefined && actor.creep.memory.resupplyThreshold < target.energy ||
+                 target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold < target.store[RESOURCE_ENERGY]))
             {
                 return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
             }
