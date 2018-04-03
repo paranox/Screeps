@@ -1,6 +1,7 @@
 var BodyPartMap = require('creepBodyPartMap');
 var Role = require('roleTypes');
 var RoleBase = require('roleBase');
+var JobPrototypePickup = require('job.pickup');
 var JobPrototypeSupply = require('job.supply');
 var JobPrototypeStore = require('job.store');
 var JobPrototypeResupply = require('job.resupply');
@@ -41,9 +42,9 @@ Supplier.prototype.tryDoJob = function(actor)
         if (job.hasStarted == false)
             job.start(actor);
 
-        if (job.jobType != Job.Type.Supply && job.jobType != Job.Type.Resupply)
+        if (job.jobType == Job.Type.Upgrade)
         {
-            // Every 10 ticks, check for Supply targets
+            // Every 10 ticks while doing Upgrade, check for Supply targets
             if (job.startTime < Game.time && (Game.time - job.startTime) % 10 == 0)
             {
                 //console.log(actor.creep.name + ": Working on " + job.jobType +
@@ -129,8 +130,17 @@ function getJob(actor)
 
     if (actor.creep.carry.energy < actor.creep.carryCapacity)
     {
-        // Try to find a target for Resupply job, but don't allow taking from storage only to supply back in storage
+        // Try to find a resource to pick up
         var typeFilter = {};
+        var pickup = JobPrototypePickup.getPickupTarget(actor);
+        if (pickup != null)
+        {
+            //console.log(actor.creep.name + ": Found pickup target " + pickup + " at " + pickup.pos);
+            return Game.empire.factories.job.createFromType(Job.Type.Pickup, { for:actor.creep.name, target:pickup });
+        }
+
+        // Try to find a target for Resupply job, but don't allow taking from storage only to supply back in storage
+        typeFilter = {};
         typeFilter[STRUCTURE_STORAGE] = false;
         var target = JobPrototypeResupply.getResupplyTarget(actor, typeFilter);
 
