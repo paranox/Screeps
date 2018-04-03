@@ -1,6 +1,6 @@
 var BodyPartMap = require('creepBodyPartMap');
 var Role = require('roleTypes');
-var RoleBase = require('rolePrototype');
+var RoleBase = require('roleBase');
 var JobPrototypeSupply = require('job.supply');
 var JobPrototypeStore = require('job.store');
 var JobPrototypeResupply = require('job.resupply');

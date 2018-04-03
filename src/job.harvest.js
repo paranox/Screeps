@@ -1,5 +1,5 @@
 var Utils = require('utils');
-var JobBase = require('jobPrototype');
+var JobBase = require('jobBase');
 var Job = require('jobTypes');
 
 function Harvest(opts)
