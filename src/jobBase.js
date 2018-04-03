@@ -1,3 +1,5 @@
+var JobTypes = require('jobTypes');
+
 function Job(context, opts)
 {
 	//console.log("Job.constructor(" + context.jobName + "|" + context.jobType + ")");
@@ -44,8 +46,13 @@ Job.prototype.readSaveData = function(context, data)
 		console.log("Job save data has no job type defined!");
 		return false;
 	}
+	else if (!JobTypes.Type.hasOwnProperty(data.jobType))
+	{
+		console.log("Job save data has invalid job type '" + data.jobType + "'' defined!");
+		return false;
+	}
 	else
-		context.jobType = data.jobType;
+		context.jobType = JobTypes.Type[data.jobType];
 
 	if (data.startTime != undefined)
 	{
@@ -63,7 +70,7 @@ Job.prototype.readSaveData = function(context, data)
 
 Job.prototype.createSaveData = function(context)
 {
-	var data = { jobType: context.jobType, startTime: context.startTime };
+	var data = { jobType:JobTypes.getNameOf(context.jobType), startTime:context.startTime };
 	if (context.endTime != undefined)
 		data.endTime = context.endTime;
 

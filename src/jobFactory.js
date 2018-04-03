@@ -14,13 +14,14 @@ function createJobFromData(data)
 {
 	if (data != undefined && data != null)
 	{
-		var job = createJobFromType(data.jobType, data.opts);
+		var jobType = Job.Type[data.jobType];
+		var job = createJobFromType(jobType, data.opts);
 
 		if (job != null && job.readSaveData(data))
 			return job;
 	}
 
-	console.log("Failed to create job of type " + Job.getNameOf(data.jobType) + " from data!");
+	console.log("Failed to create job of type " + data.jobType + " from data!");
 	return null;
 }
 

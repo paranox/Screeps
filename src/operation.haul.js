@@ -6,8 +6,8 @@ var Job = require('jobTypes');
 function Haul(opts)
 {
 	//console.log("OperationBase->Haul.constructor(opts: " + JSON.stringify(opts) + ")");
-	this.opName = "Haul";
 	this.opType = Operation.Type.Haul;
+	this.opName = Operation.getNameOf(this.opType);
 	
     this.base = OperationBase;
     this.base.constructor(this, opts);

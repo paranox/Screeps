@@ -1,3 +1,5 @@
+var Role = require('roleTypes');
+
 // TODO: Investigate Object.assign() usage for merging
 // Role.prototype with specific role prototype objects
 // to simulate inheritance of classes better
@@ -7,7 +9,7 @@ function RoleBase(context, roleType)
 	//console.log("Role.constructor(" + context.roleName + ")");
 
 	context.roleType = roleType;
-    context.opts = { memory: { "role": roleType } };
+    context.opts = { memory: { role:Role.getNameOf(roleType) } };
 	context.minimumParts = [WORK, CARRY, MOVE, MOVE];
     context.partMap = {};
 

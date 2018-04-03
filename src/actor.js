@@ -43,15 +43,15 @@ function Actor(creep)
 
     this.roleType = -1;
     this.roleName = "Unknown";
-    if (creep.memory.role != undefined)
+    if (creep.memory.role)
     {
-        if (Role.isDefined(creep.memory.role))
+        if (Role.Type.hasOwnProperty(creep.memory.role))
         {
-            this.roleType = creep.memory.role;
-            this.roleName = Role.getNameOf(this.roleType);   
+            this.roleName = creep.memory.role;
+            this.roleType = Role.Type[creep.memory.role];
         }
         else
-            console.log("Actor " + creep.name + ": Unhandled role parameter: " + creep.memory.role);
+            console.log("Actor " + creep.name + ": Unhandled role name: " + creep.memory.role);
     }
     else
         console.log("Actor " + creep.name + ": No role parameter!");
@@ -130,6 +130,11 @@ Actor.prototype.init = function(role)
 
 Actor.prototype.run = function()
 {
+    if (this.doDebug)
+        console.log("Actor " + this.creep.name + ": run()");
+
+    if (this.creep.spawning)
+        return;
 
     /*if (creep.memory.operationID != undefined)
     {
@@ -155,9 +160,12 @@ Actor.prototype.run = function()
 
 Actor.prototype.end = function()
 {
-	if (this.doDebug)
+    if (this.doDebug)
 		console.log("Actor " + this.creep.name + ": end()");
 
+    if (this.creep.spawning)
+        return;
+    
     if (this.role != null)
     	this.role.end(this);
     else

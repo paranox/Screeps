@@ -7,8 +7,8 @@ var Job = require('jobTypes');
 function Harvest(opts)
 {
 	//console.log("OperationBase->Harvest.constructor(opts: " + JSON.stringify(opts) + ")");
-	this.opName = "Harvest";
 	this.opType = Operation.Type.Harvest;
+	this.opName = Operation.getNameOf(this.opType);
 	
     this.base = OperationBase;
     this.base.constructor(this, opts);

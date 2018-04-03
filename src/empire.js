@@ -68,8 +68,33 @@ module.exports =
 	    {
 	        creep = Game.creeps[name];
 
-	        if (creep.spawning)
-	            continue;
+	        /// START Temporary Creep memory adjustments go here
+    		var oldRoleType = creep.memory.role;
+        	if (typeof oldRoleType == "number")
+        	{
+        		var newRoleType = Role.getNameOf(oldRoleType);
+            	creep.memory.role = newRoleType;
+				console.log("Updated creep " + creep.name + " role type from " + oldRoleType + " to: " + newRoleType);
+        	}
+
+            if (Array.isArray(creep.memory.jobs))
+            {
+            	var Job = null;
+            	var oldJobType, newJobType;
+            	for (var i = 0; i < creep.memory.jobs.length; i++)
+            	{
+            		oldJobType = creep.memory.jobs[i].jobType;
+            		if (typeof oldJobType == "number")
+            		{
+            			if (Job == null) Job = require('jobTypes');
+		        		newJobType = Job.getNameOf(oldJobType);
+		            	creep.memory.jobs[i].jobType = newJobType;
+						console.log("Updated creep " + creep.name + " job " + i + " type from " +
+							oldJobType + " to: " + newJobType);
+            		}
+            	}
+            }
+	        /// END Creep Temporary memory adjustments
 
 	        Memory.creeps[name].id = creep.id;
 
@@ -144,6 +169,37 @@ module.exports =
 	    {
 	        for (const id in Memory.empire.operations)
 	        {
+		        /// START Temporary Operation memory adjustments go here
+	        	if (typeof Memory.empire.operations[id].opType == "number")
+	            	Memory.empire.operations[id].opType = Operation.Type[Memory.empire.operations[id].opType];
+	            if (Memory.empire.operations[id].opType == Operation.getNameOf(Operation.Type.Home))
+	            {
+	            	var spawn = Game.getObjectById(Memory.empire.operations[id].home.spawnID)
+	            	if (spawn != null && spawn.memory.spawnQueue)
+	            	{
+	            		for (const order in spawn.memory.spawnQueue)
+	            		{
+	            			if (spawn.memory.spawnQueue[order].blueprint && spawn.memory.spawnQueue[order].blueprint.opts &&
+	            				spawn.memory.spawnQueue[order].blueprint.opts.memory &&
+	            				spawn.memory.spawnQueue[order].blueprint.opts.memory.role)
+	            			{
+	            				var oldRoleType = spawn.memory.spawnQueue[order].blueprint.opts.memory.role;
+	            				if (typeof oldRoleType == "number")
+	            				{
+		            				var newRoleType =
+		            					Role.getNameOf(spawn.memory.spawnQueue[order].blueprint.opts.memory.role);
+
+	            					spawn.memory.spawnQueue[order].blueprint.opts.memory.role = newRoleType;
+
+		            				console.log("Updated spawn order " + order + " creep role type from " +
+		            					oldRoleType + " to: " + newRoleType);
+	            				}
+	            			}
+	            		}
+	            	}
+	            }
+		        /// END Operation Temporary memory adjustments
+
 	            op = OperationFactory.createFromData(Memory.empire.operations[id]);
 	            Game.empire.operations[op.id] = op;
 	        }
@@ -158,6 +214,7 @@ module.exports =
 	    for (var id in Game.empire.actors)
 	    {
 	        actor = Game.empire.actors[id];
+	        
 	        if (actor.creep.memory.operationID != undefined)
 	        {
 	            op = Game.empire.operations[actor.creep.memory.operationID];

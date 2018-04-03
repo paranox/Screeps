@@ -10,7 +10,7 @@ var Job = require('jobTypes');
 function Harvester()
 {
     //console.log("Harvester.constructor()");
-    this.roleName = "Harvester";
+    this.roleName = Role.getNameOf(Role.Type.Harvester);
 
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Harvester);

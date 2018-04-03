@@ -61,9 +61,10 @@ function OperationBase(context, opts)
 OperationBase.prototype.readSaveData = function(context, data)
 {
 	context.doDebug = data.doDebug == true;
-	context.opName = (data.opName != undefined && data.opName != null ? data.opName : "Unnamed");
-	context.opType = (data.opType != undefined && data.opType != null ? data.opType : -1);
-	context.id = (data.id != undefined && data.id != null ? data.id : Game.empire.consumeNewOperationID());
+	context.id = data.id != undefined && data.id != null ? data.id : Game.empire.consumeNewOperationID();
+
+	context.opName = data.opName;
+	context.opType = data.opType && Operation.Type.hasOwnProperty(data.opType) ? Operation.Type[data.opType] : -1;
 
 	if (Array.isArray(data.jobs))
 	{
@@ -147,7 +148,7 @@ OperationBase.prototype.createSaveData = function(context)
 
 	memoryObject.id = context.id;
 	memoryObject.opName = context.opName;
-	memoryObject.opType = context.opType;
+	memoryObject.opType = Operation.getNameOf(context.opType);
 
     if (context.jobs.length > 0)
     {
@@ -220,7 +221,10 @@ OperationBase.prototype.update = function()
 		for (i = 0; i < this.actors.length; i++)
 		{
 			actor = this.actors[i];
-			this.modifyRoleActorCount(actor.roleType, 1);
+			if (actor.creep.spawning)
+				this.modifyRoleActorCount(Role.Type[actor.creep.memory.role], 1);
+			else
+				this.modifyRoleActorCount(actor.roleType, 1);
 		}
 	}
 
@@ -325,8 +329,11 @@ OperationBase.prototype.update = function()
 			else
 				nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
 
+			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName +
+				", current count: " + role.current);
+
 			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
-			Game.empire.factories.creep.addBlueprintToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
+			Game.empire.factories.creep.addOrderToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
 				this.home.room.energyCapacityAvailable - 200, this.home.room.energyCapacityAvailable);
 		}
 	}
@@ -413,7 +420,16 @@ OperationBase.prototype.addActor = function(actor)
 		else
 		{
 			if (true)//this.doDebug)
-				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name);
+			{
+				var roleType = -1;
+				if (actor.creep.spawning)
+					roleType = Role.Type[actor.creep.memory.role];
+				else
+					roleType = actor.roleType;
+				
+				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name +
+					". Actor count in role was " + this.roles[roleType].current);
+			}
 
 			delete this.home.spawnOrdersPlaced[spawnOrderID];
 		}

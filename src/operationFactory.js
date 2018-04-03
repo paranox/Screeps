@@ -8,13 +8,14 @@ function createOperationFromData(data)
 {
 	if (data != undefined && data != null)
 	{
-		var op = createOperationFromType(data.opType, data.opts);
+		var opType = Operation.Type[data.opType];
+		var op = createOperationFromType(opType, data.opts);
 
 		if (op != null && op.readSaveData(data))
 			return op;
 	}
 
-	console.log("Failed to create operation of type " + Operation.getNameOf(data.opType) + " from data!");
+	console.log("Failed to create operation of type " + data.opType + " from data!");
 	return null;
 }
 

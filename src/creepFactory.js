@@ -680,12 +680,15 @@ module.exports =
                 order.maxCost = opts.maxCost;
         }
 
+        if (blueprint.opts && blueprint.opts.memory)
+            order.role = blueprint.opts.memory.role;
+        
         order.blueprint = blueprint;
 
         return order;
     },
 
-    addBlueprintToSpawnQueue: function(spawn, id, priority, blueprint, minCost, maxCost)
+    addOrderToSpawnQueue: function(spawn, id, priority, blueprint, minCost, maxCost)
     {
         if (blueprint == null)
             return;
@@ -713,7 +716,7 @@ module.exports =
             "')" + spawn.pos + "\n" + JSON.stringify(spawnOrder));
     },
 
-    getEntryFromSpawnQueue: function(spawn)
+    getOrderFromSpawnQueue: function(spawn)
     {
         if (!spawn.memory.spawnQueue)
             return null;
@@ -741,7 +744,7 @@ module.exports =
         return chosenEntry;
     },
 
-    tryRemoveEntryFromSpawnQueue: function(spawn, id)
+    tryRemoveOrderFromSpawnQueue: function(spawn, id)
     {
         if (!spawn.memory.spawnQueue || !spawn.memory.spawnQueue.hasOwnProperty(id))
             return false;
