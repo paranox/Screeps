@@ -136,20 +136,21 @@ Repair.prototype.getRepairTarget = function(room, actor)
                 break;
             case STRUCTURE_ROAD:
                 if (targetHealth > 0.75) continue;
-                else if (targetHealth < 0.25) multiplier = 1.5;
-                else multiplier = 0.75;
+                else if (target.hits > 1000) multiplier = 0.75;
+                else if (target.hits < 500) multiplier = 1.5;
                 break;
             case STRUCTURE_RAMPART:
                 if (targetHealth > 0.5) continue;
                 else if (target.hits > 1000000) multiplier = 0.25;
-                else if (target.hits < 50000) multiplier = 1.5;
-                else if (target.hits < 250000) multiplier = 1.125;
+                else if (target.hits > 100000) multiplier = 0.5;
+                else if (target.hits < 5000) multiplier = 1.75;
+                else if (target.hits < 20000) multiplier = 1.25;
                 break;
             case STRUCTURE_WALL:
                 if (targetHealth > 0.5) continue;
-                else if (target.hits > 10000000) multiplier = 0.25;
-                else if (target.hits < 50000) multiplier = 1.5;
-                else if (target.hits < 75000) multiplier = 1.125;
+                else if (target.hits > 10000000) multiplier = 0.125;
+                else if (target.hits < 5000) multiplier = 1.5;
+                else if (target.hits < 25000) multiplier = 1.125;
                 else if (target.hits < 125000) multiplier = 0.5;
                 break;
         }

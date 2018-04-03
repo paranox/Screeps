@@ -106,10 +106,14 @@ Resupply.prototype.getResupplyTarget = function(actor, typeFilter)
 	    {
 	        filter: (structure) =>
 	        {
-	        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) && !typeFilter[structure.structureType])
+	        	if (typeFilter != undefined && typeFilter.hasOwnProperty(structure.structureType) &&
+	        		!typeFilter[structure.structureType])
 	        	{
 	        		if (actor.doDebug)
-	        			console.log(actor.creep.name + ": Structure type " + structure + " was type-filtered out from resupply targets!");
+	        		{
+	        			console.log(actor.creep.name + ": Structure type " + structure +
+	        				" was type-filtered out from resupply targets!");
+	        		}
 	        		
 	        		return false;	
 	        	}

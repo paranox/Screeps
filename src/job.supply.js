@@ -142,15 +142,15 @@ Supply.prototype.getSupplyTarget = function(actor, typeFilter)
     	target = targets[i];
     	switch (target.structureType)
     	{
+			case STRUCTURE_TOWER:
+				priority = 3.0;
+				break;
     		case STRUCTURE_EXTENSION:
     		case STRUCTURE_SPAWN:
-    			priority = 3.0;
+    			priority = 1.5;
     			break;
 			case STRUCTURE_STORAGE:
-				priority = 2.0;
-				break;
-			case STRUCTURE_TOWER:
-				priority = 1.5;
+				priority = 1.25;
 				break;
 			default:
 				priority = 1.0;

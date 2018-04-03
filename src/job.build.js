@@ -96,14 +96,14 @@ Build.prototype.getBuildTarget = function(actor)
         {
             case STRUCTURE_RAMPART:
             case STRUCTURE_TOWER:
-                priority = 2.0;
+                priority = 3.0;
                 break;
             case STRUCTURE_EXTENSION:
-            	priority = 1.75;
+            	priority = 1.5;
             	break;
             case STRUCTURE_CONTAINER:
             case STRUCTURE_STORAGE:
-                priority = 1.5;
+                priority = 1.25;
                 break;
             case STRUCTURE_WALL:
                 priority = 0.75;
@@ -116,7 +116,7 @@ Build.prototype.getBuildTarget = function(actor)
         }
 
         priority += target.progress / target.progressTotal;
-        priority -= actor.creep.pos.getRangeTo(target) / 20.0;
+        priority -= actor.creep.pos.getRangeTo(target) / 30.0;
 
         //console.log("Build Target[" + i + "/" + allTarges.length + "]" + target.structureType + " at " + target.pos +
         //	" has priority " + priority + ", " + (Math.round(100 * target.progress / target.progressTotal) / 100) +
