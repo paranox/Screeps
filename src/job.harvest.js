@@ -13,7 +13,7 @@ function Harvest(opts)
 
 	if (opts != undefined && opts != null)
 	{
-		if (opts.target != null)
+		if (opts.target)
 			this.target = opts.target;
 	}
 }
@@ -26,7 +26,7 @@ Harvest.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	if (data.target != undefined && data.target != null)
+	if (data.target)
 	{
 		this.target = Game.getObjectById(data.target);
 
@@ -46,7 +46,7 @@ Harvest.prototype.createSaveData = function()
 	var data = this.base.createSaveData(this);
 
 	if (this.target != null)
-		data["target"] = this.target.id;
+		data.target = this.target.id;
 
 	return data;
 };
@@ -61,7 +61,7 @@ Harvest.prototype.onUpdate = function(actor)
 	if (actor.doDebug)
 		console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    if (this.target == undefined || this.target == null)
+    if (!this.target)
     {
     	var targets = actor.creep.room.find(FIND_SOURCES);
 

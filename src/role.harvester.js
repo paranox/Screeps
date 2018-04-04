@@ -15,9 +15,9 @@ function Harvester()
     this.base = Object.create(RoleBase);
     this.base.constructor(this, Role.Type.Harvester);
 
-    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:1.5 };
+    this.partMap[WORK] = { type:BodyPartMap.Type.Weight, value:1.0 };
     this.partMap[CARRY] = { type:BodyPartMap.Type.Weight, value:1.0 };
-    this.partMap[MOVE] = { type:BodyPartMap.Type.PerPartOfType, value:0.5, opts: { part:WORK } };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:1.0 };
 }
 
 /// Prototype
@@ -30,16 +30,12 @@ Harvester.prototype.run = function(actor)
     if (this.tryDoJob(actor))
         return;
 
-    var job = getJob(actor);
+    var job = this.getJob(actor);
     if (job != null)
         actor.addJob(job);
 }
 
-module.exports = Harvester.prototype;
-
-/// Internal functions
-
-function getJob(actor)
+Harvester.prototype.getJob = function(actor)
 {
     if (actor.operation != null)
     {
@@ -77,3 +73,7 @@ function getJob(actor)
 
     return null;
 }
+
+module.exports = Harvester.prototype;
+
+/// Internal functions
