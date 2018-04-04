@@ -170,8 +170,22 @@ module.exports =
 	        for (const id in Memory.empire.operations)
 	        {
 		        /// START Temporary Operation memory adjustments go here
+	            if (!Memory.empire.operations[id].opType && Memory.empire.operations[id].opName &&
+	            	Operation.Type.hasOwnProperty(Memory.empire.operations[id].opName))
+	            {
+	            	Memory.empire.operations[id].opType = Operation.Type[Memory.empire.operations[id].opName];
+
+    				console.log("Set Operation " + id + " type property from " +
+    					Memory.empire.operations[id].opName + " to: " + Memory.empire.operations[id].opType);
+	            }
 	        	if (typeof Memory.empire.operations[id].opType == "number")
-	            	Memory.empire.operations[id].opType = Operation.Type[Memory.empire.operations[id].opType];
+	        	{
+	        		var oldOpType = Memory.empire.operations[id].opType;
+	        		var newOpType = Operation.getNameOf(oldOpType);
+	            	Memory.empire.operations[id].opType = newOpType;
+
+    				console.log("Updated Operation " + id + " type property from " + oldOpType + " to: " + newOpType);
+	        	}
 	            if (Memory.empire.operations[id].opType == Operation.getNameOf(Operation.Type.Home))
 	            {
 	            	var spawn = Game.getObjectById(Memory.empire.operations[id].home.spawnID)
@@ -201,7 +215,8 @@ module.exports =
 		        /// END Operation Temporary memory adjustments
 
 	            op = OperationFactory.createFromData(Memory.empire.operations[id]);
-	            Game.empire.operations[op.id] = op;
+	            if (op != null)
+	            	Game.empire.operations[op.id] = op;
 	        }
 	    }
 	},
@@ -214,12 +229,15 @@ module.exports =
 	    for (var id in Game.empire.actors)
 	    {
 	        actor = Game.empire.actors[id];
-	        
+
 	        if (actor.creep.memory.operationID != undefined)
 	        {
 	            op = Game.empire.operations[actor.creep.memory.operationID];
-	            actor.setOperation(op);
-	            op.addActor(actor);
+	            if (op != null)
+	            {
+		            actor.setOperation(op);
+		            op.addActor(actor);
+		        }
 	        }
 	    }
 	},
