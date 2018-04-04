@@ -16,8 +16,16 @@ function Harvest(opts)
 	if (opts == null)
 		return;
 	
-	if (opts.target != null)
+	if (opts.target instanceof Source)
+	{
 		this.target = opts.target;
+		this.targetPos = opts.target.pos;
+	}
+	else if (opts.targetPos)
+		this.targetPos = opts.targetPos;
+
+    if (opts.dropOff)
+        this.dropOff = opts.dropOff;
 }
 
 /// Memory functions, should always be called via context's override
@@ -33,11 +41,25 @@ Harvest.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	if (data != null)
+	if (!data)
+		return;
+	
+	if (data.target)
 	{
-		if (data.target != undefined)
-			this.target = Game.getObjectById(data.target);
+		this.target = Game.getObjectById(data.target);
+
+		if (!this.target)
+			console.log("Operation " + this.opName + "[" + this.id + "]: Unable to determine target object by id " + data.target);
 	}
+	if (data.targetPos)
+	{
+		this.targetPos = new RoomPosition(data.targetPos.x, data.targetPos.y, data.targetPos.roomName);
+	}
+
+    if (typeof data.dropOff == "object")
+        this.dropOff = new RoomPosition(data.dropOff.x, data.dropOff.y, data.dropOff.roomName);
+    else if (typeof data.dropOff == "string")
+    	this.dropOff = Game.getObjectById(data.dropOff);
 
 	return true;
 }
@@ -46,8 +68,15 @@ Harvest.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 	
-	if (this.target != null)
+	if (this.target)
 		data.target = this.target.id;
+	if (this.targetPos)
+		data.targetPos = this.targetPos
+
+    if (this.dropOff instanceof RoomPosition)
+        data.dropOff = this.dropOff;
+    else if (this.dropOff instanceof Structure)
+    	data.dropOff = this.dropOff.id;
 
 	return data;
 }
@@ -65,13 +94,66 @@ Harvest.prototype.getJob = function(actor)
 	if (actor.creep.carry.energy >= actor.creep.carryCapacity)
 	{
 		//console.log("Operation " + this.opName + ": Actor full of energy!");
+		if (this.dropOff instanceof RoomPosition)
+		{
+			if (Game.rooms[this.dropOff.roomName])
+			{
+				var storeTarget = null;
+				var structures = this.dropOff.lookFor(LOOK_STRUCTURES);
+				for (var i = 0; i < structures.length; i++)
+				{
+					if (structures[i].storeCapacity > 0)
+					{
+						storeTarget = structures[i];
+						break;
+					}
+				}
+
+				if (storeTarget != null)
+				{
+					if (this.doDebug)
+					{
+						console.log("Operation " + this.opName + "[" + this.id + "]: " + actor.creep.name +
+							" dropping off at " + storeTarget);
+					}
+
+					return Game.empire.factories.job.createFromType(Job.Type.Store, { for:actor.creep.name, target:storeTarget })
+				}
+
+				console.log("Operation " + this.opName + "[" + this.id + "]: " + actor.creep.name +
+					" couldn't find anything to transfer energy to at dropOff " + this.dropOff);
+			}
+		}
+		else if (this.dropOff instanceof Structure)
+			return Game.empire.factories.job.createFromType(Job.Type.Store, { for:actor.creep.name, target:this.dropOff });
+
 		return null;
 	}
 
-	if (this.target == null)
+	if (!this.target)
 	{
-		console.log("Operation " + this.opName + "[" + this.id + "]: No target specified!");
-		return null;
+		if (this.targetPos)
+		{
+			if (this.targetPos.roomName != actor.creep.room.name)
+			{
+				return Game.empire.factories.job.createFromType(Job.Type.MoveTo,
+					{ for:actor.creep.name, targetName:this.targetPos.roomName})
+			}
+			else
+			{
+				this.target = Game.rooms[this.targetPos.roomName].lookForAt(FIND_SOURCES, this.targetPos);
+				if (!this.target)
+				{
+					console.log("Operation " + this.opName + "[" + this.id + "]: Unable to find Source at " + this.targetPos);
+					return null;
+				}
+			}
+		}
+		else
+		{
+			console.log("Operation " + this.opName + "[" + this.id + "]: No target specified!");
+			return null;
+		}
 	}
 
 	if (this.target.energy == 0)
