@@ -35,8 +35,10 @@ function OperationBase(context, opts)
 	if (context.getConstructorOptsHelpString == undefined)
 		context.getConstructorOptsHelpString = this.getConstructorOptsHelpString;
 
-	//if (context.start == undefined)
-	//	context.start = this.start;
+	if (context.start == undefined)
+		context.start = this.start;
+	if (context.onStart == undefined)
+		context.onStart = this.onStart;
 	if (context.update == undefined)
 		context.update = this.update;
 	if (context.onUpdate == undefined)
@@ -68,6 +70,9 @@ OperationBase.prototype.readSaveData = function(context, data)
 
 	context.opName = data.opName;
 	context.opType = data.opType && Operation.Type.hasOwnProperty(data.opType) ? Operation.Type[data.opType] : -1;
+
+	if (data.isHalted == true)
+		context.isHalted = true;
 
 	if (Array.isArray(data.jobs))
 	{
@@ -155,6 +160,9 @@ OperationBase.prototype.createSaveData = function(context)
 	memoryObject.opName = context.opName;
 	memoryObject.opType = Operation.getNameOf(context.opType);
 
+	if (context.isHalted == true)
+		memoryObject.isHalted = true;
+
     if (context.jobs.length > 0)
     {
         data.jobs = [];
@@ -206,6 +214,16 @@ OperationBase.prototype.createSaveData = function(context)
 OperationBase.prototype.getConstructorOptsHelpString = function()
 {
 	return "id, home{}, roles{}, actors[]";
+}
+
+OperationBase.prototype.start = function()
+{
+	this.onStart();
+}
+
+OperationBase.prototype.onStart = function()
+{
+	// Should be overridden to provide functionality
 }
 
 OperationBase.prototype.update = function()

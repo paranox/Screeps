@@ -224,7 +224,6 @@ module.exports =
 	onTickStart: function()
 	{
 		//console.log("Empire.onTickStart()");
-
 		var actor, op;
 	    for (var id in Game.empire.actors)
 	    {

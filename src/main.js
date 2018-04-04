@@ -31,6 +31,13 @@ module.exports.loop = function ()
     for (var id in Game.empire.operations)
     {
         op = Game.empire.operations[id];
+        //console.log("Operation " + id + "(" + op.opType + "), starting...");
+        op.start();
+    }
+
+    for (var id in Game.empire.operations)
+    {
+        op = Game.empire.operations[id];
         //console.log("Operation " + id + "(" + op.opType + "), updating...");
         op.update();
     }

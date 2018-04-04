@@ -13,27 +13,6 @@ function Expand(opts)
     this.base = OperationBase;
     this.base.constructor(this, opts);
 
-	var roomCount = 0;
-	for (const id in Game.rooms)
-	{
-		if (Game.rooms[id].controller.my)
-		{
-			//console.log("I'm controlling room " + id);
-			roomCount++;
-		}
-	}
-
-	if (Game.gcl.level <= roomCount)
-	{
-		//console.log("Expand operation is not possible due to GCL " + Game.gcl.level +
-		//	" is less than or equal to the number of controlled rooms " + roomCount +
-		//	"!\nProgress: " + Game.gcl.progress + " / " + Game.gcl.progressTotal);
-
-		this.isHalted = true;
-	}
-	//else
-	//	console.log("I can expand! GCL " + Game.gcl.level + " > " + roomCount);
-
 	if (!opts)
 		return;
 	
@@ -74,6 +53,11 @@ Expand.prototype.readSaveData = function(data)
 		this.target = Game.rooms.hasOwnProperty(data.target) ? Game.rooms[data.target] : null;
 	}
 
+	if (data.reservationTicks)
+		this.reservationTicks = data.reservationTicks;
+	if (data.lastObserved)
+		this.lastObserved = data.lastObserved;
+
 	return true;
 }
 
@@ -86,6 +70,11 @@ Expand.prototype.createSaveData = function()
 	else if (this.targetName)
 		data.target = this.targetName;
 
+	if (this.reservationTicks)
+		data.reservationTicks = this.reservationTicks;
+	if (this.lastObserved)
+		data.lastObserved = this.lastObserved;
+
 	return data;
 }
 
@@ -97,20 +86,116 @@ Expand.prototype.getConstructorOptsHelpString = function()
     return OperationBase.getConstructorOptsHelpString() + ", target, targetName";
 }
 
-Expand.prototype.onUpdate = function()
+Expand.prototype.onStart = function()
 {
+	this.roomCount = 0;
 
+	var me = null;
+	var room;
+	for (const id in Game.rooms)
+	{
+		room = Game.rooms[id];
+		if (room.controller.my)
+		{
+			//console.log("I'm controlling room " + id);
+
+			if (me == null)
+				me = room.controller.owner.username;
+
+			this.roomCount++;
+		}
+	}
+
+	if (this.target)
+	{
+		if (this.target.controller.my)
+		{
+			if (!this.isHalted)
+				console.log("Operation " + this.opName + "[" + this.id + "]: Room " + this.target + " already claimed successfully!");
+
+			this.isHalted = true;
+		}
+		else if (me != null && this.target.controller.reservation && this.target.controller.reservation.username != me)
+		{
+			this.reservationTicks = room.controller.reservation.ticksToEnd;
+			this.lastObserved = Game.time;
+
+			if (!this.isHalted && this.reservationTicks > 5000)
+			{
+				this.isHalted = true;
+
+				console.log("Operation " + this.opName + "[" + this.id + "]: Room " + this.target +
+					" fully reserved, halting operation!");
+			}
+			else if (this.isHalted && this.reservationTicks < 4000)
+			{
+				this.isHalted = false;
+
+				console.log("Operation " + this.opName + "[" + this.id + "]: Room " + this.target +
+					" reservation dropped to " + this.reservationTicks + " , resuming operation!");
+			}
+		}
+	}
+	else
+	{
+		this.estimatedReservationTicks = this.reservationTicks - (Game.time - this.lastObserved);
+
+		//console.log("No visibility to " + this.targetName + ", estimated reservation ticks: " +
+		//	this.estimatedReservationTicks + "!");
+
+		if (this.isHalted && this.estimatedReservationTicks < 4000)
+		{
+			this.isHalted = false;
+
+				console.log("Operation " + this.opName + "[" + this.id + "]: Room " + this.target +
+					" estimated reservation dropped to " + this.estimatedReservationTicks + " , resuming operation!");
+		}
+	}
+
+	this.canClaim = Game.gcl.level > this.roomCount;
 }
 
 Expand.prototype.getJob = function(actor)
 {
-	var opts = { for:actor.creep.name, targetName:this.targetName };
-	if (this.target) opts.target = this.target;
+	var opts = { for:actor.creep.name };
 
-	console.log("Operation " + this.opName + "[" + this.id + "]: Giving " + actor.creep.name +
-		" Claim job with opts: " + Utils.objectToString(opts, 0, 1));
+	if (this.target)
+	{
+		if (this.target.controller.my)
+			return null;
+		if (this.reservationTicks)
 
-	return Game.empire.factories.job.createFromType(Job.Type.Claim, opts);
+		opts.target = this.target;
+
+		if (this.canClaim)
+		{
+			console.log("Operation " + this.opName + "[" + this.id + "]: Giving " + actor.creep.name +
+				" Claim job with opts: " + Utils.objectToString(opts, 0, 1));
+		}
+		else
+		{
+			console.log("Expand operation is not possible! GCL " + Game.gcl.level +
+				" needs to be greater than the number of controlled rooms: " + this.roomCount +
+				"!\nProgress to GCL level " + (Game.gcl.level + 1) + ": " + Game.gcl.progress + " / " + Game.gcl.progressTotal);
+
+			opts.doReserve = true;
+		}
+
+		return Game.empire.factories.job.createFromType(Job.Type.Claim, opts);
+	}
+
+	if (this.targetName)
+	{
+		opts.targetName = this.targetName;
+
+		console.log("Operation " + this.opName + "[" + this.id + "]: Giving " + actor.creep.name +
+			" MoveTo job with opts: " + Utils.objectToString(opts, 0, 1));
+
+		return Game.empire.factories.job.createFromType(Job.Type.MoveTo, opts);
+	}
+
+	console.log("Operation " + this.opName + "[" + this.id + "]: Unable to give job to " + actor.creep.name);
+	return null;
 }
 
 Expand.prototype.createDefaultRoles = function()
