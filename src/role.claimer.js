@@ -12,7 +12,7 @@ function Claimer()
 
     this.minimumParts = [CLAIM, MOVE];
     this.partMap[CLAIM] = { type:BodyPartMap.Type.Weight, value:1 };
-    this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:2 };
+    this.partMap[MOVE] = { type:BodyPartMap.Type.PerOtherPart, value:1 };
 }
 
 /// Prototype
