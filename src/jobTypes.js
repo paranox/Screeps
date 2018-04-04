@@ -2,16 +2,17 @@ module.exports =
 {
 	Type:Object.freeze(
 		{
-			Harvest:  0,
-			Build:    1,
-			Upgrade:  2,
-			Repair:   3,
-			Supply:   4,
-			Store:    5,
-			Resupply: 6,
-			Wait:     7,
-			Pickup:   8,
-			Claim:    9
+			Harvest:   0,
+			Build:     1,
+			Upgrade:   2,
+			Repair:    3,
+			Supply:    4,
+			Store:     5,
+			Resupply:  6,
+			Wait:      7,
+			Pickup:    8,
+			Claim:     9,
+			MoveTo:   10,
 		}
 	),
 
