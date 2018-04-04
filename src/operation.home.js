@@ -283,8 +283,8 @@ Home.prototype.spawnUpdate = function()
             var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
             var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
 
-            console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
-                "\n" + JSON.stringify(spawnQueueEntry));
+            //console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
+            //    "\n" + JSON.stringify(spawnQueueEntry));
 
             if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, spawnQueueEntry.blueprint, minCost, maxCost))
             {

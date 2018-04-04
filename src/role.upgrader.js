@@ -48,7 +48,8 @@ function getJob(actor)
     if (actor.creep.carry.energy == 0)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
-        if (target != null)
+
+        if (target)
             return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
 
         return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });

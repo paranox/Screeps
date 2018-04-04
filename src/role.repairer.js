@@ -93,18 +93,9 @@ function getJob(actor)
     if (actor.creep.carry.energy == 0)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
-        if (target != null)
-        {
-            if (actor.creep.memory.resupplyThreshold != undefined &&
-                ((target.energy != undefined && actor.creep.memory.resupplyThreshold > target.energy / target.energyCapacity) ||
-                 (target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold > target.store[RESOURCE_ENERGY] / target.storeCapacity)))
-            {
-                if (actor.doDebug)
-                    console.log(actor.creep.name + ": Target energy level too low!");
-            }
-            else
-                return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
-        }
+
+        if (target)
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
 
         return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }

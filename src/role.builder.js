@@ -49,15 +49,48 @@ function getJob(actor)
     if (actor.creep.carry.energy == 0)
     {
         var target = JobPrototypeResupply.getResupplyTarget(actor);
-        if (target != null)
+
+        if (target && actor.creep.memory.resupplyThreshold)
         {
-            if (!actor.creep.memory.resupplyThreshold ||
-                (target.energy != undefined && actor.creep.memory.resupplyThreshold < target.energy ||
-                 target.store[RESOURCE_ENERGY] != undefined && actor.creep.memory.resupplyThreshold < target.store[RESOURCE_ENERGY]))
+            var threshold = actor.creep.memory.resupplyThreshold;
+
+            var amount;
+            if (target.energy)
             {
-                return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+                amount = threshold <= 1.0 ? target.energy / target.energyCapacity : target.energy;
+
+                if (threshold > amount)
+                {
+                    if (true)//actor.doDebug)
+                    {
+                        console.log(actor.creep.name + ": Target " + target + " energy level: " +
+                            target.energy + "/" + target.energyCapacity + ", " + amount + "<" + threshold + " is too low!");
+                    }
+
+                    target = null;
+                }
             }
+            else if (target.store[RESOURCE_ENERGY])
+            {
+                amount = threshold <= 1.0 ? target.store[RESOURCE_ENERGY] / target.storeCapacity : target.store[RESOURCE_ENERGY];
+
+                if (threshold > amount)
+                {
+                    if (true)//actor.doDebug)
+                    {
+                        console.log(actor.creep.name + ": Target " + target + " energy stores: " +
+                            target.store[RESOURCE_ENERGY] + "/" + target.storeCapacity + ", " + amount + "<" + threshold + " is too low!");
+                    }
+
+                    target = null;
+                }
+            }
+            else
+                console.log(actor.creep.name + ": Target " + target + " doesn't have energy storage at all!");
         }
+
+        if (target)
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
 
         return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
     }

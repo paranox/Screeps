@@ -55,9 +55,9 @@ Resupply.prototype.createSaveData = function()
 	var data = this.base.createSaveData(this);
 
 	if (this.target != undefined && this.target != null)
-		data["target"] = this.target.id;
+		data.target = this.target.id;
 	if (this.waitPos != undefined)
-		data["waitPos"] = this.waitPs;
+		data.waitPos = this.waitPs;
 
 	return data;
 }
@@ -72,32 +72,8 @@ Resupply.prototype.getResupplyTarget = function(actor, typeFilter)
 		for (var id in this.targets)
 		{
 			target = this.targets[id];
-			if (target.energyCapacity != undefined)
-			{
-				if (target.energy > 0)
-				{
-					if (actor.doDebug)
-						console.log("Object " + id + " " + target + " has " + target.energy + "/" + target.energyCapacity + " energy!");
-
-					targets.push(target);
-				}
-				else if (actor.doDebug)
-					console.log("Object " + id + " " + target + " is out of energy!");
-			}
-			else if (target.storeCapacity != undefined)
-			{
-				if (target.store[RESOURCE_ENERGY] > 0)
-				{
-					if (actor.doDebug)
-						console.log("Object " + id + " " + target + " has " + target.store[RESOURCE_ENERGY] + "/" + target.storeCapacity + " energy!");
-
-					targets.push(target);
-				}
-				else if (actor.doDebug)
-					console.log("Object " + id + " " + target + " store is out of energy!");
-			}
-			else if (actor.doDebug)
-				console.log("Object " + id + " " + target + " is ineligible for Supply target");
+			if (validateTarget(actor, target))
+				targets.push(target);
 		}
 	}
 	else
@@ -118,8 +94,13 @@ Resupply.prototype.getResupplyTarget = function(actor, typeFilter)
 	        		return false;	
 	        	}
 
-	            return (structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) &&
-	            	structure.store[RESOURCE_ENERGY] > 0;
+	        	if ((structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE) &&
+	        		validateTarget(actor, structure))
+	        	{
+	        		return true;
+	        	}
+
+	            return false;
 	        }
 	    });
 	}
@@ -188,38 +169,39 @@ Resupply.prototype.onUpdate = function(actor)
 	{
 		case OK:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Resupplied from target at " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Resupplied from target at " + this.target.pos);
 
 			break;
 		case ERR_NOT_ENOUGH_RESOURCES:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": No resources left, unable to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": No resources left, unable to resupply from target at " + this.target.pos);
 
-            this.wait(actor);
+            this.finish(actor, false);
+            //this.wait(actor);
 
 			break;
 		case ERR_NOT_IN_RANGE:
 	        if (actor.doDebug)
-	            console.log(actor.creep.name + ": Moving to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
+	            console.log(actor.creep.name + ": Moving to resupply from target at " + this.target.pos);
 
 	        actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: '#ffaa00' } } );
 
 			break;
 		case ERR_FULL:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Capacity full, unable to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Capacity full, unable to resupply from target at " + this.target.pos);
 
             this.finish(actor, true);
 
 			break;
         case ERR_BUSY:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Creep busy, unable to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Creep busy, unable to resupply from target at " + this.target.pos);
 
             break;
 		default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to resupply from target at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to resupply from target at " + this.target.pos);
 
 			break;
     }
@@ -250,3 +232,68 @@ Resupply.prototype.wait = function(actor)
 }
 
 module.exports = Resupply.prototype;
+
+/// Internal functions
+
+function validateTarget(actor, target)
+{
+    var threshold = 0;
+    if (actor.creep.memory.resupplyThreshold)
+        threshold = actor.creep.memory.resupplyThreshold;
+
+    var amount;
+    if (target.energy)
+    {
+    	if (target.energy < 1)
+    	{
+            if (actor.doDebug)
+                console.log(actor.creep.name + ": Target " + target + " has no energy left!");
+
+    		return false;
+    	}
+
+        amount = threshold <= 1.0 ? target.energy / target.energyCapacity : target.energy;
+
+        if (amount < threshold)
+        {
+            if (actor.doDebug)
+            {
+                console.log(actor.creep.name + ": Target " + target + " energy level: " +
+                    target.energy + "/" + target.energyCapacity + ", " + amount + "<" + threshold + " is too low!");
+            }
+
+            return false;
+        }
+    }
+    else if (target.store && target.store[RESOURCE_ENERGY])
+    {
+    	if (target.store[RESOURCE_ENERGY] < 1)
+    	{
+            if (actor.doDebug)
+                console.log(actor.creep.name + ": Target " + target + " has no energy left!");
+
+    		return false;
+    	}
+
+        amount = threshold <= 1.0 ? target.store[RESOURCE_ENERGY] / target.storeCapacity : target.store[RESOURCE_ENERGY];
+
+        if (amount < threshold)
+        {
+            if (actor.doDebug)
+            {
+                console.log(actor.creep.name + ": Target " + target + " energy stores: " +
+                    target.store[RESOURCE_ENERGY] + "/" + target.storeCapacity + ", " + amount + "<" + threshold + " is too low!");
+            }
+
+            return false;
+        }
+    }
+    else
+    {
+        //console.log(actor.creep.name + ": Target " + target + " doesn't have energy storage at all!");
+        return false;
+    }
+
+
+    return true;
+}
