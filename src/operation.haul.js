@@ -12,25 +12,47 @@ function Haul(opts)
     this.base = OperationBase;
     this.base.constructor(this, opts);
 
+    this.sources = {};
     this.targets = {};
 
 	if (!opts)
 		return;
 	
-	if (opts.source != null)
-		this.source = opts.source;
-	if (opts.targets != undefined)
+	if (opts.sources)
+	{
+		if (Array.isArray(opts.sources))
+		{
+			var entry;
+			for (var i = 0; i < opts.sources.length; i++)
+			{
+				entry = opts.sources[i];
+				if (typeof entry == "string")
+					this.sources[entry] = Game.getObjectById(entry);
+				else
+					this.sources[entry.id] = entry;
+			}
+		}
+		else
+			this.sources[opts.sources.id] = opts.sources;
+	}
+
+	if (opts.targets)
 	{
 		if (Array.isArray(opts.targets))
 		{
-			for (var id in opts.targets)
-				this.targets[id] = opts.targets[id];
+			var entry;
+			for (var i = 0; i < opts.targets.length; i++)
+			{
+				entry = opts.targets[i];
+				if (typeof entry == "string")
+					this.targets[entry] = Game.getObjectById(entry);
+				else
+					this.targets[entry.id] = entry;
+			}
 		}
 		else
-			this.targets = opts.targets;
+			this.targets[opts.targets.id] = opts.targets;
 	}
-	if (opts.target != null)
-		this.targets[opts.target.id] = opts.target;
 }
 
 /// Memory functions, should always be called via context's override
@@ -41,18 +63,24 @@ Haul.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	if (data != null)
+	if (!data)
+		return true;
+
+	if (Array.isArray(data.sources))
 	{
-		if (data.source != undefined)
-			this.source = Game.getObjectById(data.source);
-		if (Array.isArray(data.targets))
-		{
-			for (var i = 0; i < data.targets.length; i++)
-				this.targets[data.targets[i]] = Game.getObjectById(data.targets[i]);
-		}
-		if (data.target != undefined)
-			this.targets[data.target] = Game.getObjectById(data.target);
+		for (var i = 0; i < data.sources.length; i++)
+			this.sources[data.sources[i]] = Game.getObjectById(data.sources[i]);
 	}
+	else if (typeof data.sources == "string")
+		this.sources[data.sources] = Game.getObjectById(data.sources);
+
+	if (Array.isArray(data.targets))
+	{
+		for (var i = 0; i < data.targets.length; i++)
+			this.targets[data.targets[i]] = Game.getObjectById(data.targets[i]);
+	}
+	else if (typeof data.targets == "string")
+		this.targets[data.targets] = Game.getObjectById(data.targets);
 
 	return true;
 }
@@ -61,10 +89,10 @@ Haul.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 	
-	if (this.source != null)
-		data["source"] = this.source.id;
+	if (this.sources != null)
+		data.sources = Object.keys(this.sources);
 	if (this.targets != null)
-		data["targets"] = Object.keys(this.targets);
+		data.targets = Object.keys(this.targets);
 
 	return data;
 }
@@ -74,7 +102,8 @@ Haul.prototype.createSaveData = function()
 
 Haul.prototype.getConstructorOptsHelpString = function()
 {
-    return OperationBase.getConstructorOptsHelpString() + ", source, target, targets[]";
+    return OperationBase.getConstructorOptsHelpString() + ", sources:(RoomObject|string_id | [ RoomObject|string_id ])," +
+    	" targets:(RoomObject|string_id | [ RoomObject|string_id ])";
 }
 
 Haul.prototype.onUpdate = function()
@@ -86,22 +115,34 @@ Haul.prototype.getJob = function(actor)
 {
 	if (actor.creep.carry.energy == 0)
 	{
-		if (this.source == null)
+		var chosenSource = null;
+		var highestPriority = 0;
+
+		var source, priority;
+		for (var id in this.sources)
 		{
-			console.log("Operation " + this.opName + "[" + this.id + "]: No source specified!");
-			return null;
+			source = this.sources[id];
+
+			if (source.energy && source.energy > 0)
+				priority = source.energy / source.energyCapacity;
+
+			if (source.store && source.store[RESOURCE_ENERGY] > 0)
+				priority = source.store[RESOURCE_ENERGY] / source.storeCapacity;
+
+			priority -= actor.creep.pos.getRangeTo(source) / 50;
+
+			if (priority > highestPriority)
+			{
+				highestPriority = priority;
+				chosenSource = source;
+			}
 		}
 
-		//if (this.target.energy == 0)
-		//{
-		//	if (this.doDebug)
-		//		console.log("Operation " + this.opName + "[" + this.id + "]: Target " + this.target + " at " + this.target.pos + " has no energy left!");
-		//
-		//	return null;
-		//}
+		if (!chosenSource)
+			return null;
 
-		//console.log("Operation " + this.opName + ": Giving resupply job to " + actor.creep.name + ", target: " + this.source);
-		return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:this.source } );
+		//console.log("Operation " + this.opName + ": Giving resupply job to " + actor.creep.name + ", target: " + chosenSource);
+		return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:chosenSource } );
 	}
 
 	if (this.targets == null || Object.keys(this.targets).length == 0)

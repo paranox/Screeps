@@ -29,16 +29,6 @@ function Repairer()
 Repairer.prototype = Object.create(RoleBase);
 Repairer.prototype.constructor = Repairer;
 
-Repairer.prototype.run = function(actor)
-{
-    if (this.tryDoJob(actor))
-        return;
-
-    var job = getJob(actor);
-    if (job != null)
-        actor.addJob(job);
-}
-
 Repairer.prototype.tryDoJob = function(actor)
 {
     if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
@@ -66,9 +56,9 @@ Repairer.prototype.tryDoJob = function(actor)
 
                     // No energy, go resupply
                     if (actor.creep.carry.energy == 0)
-                        job = Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name });
                     else
-                        job = Game.empire.factories.job.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Repair, { for:actor.creep.name, target:target });
 
                     if (job != null)
                         actor.addJob(job);
@@ -83,11 +73,7 @@ Repairer.prototype.tryDoJob = function(actor)
     return false;
 }
 
-module.exports = Repairer.prototype;
-
-/// Internal functions
-
-function getJob(actor)
+Repairer.prototype.getJob = function(actor)
 {
     // No energy, go get some
     if (actor.creep.carry.energy == 0)
@@ -95,24 +81,28 @@ function getJob(actor)
         var target = JobPrototypeResupply.getResupplyTarget(actor);
 
         if (target)
-            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:target });
 
-        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name });
     }
 
     // Try to find a target for a Repair job
     var target = JobPrototypeRepair.getRepairTarget(actor.creep.room, actor);
     if (target != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Repair, { "for": actor.creep.name, "target": target });
+        return Game.empire.factories.job.createFromType(Job.Type.Repair, { for:actor.creep.name, target:target });
     else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to repair!");
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
     if (controller != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { for:actor.creep.name, target:controller });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 
     return null;
 }
+
+module.exports = Repairer.prototype;
+
+/// Internal functions

@@ -20,29 +20,12 @@ function Claimer()
 Claimer.prototype = Object.create(RoleBase);
 Claimer.prototype.constructor = Claimer;
 
-Claimer.prototype.run = function(actor)
+Claimer.prototype.getJob = function(actor)
 {
-    if (this.tryDoJob(actor))
-        return;
-
-    var job = getJob(actor);
-    if (job != null)
-        actor.addJob(job);
+    console.log(actor.creep.name + ": Claimer has nothing to do!");
+    return null;
 }
 
 module.exports = Claimer.prototype;
 
 /// Internal functions
-
-function getJob(actor)
-{
-    if (actor.operation != null)
-    {
-        var job = actor.operation.getJob(actor);
-        if (job != null)
-            return job;
-    }
-
-    console.log(actor.creep.name + ": Claimer has nothing to do!");
-    return null;
-}

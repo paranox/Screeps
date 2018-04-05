@@ -18,7 +18,54 @@ function OperationBase(context, opts)
 			context.id = opts.id;
 		
 		if (opts.home != null)
-			context.home = opts.home;
+		{
+			if (opts.home.room)
+			{
+				if (opts.home.room instanceof Room)
+					context.home.room = opts.home.room;
+				else if (typeof opts.home.room == "string")
+					context.home.room = Game.rooms[opts.home.room];
+				else
+				{
+					console.log("Operation " + context.id + " of type " + context.opType + " has an invalid home room definition: " +
+						opts.home.room + " of type " + typeof opts.home.room);
+				}
+			}
+			else
+				console.log("Operation " + context.id + " of type " + context.opType + " has no home room defined in opts!");
+
+			if (opts.home.spawn)
+			{
+				if (opts.home.spawn instanceof StructureSpawn)
+					context.home.spawn = opts.home.spawn;
+				else if (typeof opts.home.spawn == "string")
+					context.home.spawn = Game.getObjectById(opts.home.spawn);
+				else
+				{
+					console.log("Operation " + context.id + " of type " + context.opType + " has an invalid home spawn definition: " +
+						opts.home.spawn + " of type " + typeof opts.home.spawn);
+
+					if (context.home.room)
+					{
+						var spawn;
+						for (const id in Game.spawns)
+						{
+							spawn = Game.spawns[id];
+							if (spawn.room == context.home.room)
+							{
+								console.log("Operation " + context.id + " of type " + context.opType +
+									" found StructureSpawn in room " + context.home.room);
+
+								context.home.spawn = spawn;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+			console.log("Operation " + context.id + " of type " + context.opType + " has no home defined in opts!");
 
 		if (opts.roles != null)
 			context.roles = opts.roles;
@@ -213,7 +260,7 @@ OperationBase.prototype.createSaveData = function(context)
 
 OperationBase.prototype.getConstructorOptsHelpString = function()
 {
-	return "id, home{}, roles{}, actors[]";
+	return "id:string, home:{ room:string_roomName | Room) }, roles{}, actors[ string_id ]";
 }
 
 OperationBase.prototype.start = function()
@@ -360,9 +407,18 @@ OperationBase.prototype.update = function()
 			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName +
 				", current count: " + role.current);
 
+			var maxCost = 300;
+
+			if (this.home.spawn)
+				maxCost = this.home.spawn.room.energyCapacityAvailable;
+			else if (this.home.room)
+				maxCost = this.home.room.energyCapacityAvailable;
+
+			var minCost = maxCost - 200;
+
 			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
 			Game.empire.factories.creep.addOrderToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
-				this.home.room.energyCapacityAvailable - 200, this.home.room.energyCapacityAvailable);
+				minCost, maxCost);
 		}
 	}
 

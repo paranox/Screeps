@@ -24,8 +24,10 @@ function Harvest(opts)
 	else if (opts.targetPos)
 		this.targetPos = opts.targetPos;
 
-    if (opts.dropOff)
-        this.dropOff = opts.dropOff;
+    if (typeof opts.dropOff == "string")
+        this.dropOff = Game.getObjectById(opts.dropOff);
+    else
+    	this.dropOff = opts.dropOff;
 }
 
 /// Memory functions, should always be called via context's override
@@ -33,7 +35,7 @@ function Harvest(opts)
 
 Harvest.prototype.getConstructorOptsHelpString = function()
 {
-    return OperationBase.getConstructorOptsHelpString() + ", target";
+    return OperationBase.getConstructorOptsHelpString() + ", target:string_id, targetPos:RoomPosition";
 }
 
 Harvest.prototype.readSaveData = function(data)
@@ -75,7 +77,7 @@ Harvest.prototype.createSaveData = function()
 
     if (this.dropOff instanceof RoomPosition)
         data.dropOff = this.dropOff;
-    else if (this.dropOff instanceof Structure)
+    else if (this.dropOff)
     	data.dropOff = this.dropOff.id;
 
 	return data;
@@ -124,8 +126,13 @@ Harvest.prototype.getJob = function(actor)
 					" couldn't find anything to transfer energy to at dropOff " + this.dropOff);
 			}
 		}
-		else if (this.dropOff instanceof Structure)
+		else if (this.dropOff instanceof RoomObject)
 			return Game.empire.factories.job.createFromType(Job.Type.Store, { for:actor.creep.name, target:this.dropOff });
+		else if (this.dropOff)
+		{
+			console.log("Operation " + this.opName + "[" + this.id + "]: Invalid dropOff property given: " +
+				this.dropOff + " of type " + typeof this.dropOff);
+		}
 
 		return null;
 	}

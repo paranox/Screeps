@@ -14,6 +14,7 @@ function RoleBase(context, roleType)
     context.partMap = {};
 
 	if (context.run == undefined) context.run = this.run;
+    if (context.getJob == undefined) context.getJob = this.getJob;
 	if (context.tryDoJob == undefined) context.tryDoJob = this.tryDoJob;
 	if (context.end == undefined) context.end = this.end;
 }
@@ -29,7 +30,28 @@ RoleBase.prototype.run = function(actor)
 	if (actor.doDebug)
 		console.log("Role->" + this.roleName + ".run(" + actor.creep.name + ")");
 
-	this.tryDoJob(actor);
+    if (this.tryDoJob(actor))
+        return;
+
+    var job;
+    if (actor.operation != null)
+    {
+        job = actor.operation.getJob(actor);
+        if (job != null)
+            actor.addJob(job);
+        //else
+        //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
+    }
+
+    job = this.getJob(actor);
+    if (job != null)
+        actor.addJob(job);
+}
+
+RoleBase.prototype.getJob = function(actor)
+{
+    console.log(actor.creep.name + ": No job to get!");
+    return null;
 }
 
 RoleBase.prototype.tryDoJob = function(actor)

@@ -40,12 +40,15 @@ Home.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 	
-	data.home["roomLevel"] = this.home.roomLevel;
-    data.home.reserves = {};
-    data.home.reserves.resources = this.home.reserves.resources;
-    data.home.reserves.stores = {};
-    for (var i = 0; i < this.home.reserves.stores.length; i++)
-        data.home.reserves.stores[this.home.reserves.stores[i].id] = { type:this.home.reserves.stores[i].structureType };
+	data.home.roomLevel = this.home.roomLevel;
+    if (this.home.reserves)
+    {
+        data.home.reserves = {};
+        data.home.reserves.resources = this.home.reserves.resources;
+        data.home.reserves.stores = {};
+        for (var i = 0; i < this.home.reserves.stores.length; i++)
+            data.home.reserves.stores[this.home.reserves.stores[i].id] = { type:this.home.reserves.stores[i].structureType };
+    }
 
 	return data;
 }
@@ -68,6 +71,9 @@ Home.prototype.onUpdate = function()
         {
             spawnQueueEntry = this.home.spawn.memory.spawnQueue[id];
             roleType = -1;
+
+            if (!spawnQueueEntry)
+                continue;
 
             if (spawnQueueEntry.role)
                 roleType = Role.Type[spawnQueueEntry.role];
@@ -221,14 +227,31 @@ Home.prototype.spawnUpdate = function()
         spawn.memory.spawnQueue = {};
     }
 
+    if (this.home.room.name != spawn.room.name)
+        return;
+
+    this.roomVisual = new RoomVisual(spawn.room.name);
+
     if (spawn.spawning)
     {
+        if (this.roomVisual)
+        {
+            let percentage = Math.floor(100.0 * (1 - spawn.spawning.remainingTime / spawn.spawning.needTime));
+            let text = "Spawning " + percentage + "%";
+            this.roomVisual.text(text, spawn.pos.x, spawn.pos.y + 1.3, { font:0.5, stroke:"#000000" });
+            this.roomVisual.text(spawn.spawning.name, spawn.pos.x, spawn.pos.y + 2, { font:0.5, stroke:"#000000" });
+            this.roomVisual.text("Orders: " + Object.keys(spawn.memory.spawnQueue).length,
+                spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
+        }
+
         //console.log("Spawn " + spawn.name + " is spawning: " + Utils.objectToString(spawn.spawning, 0, 2));
         return;
     }
     else if (spawn.memory.spawning != null)
     {
-        console.log("Operation " + this.opName + "[" + this.id + "]: Spawn " + spawn.name + " is done spawning: " + Utils.objectToString(spawn.memory.spawning, 0, 2));
+        console.log("Operation " + this.opName + "[" + this.id + "]: Spawn " + spawn.name +
+            " is done spawning: " + Utils.objectToString(spawn.memory.spawning, 0, 2));
+
         spawn.memory.spawning = null;
     }
 
@@ -238,6 +261,15 @@ Home.prototype.spawnUpdate = function()
     var spawnQueueEntry = Game.empire.factories.creep.getOrderFromSpawnQueue(spawn);
     if (spawnQueueEntry != null)
     {
+        var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
+        var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
+
+        if (this.roomVisual)
+        {
+            this.roomVisual.text("Spawn Order: " + spawnQueueEntry.id, spawn.pos.x, spawn.pos.y + 1.3, { font:0.5, stroke:"#000000" });
+            this.roomVisual.text("Priority: " + spawnQueueEntry.priority, spawn.pos.x, spawn.pos.y + 2, { font:0.5, stroke:"#000000" });
+        }
+
         //var chosenQueueID = null;
         //var chosenBlueprint = null;
 
@@ -249,14 +281,26 @@ Home.prototype.spawnUpdate = function()
                     " is higher than available energy " + energyAvailable + ", waiting...");
             }
 
+            if (this.roomVisual)
+            {
+                this.roomVisual.text("Cost: " + spawnQueueEntry.cost + " > " + energyAvailable,
+                    spawn.pos.x, spawn.pos.y + 2.7, { font:0.5 });
+            }
+
             spawnQueueEntry = null;
         }
-        if (spawnQueueEntry.minCost > energyAvailable)
+        else if (minCost > energyAvailable)
         {
             if (this.doDebug)
             {
                 console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint minimum cost " +
-                    spawnQueueEntry.minCost + " is higher than available energy " + energyAvailable + ", waiting...");
+                    minCost + " is higher than available energy " + energyAvailable + ", waiting...");
+            }
+
+            if (this.roomVisual)
+            {
+                this.roomVisual.text("MinCost: " + minCost + " > " + energyAvailable,
+                    spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
             }
 
             spawnQueueEntry = null;
@@ -278,11 +322,11 @@ Home.prototype.spawnUpdate = function()
             //chosenQueueID = spawnQueueEntry.id;
         }
 
+        this.roomVisual.text("Orders: " + Object.keys(spawn.memory.spawnQueue).length,
+            spawn.pos.x, spawn.pos.y + 3.4, { font:0.5, stroke:"#000000" });
+
         if (spawnQueueEntry != null)
         {
-            var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
-            var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
-
             //console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
             //    "\n" + JSON.stringify(spawnQueueEntry));
 
@@ -303,6 +347,14 @@ Home.prototype.spawnUpdate = function()
 
 Home.prototype.getJob = function(actor)
 {
+    if (actor.creep.room.name != this.home.room.name)
+    {
+        console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+            " not in the correct room " + actor.creep.room + ", ordering it to return home to " + this.home.room + "!");
+
+        return Game.empire.factories.job.createFromType(Job.Type.MoveTo, { target:this.home.room });
+    }
+
 	//if (actor.creep.carry.energy >= actor.creep.carryCapacity)
 	//{
 	//	//console.log("Operation " + this.opName + ": Actor full of energy!");

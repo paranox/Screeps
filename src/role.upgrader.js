@@ -28,21 +28,7 @@ function Upgrader()
 Upgrader.prototype = Object.create(RoleBase);
 Upgrader.prototype.constructor = Upgrader;
 
-Upgrader.prototype.run = function(actor)
-{
-    if (this.tryDoJob(actor))
-        return;
-
-    var job = getJob(actor);
-    if (job != null)
-        actor.addJob(job);
-}
-
-module.exports = Upgrader.prototype;
-
-/// Internal functions
-
-function getJob(actor)
+Upgrader.prototype.getJob = function(actor)
 {
     // No energy, go get some
     if (actor.creep.carry.energy == 0)
@@ -50,17 +36,21 @@ function getJob(actor)
         var target = JobPrototypeResupply.getResupplyTarget(actor);
 
         if (target)
-            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:target });
 
-        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name });
     }
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
-    if (controller != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+    if (controller && controller.my)
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { for:actor.creep.name, target:controller });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 
     return null;
 }
+
+module.exports = Upgrader.prototype;
+
+/// Internal functions

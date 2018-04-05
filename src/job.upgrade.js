@@ -11,11 +11,11 @@ function Upgrade(opts)
     this.base = JobBase;
     this.base.constructor(this, opts);
 
-	if (opts != undefined && opts != null)
-	{
-		if (opts.target != null)
-			this.target = opts.target;
-	}
+	if (!opts)
+		return;
+	
+	if (opts.target)
+		this.target = opts.target;
 }
 
 Upgrade.prototype = Object.create(JobBase);
@@ -26,18 +26,8 @@ Upgrade.prototype.readSaveData = function(data)
 	if (!this.base.readSaveData(this, data))
 		return false;
 
-	if (data.target != undefined)
-	{
-		let target = Game.getObjectById(data.target);
-
-		if (target == null)
-		{
-			console.log("Target id[" + data.target + "] was not found!");
-			return false;
-		}
-
-		this.target = target;
-	}
+	if (data.target)
+		this.target = Game.getObjectById(data.target);
 
 	//console.log("Target found based on save data: " + data.target);
 	return true;
@@ -47,8 +37,8 @@ Upgrade.prototype.createSaveData = function()
 {
 	var data = this.base.createSaveData(this);
 
-	if (this.target != undefined && this.target != null)
-		data["target"] = this.target.id;
+	if (this.target)
+		data.target = this.target.id;
 
 	return data;
 }
@@ -64,10 +54,9 @@ Upgrade.prototype.onUpdate = function(actor)
 	if (actor.doDebug)
         console.log(actor.creep.name + ": Running Job<" + this.jobType + ">(" + this.jobName + ")");
 
-    this.target = actor.home.controller;
-    if (this.target == null)
+    if (!this.target)
     {
-        console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
+        console.log(actor.creep.name + ": No target to upgrade!");
 
         this.finish(actor, false);
         return;

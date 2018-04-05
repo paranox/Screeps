@@ -25,49 +25,30 @@ function Harvester()
 Harvester.prototype = Object.create(RoleBase);
 Harvester.prototype.constructor = Harvester;
 
-Harvester.prototype.run = function(actor)
-{
-    if (this.tryDoJob(actor))
-        return;
-
-    var job = this.getJob(actor);
-    if (job != null)
-        actor.addJob(job);
-}
-
 Harvester.prototype.getJob = function(actor)
 {
-    if (actor.operation != null)
-    {
-        var job = actor.operation.getJob(actor);
-        if (job != null)
-            return job;
-        //else
-        //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
-    }
-
     // No energy, go harvest
     if (actor.creep.carry.energy == 0)
-        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name });
 
     // Try to find a target for a Store job
     var target = JobPrototypeStore.getStoreTarget(actor);
     if (target != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Store, { "for": actor.creep.name, "target": target });
+        return Game.empire.factories.job.createFromType(Job.Type.Store, { for:actor.creep.name, target:target });
     else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to store energy to to!");
 
     // Try to find a target for a Supply job
     var target = JobPrototypeSupply.getSupplyTarget(actor);
     if (target != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Supply, { "for": actor.creep.name, "target": target });
+        return Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, target:target });
     else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to supply energy with!");
 
     // Get the room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
-    if (controller != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+    if (controller && controller.my)
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { for:actor.creep.name, target:controller });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + actor.creep.room + "!");
 

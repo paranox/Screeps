@@ -83,7 +83,7 @@ Expand.prototype.createSaveData = function()
 
 Expand.prototype.getConstructorOptsHelpString = function()
 {
-    return OperationBase.getConstructorOptsHelpString() + ", target, targetName";
+    return OperationBase.getConstructorOptsHelpString() + ", target:Room, targetName:string_roomName";
 }
 
 Expand.prototype.onStart = function()
@@ -159,11 +159,10 @@ Expand.prototype.getJob = function(actor)
 {
 	var opts = { for:actor.creep.name };
 
-	if (this.target)
+	if (this.target && this.target == actor.creep.room)
 	{
 		if (this.target.controller.my)
 			return null;
-		if (this.reservationTicks)
 
 		opts.target = this.target;
 
@@ -174,7 +173,7 @@ Expand.prototype.getJob = function(actor)
 		}
 		else
 		{
-			console.log("Expand operation is not possible! GCL " + Game.gcl.level +
+			console.log("Operation " + this.opName + "[" + this.id + "]: Claiming is NOT possible! GCL " + Game.gcl.level +
 				" needs to be greater than the number of controlled rooms: " + this.roomCount +
 				"!\nProgress to GCL level " + (Game.gcl.level + 1) + ": " + Game.gcl.progress + " / " + Game.gcl.progressTotal);
 

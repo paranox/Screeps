@@ -60,7 +60,10 @@ Supply.prototype.createSaveData = function()
 	{
 		var targets = [];
 		for (var id in this.targets)
-			 targets.push(this.targets[id].id);
+		{
+			if (this.targets[id])
+				targets.push(this.targets[id].id);
+		}
 		data["targets"] = targets;
 	}
 

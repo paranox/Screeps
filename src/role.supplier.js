@@ -24,16 +24,6 @@ function Supplier()
 Supplier.prototype = Object.create(RoleBase);
 Supplier.prototype.constructor = Supplier;
 
-Supplier.prototype.run = function(actor)
-{
-    if (this.tryDoJob(actor))
-        return;
-
-    var job = getJob(actor);
-    if (job != null)
-        actor.addJob(job);
-}
-
 Supplier.prototype.tryDoJob = function(actor)
 {
     if (actor.currentJob != undefined && actor.currentJob >= 0 && actor.currentJob < actor.jobs.length)
@@ -61,9 +51,9 @@ Supplier.prototype.tryDoJob = function(actor)
 
                     // No energy, go resupply
                     if (actor.creep.carry.energy == 0)
-                        job = Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name });
                     else
-                        job = Game.empire.factories.job.createFromType(Job.Type.Supply, { "for": actor.creep.name, "target": target });
+                        job = Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, target:target });
 
                     actor.addJob(job);
                     job.start(actor);
@@ -78,21 +68,8 @@ Supplier.prototype.tryDoJob = function(actor)
     return false;
 }
 
-module.exports = Supplier.prototype;
-
-/// Internal functions
-
-function getJob(actor)
+Supplier.prototype.getJob = function(actor)
 {
-    if (actor.operation != null)
-    {
-        var job = actor.operation.getJob(actor);
-        if (job != null)
-            return job;
-        //else
-        //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
-    }
-
     var room = actor.creep.room;
 
     if (actor.creep.carry.energy > 0)
@@ -123,7 +100,7 @@ function getJob(actor)
             console.log(actor.creep.name + ": Picked supply target " + target);
 
         if (target != null)
-            return Game.empire.factories.job.createFromType(Job.Type.Supply, { "for": actor.creep.name, "target": target });
+            return Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, target:target });
         else if (actor.doDebug)
             console.log(actor.creep.name + ": Nothing to supply energy with!");
     }
@@ -164,19 +141,23 @@ function getJob(actor)
             console.log(actor.creep.name + ": Picked resupply target " + target);
 
         if (target != null)
-            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { "for": actor.creep.name, "target": target });
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:target });
         else if (actor.doDebug)
             console.log(actor.creep.name + ": Nothing to resupply energy from!");
 
-        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Harvest, { for:actor.creep.name });
     }
 
     // Get the room's Controller for an Upgrade job
     var controller = room.controller;
     if (controller != null)
-        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { "for": actor.creep.name });
+        return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { for:actor.creep.name, target:controller });
     else
         console.log(actor.creep.name + ": Can't find Controller in room " + room + "!");
 
     return null;
 }
+
+module.exports = Supplier.prototype;
+
+/// Internal functions
