@@ -22,7 +22,7 @@ function Actor(creep)
     	creep.say("HelloWorld");
     }
 
-    if (creep.memory.home == undefined)
+    if (!creep.memory.home)
     {
         if (this.doDebug)
             console.log("Actor " + creep.name + ": Home room set to " + creep.room);
@@ -33,13 +33,52 @@ function Actor(creep)
     this.home = Game.rooms[creep.memory.home];
 
     this.state = 0;
-    if (creep.memory.state != undefined)
+    if (creep.memory.state)
     {
         if (this.doDebug)
             console.log("Actor " + creep.name + ": State[" + creep.memory.state + "] read from creep memory");
 
         this.state = creep.memory.state;
     }
+
+    if (!creep.memory.visitedRooms)
+        creep.memory.visitedRooms = { previous:null };
+
+    if (creep.memory.visitedRooms.previous && creep.room.name != creep.memory.visitedRooms.previous)
+    {
+        //console.log("Actor " + creep.name + ": Moved between rooms from " + creep.memory.previousRoom + " to " +
+        //    creep.room.name + "!");
+
+        if (creep.memory.visitedRooms[creep.room.name] >= Game.time - 4)
+        {
+            console.log("Actor " + creep.name + " possibly stuck in room change limbo between " + creep.room.name + " and " +
+                creep.memory.visitedRooms.previous + "! Trying to fix by forced move away from edge at " + creep.pos + "...");
+            creep.memory.sleep = 1;
+
+            if (creep.pos.x == 0)
+            {
+                //console.log("Actor " + creep.name + ": Moving RIGHT from " + creep.pos);
+                creep.move(RIGHT);
+            }
+            else if (creep.pos.x == 49)
+            {
+                //console.log("Actor " + creep.name + ": Moving LEFT from " + creep.pos);
+                creep.move(LEFT);
+            }
+            else if (creep.pos.y == 0)
+            {
+                //console.log("Actor " + creep.name + ": Moving BOTTOM from " + creep.pos);
+                creep.move(BOTTOM);
+            }
+            else
+            {
+                //console.log("Actor " + creep.name + ": Moving TOP from " + creep.pos);
+                creep.move(TOP);
+            }
+        }
+    }
+
+    creep.memory.visitedRooms[creep.room.name] = Game.time;
 
     this.roleType = -1;
     this.roleName = "Unknown";
@@ -136,6 +175,12 @@ Actor.prototype.run = function()
     if (this.creep.spawning)
         return;
 
+    if (this.creep.memory.sleep > 0)
+    {
+        this.creep.memory.sleep--;
+        return;
+    }
+
     /*if (creep.memory.operationID != undefined)
     {
         if (this.doDebug)
@@ -150,7 +195,6 @@ Actor.prototype.run = function()
         else
             console.log("Actor " + creep.name + ": Could not find operation by the id of " + creep.memory.operationID);
     }*/
-
     
 	if (this.role != null)
     	this.role.run(this);
@@ -164,6 +208,9 @@ Actor.prototype.end = function()
 		console.log("Actor " + this.creep.name + ": end()");
 
     if (this.creep.spawning)
+        return;
+
+    if (this.creep.memory.sleep > 0)
         return;
     
     if (this.role != null)
@@ -217,6 +264,8 @@ Actor.prototype.end = function()
     }
 
     this.creep.memory.jobs = jobsToSave;
+
+    this.creep.memory.visitedRooms.previous = this.creep.room.name;
 }
 
 module.exports = Actor.prototype;
