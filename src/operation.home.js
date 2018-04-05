@@ -36,18 +36,62 @@ Home.prototype.readSaveData = function(data)
 	return true;
 }
 
-Home.prototype.createSaveData = function()
+Home.prototype.writeSaveData = function()
 {
-	var data = this.base.createSaveData(this);
+	var data = this.base.writeSaveData(this);
 	
 	data.home.roomLevel = this.home.roomLevel;
+
     if (this.home.reserves)
     {
-        data.home.reserves = {};
+        if (!data.home.reserves)
+        {
+            console.log("Operation " + this.opName + "[" + this.id + "]: Initializing reserves data!");
+            data.home.reserves = { stores:{} };
+        }
+
         data.home.reserves.resources = this.home.reserves.resources;
-        data.home.reserves.stores = {};
+
+        if (!data.home.reserves.stores)
+        {
+            console.log("Operation " + this.opName + "[" + this.id + "]: Initializing reserve stores data!");
+            data.home.reserves.stores = {};
+        }
+
+        var storeObject, storeData;
         for (var i = 0; i < this.home.reserves.stores.length; i++)
-            data.home.reserves.stores[this.home.reserves.stores[i].id] = { type:this.home.reserves.stores[i].structureType };
+        {
+            storeObject = this.home.reserves.stores[i];
+
+            if (!storeObject)
+                continue;
+
+            if (!data.home.reserves.stores[storeObject.id])
+            {
+                console.log("Operation " + this.opName + "[" + this.id + "]: New store object found: " + storeObject);
+                storeData = { type:storeObject.structureType, priority:1.0, resources:{} };
+                data.home.reserves.stores[storeObject.id] = storeData;
+            }
+            else
+                storeData = data.home.reserves.stores[storeObject.id];
+
+            if (storeObject.energy)
+            {
+                storeData.resources[RESOURCE_ENERGY] = storeObject.energy;
+                storeData.resources.capacity = storeObject.energy / storeObject.energyCapacity;
+            }
+            else if (storeObject.store)
+            {
+                var sum = 0;
+                for (const res in storeObject.store)
+                {
+                    sum += storeObject.store[res];
+                    storeData.resources[res] = storeObject.store[res];
+                }
+
+                storeData.resources.capacity = sum / storeObject.storeCapacity;
+            }
+        }
     }
 
 	return data;
@@ -236,11 +280,11 @@ Home.prototype.spawnUpdate = function()
     {
         if (this.roomVisual)
         {
-            let percentage = Math.floor(100.0 * (1 - spawn.spawning.remainingTime / spawn.spawning.needTime));
+            let percentage = Math.floor(100.0 * (1 - (spawn.spawning.remainingTime / spawn.spawning.needTime)));
             let text = "Spawning " + percentage + "%";
             this.roomVisual.text(text, spawn.pos.x, spawn.pos.y + 1.3, { font:0.5, stroke:"#000000" });
             this.roomVisual.text(spawn.spawning.name, spawn.pos.x, spawn.pos.y + 2, { font:0.5, stroke:"#000000" });
-            this.roomVisual.text("Orders: " + Object.keys(spawn.memory.spawnQueue).length,
+            this.roomVisual.text("Orders remain: " + Object.keys(spawn.memory.spawnQueue).length,
                 spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
         }
 
@@ -261,78 +305,149 @@ Home.prototype.spawnUpdate = function()
     var spawnQueueEntry = Game.empire.factories.creep.getOrderFromSpawnQueue(spawn);
     if (spawnQueueEntry != null)
     {
-        var minCost = spawnQueueEntry.minCost != undefined ? spawnQueueEntry.minCost : 300;
-        var maxCost = spawnQueueEntry.maxCost != undefined ? spawnQueueEntry.maxCost : energyAvailable;
-
         if (this.roomVisual)
         {
-            this.roomVisual.text("Spawn Order: " + spawnQueueEntry.id, spawn.pos.x, spawn.pos.y + 1.3, { font:0.5, stroke:"#000000" });
+            this.roomVisual.text("Next Order: " + spawnQueueEntry.id, spawn.pos.x, spawn.pos.y + 1.3, { font:0.5, stroke:"#000000" });
             this.roomVisual.text("Priority: " + spawnQueueEntry.priority, spawn.pos.x, spawn.pos.y + 2, { font:0.5, stroke:"#000000" });
         }
 
         //var chosenQueueID = null;
         //var chosenBlueprint = null;
+        //
+        //if (spawnQueueEntry.allowUpdate == true && energyAvailable > spawnQueueEntry.cost)
+        //{
+        //    console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
+        //      JSON.stringify(spawnQueueEntry));
+        //    
+        //    spawnQueueEntry.blueprint =
+        //        Game.empire.factories.creep.buildBlueprintFromRole(spawnQueueEntry.opts.memory.role);
+        //        
+        //    console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
+        //}
+        //
+        //chosenBlueprint = spawnQueueEntry.blueprint;
+        //chosenQueueID = spawnQueueEntry.id;
 
-        if (spawnQueueEntry.cost > energyAvailable)
-        {
-            if (this.doDebug)
-            {
-                console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint cost " + spawnQueueEntry.cost +
-                    " is higher than available energy " + energyAvailable + ", waiting...");
-            }
-
-            if (this.roomVisual)
-            {
-                this.roomVisual.text("Cost: " + spawnQueueEntry.cost + " > " + energyAvailable,
-                    spawn.pos.x, spawn.pos.y + 2.7, { font:0.5 });
-            }
-
-            spawnQueueEntry = null;
-        }
-        else if (minCost > energyAvailable)
-        {
-            if (this.doDebug)
-            {
-                console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint minimum cost " +
-                    minCost + " is higher than available energy " + energyAvailable + ", waiting...");
-            }
-
-            if (this.roomVisual)
-            {
-                this.roomVisual.text("MinCost: " + minCost + " > " + energyAvailable,
-                    spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
-            }
-
-            spawnQueueEntry = null;
-        }
-        else
-        {
-            //if (spawnQueueEntry.allowUpdate == true && energyAvailable > spawnQueueEntry.cost)
-            //{
-            //    console.log("Energy capacity, and stored energy, have increased since creating blueprint:\n" +
-            //      JSON.stringify(spawnQueueEntry));
-            //    
-            //    spawnQueueEntry.blueprint =
-            //        Game.empire.factories.creep.buildBlueprintFromRole(spawnQueueEntry.opts.memory.role);
-            //        
-            //    console.log("Created new blueprint:\n" + JSON.stringify(chosenBlueprint));
-            //}
-            //
-            //chosenBlueprint = spawnQueueEntry.blueprint;
-            //chosenQueueID = spawnQueueEntry.id;
-        }
-
-        this.roomVisual.text("Orders: " + Object.keys(spawn.memory.spawnQueue).length,
+        this.roomVisual.text("Orders remain: " + Object.keys(spawn.memory.spawnQueue).length,
             spawn.pos.x, spawn.pos.y + 3.4, { font:0.5, stroke:"#000000" });
 
         if (spawnQueueEntry != null)
         {
-            //console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
-            //    "\n" + JSON.stringify(spawnQueueEntry));
+            if (spawnQueueEntry.cost > energyAvailable)
+            {
+                if (this.doDebug)
+                {
+                    console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint cost " + spawnQueueEntry.cost +
+                        " is higher than available energy " + energyAvailable + ", waiting...");
+                }
 
-            if (Game.empire.factories.creep.tryBuildCreepFromBlueprint(spawn, spawnQueueEntry.blueprint, minCost, maxCost))
+                if (this.roomVisual)
+                {
+                    this.roomVisual.text("Cost: " + spawnQueueEntry.cost + " > " + energyAvailable,
+                        spawn.pos.x, spawn.pos.y + 2.7, { font:0.5 });
+                }
+
+                return;
+            }
+
+            var minCost = 300;
+            if (spawnQueueEntry.minCost)
+                minCost = spawnQueueEntry.minCost;
+            if (spawnQueueEntry.blueprint.minimumParts)
+            {
+                var cost = Utils.getBodyCost(spawnQueueEntry.blueprint.minimumParts);
+                if (cost > minCost)
+                    minCost = cost;
+            }
+
+            // If the minimum cost of the order can't be met, keep waiting
+            if (energyAvailable < minCost)
+            {
+                if (this.doDebug)
+                {
+                    console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint minimum cost " +
+                        minCost + " is higher than available energy " + energyAvailable + ", waiting...");
+                }
+
+                if (this.roomVisual)
+                {
+                    this.roomVisual.text("MinCost: " + minCost + " > " + energyAvailable,
+                        spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
+                }
+
+                return;
+            }
+
+            var maxCost = energyAvailable;
+            if (spawnQueueEntry.maxCost && spawnQueueEntry.maxCost < maxCost)
+                maxCost = spawnQueueEntry.maxCost;
+            if (maxCost < minCost)
+                maxCost = minCost;
+
+            var newName = spawnQueueEntry.id + "[" + Game.time + "]";
+            var partList = Game.empire.factories.creep.buildPartListFromBlueprint(spawnQueueEntry.blueprint, minCost, maxCost);
+
+            // If a part list wasn't possible to build from min/max cost limitations, keep waiting
+            if (!partList || partList.length == 0)
+            {
+                if (this.doDebug)
+                {
+                    console.log("Operation " + this.opName + "[" + this.id + "]: Body not possible within cost limitations! Min/Max: " +
+                        minCost + "/" + maxCost);
+                }
+
+                if (this.roomVisual)
+                {
+                    this.roomVisual.text("No body possible: " + minCost + " <-> " + maxCost,
+                        spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
+                }
+
+                return;
+            }
+
+            var actualCost = Utils.getBodyCost(partList);
+
+            // If the cost of the part list is too high, keep waiting
+            if (energyAvailable < actualCost)
+            {
+                if (this.doDebug)
+                {
+                    console.log("Operation " + this.opName + "[" + this.id + "]: Blueprint minimum cost " +
+                        minCost + " is higher than available energy " + energyAvailable + ", waiting...");
+                }
+
+                if (this.roomVisual)
+                {
+                    this.roomVisual.text("Cost: " + actualCost + " > " + energyAvailable,
+                        spawn.pos.x, spawn.pos.y + 2.7, { font:0.5, stroke:"#000000" });
+                }
+
+                return;
+            }
+
+            console.log("Operation " + this.opName + "[" + this.id + "]: Trying to build spawn order " + spawnQueueEntry.id +
+                ", priority: " + spawnQueueEntry.priority + "\n" + JSON.stringify(spawnQueueEntry));
+
+            if (Game.empire.factories.creep.tryBuildCreep(spawn, newName, partList, spawnQueueEntry.blueprint.opts))
             {
                 spawn.memory.spawning = spawnQueueEntry;
+
+                var orderForOp = spawnQueueEntry.blueprint.opts.memory.operationID;
+                if (orderForOp)
+                {
+                    var op = Game.empire.operations[orderForOp];
+                    if (op)
+                    {
+                        op.doDebug = true;
+                        
+                        console.log("Operation " + this.opName + "[" + this.id + "]: Adding Creep " + newName +
+                            " ordered by " + orderForOp + " to Operation " + op.opName + "[" + op.id + "]");
+
+                        op.modifyRoleActorCount(Role.Type[spawnQueueEntry.blueprint.opts.memory.role], 1);
+
+                        op.doDebug = false;
+                    }
+                }
 
                 let result = Game.empire.factories.creep.tryRemoveOrderFromSpawnQueue(spawn, spawnQueueEntry.id);
                 if (!result)
@@ -349,10 +464,115 @@ Home.prototype.getJob = function(actor)
 {
     if (actor.creep.room.name != this.home.room.name)
     {
-        console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
-            " not in the correct room " + actor.creep.room + ", ordering it to return home to " + this.home.room + "!");
+        //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+        //    " not in the correct room " + actor.creep.room + ", ordering it to return home to " + this.home.room + "!");
 
         return Game.empire.factories.job.createFromType(Job.Type.MoveTo, { target:this.home.room });
+    }
+
+    if (actor.role.roleType == Role.Type.Supplier)
+    {
+        var targets = [];
+        var chosenTarget = null;
+
+        // Find which spawn or extension to supply
+        if (actor.creep.carry.energy > 0)
+        {
+            targets = this.home.room.find(FIND_STRUCTURES,
+            {
+                filter: (structure) =>
+                {
+                    if (!structure.my)
+                        return false;
+
+                    if (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN)
+                        return structure.energy < structure.energyCapacity;
+
+                    return false;
+                }
+            });
+
+            //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+            //    ": Found " + targets.length + " Supply targets: " + targets);
+
+            chosenTarget = actor.creep.pos.findClosestByPath(targets);
+
+            if (chosenTarget)
+            {
+                //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+                //    ": Supplying " + chosenTarget + " at " + chosenTarget.pos);
+
+                return Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, target:chosenTarget });
+            }
+        }
+
+        if (this.home.reserves.stores && this.home.reserves.stores.length > 0)
+        {
+            targets = this.home.reserves.stores.filter((structure) =>
+                {
+                    if (structure.energy)
+                        return structure.energy > 0;
+                    if (structure.store)
+                        return structure.store[RESOURCE_ENERGY] > 0;
+
+                    return false;
+                });
+        }
+        else
+        {
+            targets = this.home.room.find(FIND_STRUCTURES,
+            {
+                filter: (structure) =>
+                {
+                    if (structure.structureType == STRUCTURE_CONTAINER ||
+                        structure.structureType == STRUCTURE_STORAGE ||
+                        structure.structureType == STRUCTURE_LINK)
+                    {
+                        if (structure.energy)
+                            return structure.energy > 0;
+                        if (structure.store)
+                            return structure.store[RESOURCE_ENERGY] > 0;
+                    }
+
+                    return false;
+                }
+            });
+        }
+
+        //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+        //    ": Found " + targets.length + " Resupply targets: " + targets);
+
+        // Find where to get energy from
+        var highestPriority = 0;
+        var target, storeData, priority;
+        for (var i = 0; i < targets.length; i++)
+        {
+            target = targets[i];
+
+            if (Memory.empire.operations[this.id])
+                storeData = Memory.empire.operations[this.id].home.reserves.stores[target.id];
+            else
+                storeData = null;
+
+            priority = storeData && storeData.priority ? storeData.priority : 1.0
+
+            if (priority > highestPriority)
+            {
+                //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+                //    ": Highest priority " + priority + " target is now " + target);
+
+                highestPriority = priority;
+                chosenTarget = target;
+            }
+        }
+
+        if (chosenTarget)
+        {
+            //console.log("Operation " + this.opName + "[" + this.id + "]: Creep " + actor.creep.name +
+            //    ": Resupplying from " + chosenTarget + " at " + chosenTarget.pos);
+
+            return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:chosenTarget });
+        }
     }
 
 	//if (actor.creep.carry.energy >= actor.creep.carryCapacity)
@@ -383,7 +603,7 @@ Home.prototype.createDefaultRoles = function()
 {
 	var roles = {};
     roles[Role.Type.Builder]    = Operation.createRolePositionObject(Role.Type.Builder,   0, 1, 3, [1.5, 1.0]);
-    roles[Role.Type.Harvesters] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 4, [3.0, 1.2, 1.0]);
+    roles[Role.Type.Harvestes] = Operation.createRolePositionObject(Role.Type.Harvester, 0, 2, 4, [3.0, 1.2, 1.0]);
     roles[Role.Type.Repairer]   = Operation.createRolePositionObject(Role.Type.Repairer,  0, 1, 2, [1.1, 1.0]);
     roles[Role.Type.Supplier]   = Operation.createRolePositionObject(Role.Type.Supplier,  0, 1, 3, [2.5, 1.0]);
     roles[Role.Type.Upgrader]   = Operation.createRolePositionObject(Role.Type.Upgrader,  0, 0, 2, 1.0);

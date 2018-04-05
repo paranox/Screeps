@@ -111,31 +111,31 @@ Harvest.prototype.onUpdate = function(actor)
     {
         case OK:
             if (actor.doDebug)
-        		console.log(actor.creep.name + ": Harvested energy from Source at " + this.target.pos.x + "," + this.target.pos.y);
+        		console.log(actor.creep.name + ": Harvested energy from Source at " + this.target.pos);
 
             break;
         case ERR_NOT_IN_RANGE:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Moving to Source at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Moving to Source at " + this.target.pos);
 
             actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: "#ffaa00" } });
 
             break;
         case ERR_BUSY:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Creep busy, unable to harvest Source at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Creep busy, unable to harvest Source at " + this.target.pos);
 
             break;
         case ERR_NOT_ENOUGH_RESOURCES:
             if (actor.doDebug)
-                console.log(actor.creep.name + ": Source out of resources at " + this.target.pos.x + "," + this.target.pos.y);
+                console.log(actor.creep.name + ": Source out of resources at " + this.target.pos);
 
 			this.finish(actor, false);
 
             break;
         default:
             console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
-                ") when trying to harvest Source at " + this.target.pos.x + "," + this.target.pos.y);
+                ") when trying to harvest Source at " + this.target.pos);
 
             break;
     }

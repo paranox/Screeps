@@ -196,7 +196,7 @@ OperationBase.prototype.readSaveData = function(context, data)
 	return true;
 }
 
-OperationBase.prototype.createSaveData = function(context)
+OperationBase.prototype.writeSaveData = function(context)
 {
 	if (context == undefined)
 		context = this;
@@ -212,19 +212,26 @@ OperationBase.prototype.createSaveData = function(context)
 
     if (context.jobs.length > 0)
     {
-        data.jobs = [];
+        memoryObject.jobs = [];
         for (var i = 0; i < context.jobs.length; i++)
-            data.jobs.push(context.jobs[i].createSaveData());
+            memoryObject.jobs.push(context.jobs[i].createSaveData());
     }
 	
 	if (context.home != null)
 	{
-		memoryObject.home =
+		if (!memoryObject.home)
 		{
-			roomName:(context.home.room != undefined ? context.home.room.name : "undefined"),
-			spawnID:(context.home.spawn != null ? context.home.spawn.id : "undefined"),
-			spawnOrdersPlaced:context.home.spawnOrdersPlaced
-		};
+			memoryObject.home =
+			{
+				roomName:(context.home.room != undefined ? context.home.room.name : "undefined"),
+				spawnID:(context.home.spawn != null ? context.home.spawn.id : "undefined"),
+				spawnOrdersPlaced:context.home.spawnOrdersPlaced
+			};
+		}
+		else
+		{
+			memoryObject.spawnOrdersPlaced = context.home.spawnOrdersPlaced;
+		}
 	}
 	else
 		console.log("Operation " + context.opName + "[" + context.id + "]: No home defined in context!");
@@ -265,27 +272,10 @@ OperationBase.prototype.getConstructorOptsHelpString = function()
 
 OperationBase.prototype.start = function()
 {
-	this.onStart();
-}
-
-OperationBase.prototype.onStart = function()
-{
-	// Should be overridden to provide functionality
-}
-
-OperationBase.prototype.update = function()
-{
-	if (this.home == null)
-	{
-		console.log("Operation " + this.opName + "[" + this.id + "]: Has no home!");
-		return;
-	}
-
 	var role;
-	var roleKeys = this.roles != null ? Object.keys(this.roles) : [];
-	for (var i = 0; i < roleKeys.length; i++)
+	for (const type in this.roles)
 	{
-		role = this.roles[roleKeys[i]];
+		role = this.roles[type];
 		this.setRoleActorCount(role.roleType, 0);
 	}
 
@@ -303,18 +293,44 @@ OperationBase.prototype.update = function()
 		}
 	}
 
-	if (!this.home.spawnOrdersPlaced)
-		this.home.spawnOrdersPlaced = {};
+	this.onStart();
+}
+
+OperationBase.prototype.onStart = function()
+{
+	// Should be overridden to provide functionality
+}
+
+OperationBase.prototype.update = function()
+{
+	if (this.home == null)
+	{
+		console.log("Operation " + this.opName + "[" + this.id + "]: Has no home!");
+		return;
+	}
 
 	if (this.isHalted)
 		return;
 
-	var priority;
-	for (i = 0; i < roleKeys.length; i++)
-	{
-		role = this.roles[roleKeys[i]];
+	this.onUpdate();
+}
 
-		if (role.max != undefined && role.current >= role.max)
+OperationBase.prototype.onUpdate = function()
+{
+	// Should be overridden to provide functionality
+}
+
+OperationBase.prototype.end = function()
+{
+	if (!this.home.spawnOrdersPlaced)
+		this.home.spawnOrdersPlaced = {};
+
+	var priority;
+	for (const type in this.roles)
+	{
+		role = this.roles[type];
+
+		if (!role.max != undefined && role.current >= role.max)
 		{
 			if (this.doDebug)
 			{
@@ -332,41 +348,42 @@ OperationBase.prototype.update = function()
 
 			continue;
 		}
-		else
+
+		if (this.doDebug)
 		{
-			if (this.doDebug)
-				console.log("Operation " + this.opName + "[" + this.id + "]: Needs role " + JSON.stringify(role));
+			console.log("Operation " + this.opName + "[" + this.id + "]: Needs role " + Role.getNameOf(role.roleType) +
+				", current count: " + role.current + "\n" + JSON.stringify(role));
+		}
 
-			var creep, actor;
-			for (var id in Game.empire.actors)
+		var creep, actor;
+		for (var id in Game.empire.actors)
+		{
+			//if (this.doDebug)
+			//	console.log("Operation " + this.opName + "[" + this.id + "]:Finding actor by the id of " + id);
+
+			actor = Game.empire.actors[id];
+
+			if (actor == undefined || actor == null)
 			{
-				//if (this.doDebug)
-				//	console.log("Operation " + this.opName + "[" + this.id + "]:Finding actor by the id of " + id);
-
-				actor = Game.empire.actors[id];
-
-				if (actor == undefined || actor == null)
-				{
-					console.log("Operation " + this.opName + "[" + this.id + "]: Actor by the id of " + id + " no longer exists!");
-					continue;
-				}
-
-				if (actor.creep.spawning || actor.operation != null)
-					continue;
-
-				if (actor.roleType == role.roleType)
-				{
-					console.log("Operation " + this.opName + "[" + this.id + "]:Enlisting " + actor.creep.name + ", id[" + id + "]");
-					actor.setOperation(this);
-					this.addActor(actor);
-					role = null;
-					break;
-				}
+				console.log("Operation " + this.opName + "[" + this.id + "]: Actor by the id of " + id + " no longer exists!");
+				continue;
 			}
 
-			if (role == null)
+			if (actor.creep.spawning || actor.operation != null)
 				continue;
+
+			if (actor.roleType == role.roleType)
+			{
+				console.log("Operation " + this.opName + "[" + this.id + "]:Enlisting " + actor.creep.name + ", id[" + id + "]");
+				actor.setOperation(this);
+				this.addActor(actor);
+				role = null;
+				break;
+			}
 		}
+
+		if (role == null)
+			continue;
 
 		if (!Array.isArray(role.priority))
 			priority = role.priority;
@@ -404,17 +421,21 @@ OperationBase.prototype.update = function()
 			else
 				nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
 
-			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName +
-				", current count: " + role.current);
+			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName);
 
-			var maxCost = 300;
+			var maxCost = this.home.spawn ? this.home.spawn.room.energyCapacityAvailable : 300;
 
-			if (this.home.spawn)
-				maxCost = this.home.spawn.room.energyCapacityAvailable;
-			else if (this.home.room)
-				maxCost = this.home.room.energyCapacityAvailable;
+			if (role.maxCost)
+				maxCost = role.maxCost;
 
-			var minCost = maxCost - 200;
+			var minCost = role.minCost ? role.minCost : maxCost * 0.75;
+
+			if (nextBlueprint.minimumParts)
+			{
+				var cost = Utils.getBodyCost(nextBlueprint.minimumParts);
+				if (cost > minCost)
+					minCost = cost;
+			}
 
 			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
 			Game.empire.factories.creep.addOrderToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
@@ -453,16 +474,9 @@ OperationBase.prototype.update = function()
 		}
 	}
 
-	this.onUpdate();
-}
+	if (this.isHalted)
+		return;
 
-OperationBase.prototype.onUpdate = function()
-{
-	// Should be overridden to provide functionality
-}
-
-OperationBase.prototype.end = function()
-{
 	this.onEnd();
 }
 
@@ -496,7 +510,7 @@ OperationBase.prototype.addActor = function(actor)
 		}
 
 		var spawnOrderID = actor.creep.memory.spawnOrderID;
-		if (!this.home.spawnOrdersPlaced.hasOwnProperty(spawnOrderID))
+		if (!this.home.spawnOrdersPlaced[spawnOrderID])
 		{
 			console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
 				" was marked as ordered for this operation but it was unexpected.");
@@ -512,7 +526,7 @@ OperationBase.prototype.addActor = function(actor)
 					roleType = actor.roleType;
 				
 				console.log("Operation " + this.opName + "[" + this.id + "]: Received an ordered actor " + actor.creep.name +
-					". Actor count in role was " + this.roles[roleType].current);
+					". Actor count in role was " + (this.roles.hasOwnProperty(roleType) ? this.roles[roleType].current : "undefined"));
 			}
 
 			delete this.home.spawnOrdersPlaced[spawnOrderID];

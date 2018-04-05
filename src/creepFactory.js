@@ -757,48 +757,23 @@ module.exports =
         return true;
     },
 
-    tryBuildCreepFromBlueprint: function (spawn, blueprint, minCost, maxCost)
+    buildPartListFromBlueprint: function(blueprint, minCost, maxCost)
     {
         if (!blueprint)
         {
-            console.log("Invalid blueprint provided: " + blueprint);
-            return false;
+            console.log("Invalid blueprint provided: " + JSON.stringify(blueprint));
+            return null;
         }
-
-        if (!spawn)
-        {
-            console.log("Invalid Spawn provided: " + spawn + ", can't build creep from blueprint:\n" + JSON.stringify(blueprint));
-            return false;
-        }
-
-        if (minCost == undefined)
-            minCost = 300;
-
-        if (spawn.room.energyAvailable < minCost)
-        {
-            //console("Energy available " + spawn.room.energyAvailable + " is less than minimum cost " + minCost +
-            //     ". Unable to build creep from blueprint:\n" + JSON.stringify(blueprint));
-
-            return false;
-        }
-
-        var newName = blueprint.namePrefix + "[" + Game.time + "]";
-
-        if (maxCost == undefined)
-            maxCost = spawn.room.energyAvailable;
-        else
-            maxCost = Math.min(maxCost, spawn.room.energyAvailable);
 
         //console.log("Trying to build creep with a budget of " + minCost + "<->" + maxCost +
-        //    " from blueprint:\n" + JSON.stringify(blueprint));
-
-        var partList = [];
+        //    " from blueprint:\n" + JSON.stringifyblueprint));
 
         if (Array.isArray(blueprint.parts))
-            partList = blueprint.parts;
-        else if (blueprint.partMap != null)
+            return blueprint.parts;
+        else if (blueprint.partMap)
         {
-            var partMap = getPartMap(blueprint.minimumParts, blueprint.partMap, maxCost, blueprint.maxBodySize);
+            var partMap = getPartMap(blueprint.minimumParts, blueprint.partMap, maxCost,
+                blueprint.maxBodySize);
 
             var cost = 0;
             for (const part in partMap)
@@ -809,19 +784,30 @@ module.exports =
                 //console.log("Part map " + JSON.stringify(partMap) + " costs " + cost + " which is less than minimum cost " +
                 //    minCost + ". Unable to build creep from blueprint:\n" + JSON.stringify(blueprint));
 
-                return false;
+                return null;
             }
 
-            partList = this.buildPartListFromMap(partMap);
-            //console.log("Part map " + JSON.stringify(partMap) + " converted into a list:\n" + partList);
+            return this.buildPartListFromMap(partMap);
+        }
+        else
+            console.log("Invalid blueprint provided: " + JSON.stringify(blueprint));
+
+        return null;
+    },
+
+    tryBuildCreep: function (spawn, name, partList, opts)
+    {
+        if (!spawn)
+        {
+            console.log("Invalid Spawn provided: " + spawn + ", can't build creep from blueprint:\n" + JSON.stringify(blueprint));
+            return false;
         }
 
-        var status = spawn.spawnCreep(partList, newName, blueprint.opts);
+        var status = spawn.spawnCreep(partList, name, opts);
         if (status == 0)
         {
-            console.log("Building creep: '" + newName + "' at Spawn('" + spawn.name + "')" + spawn.pos +
-                ", energy cost: " + Utils.getBodyCost(partList) + "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " +
-                JSON.stringify(blueprint) + "\nParts: " + partList);
+            console.log("Building creep: '" + name + "' at Spawn('" + spawn.name + "')" + spawn.pos +
+                ", energy cost: " + Utils.getBodyCost(partList) + "\nParts: " + partList + "\nOpts: " + JSON.stringify(opts));
 
             return true;
         }
@@ -830,15 +816,15 @@ module.exports =
             if (status == ERR_NOT_ENOUGH_ENERGY)
             {
                 console.log("Unable to build creep, cost too high: " + Utils.getBodyCost(partList) + "/" +
-                    spawn.room.energyAvailable + "\nTried to build creep: '" + newName +
+                    spawn.room.energyAvailable + "\nTried to build creep: '" + name +
                     "' at Spawn('" + spawn.name + "') in " + spawn.pos + ", energy cost: " + Utils.getBodyCost(partList) +
-                    "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
+                    "\nParts: " + partList + "\nOpts: " + JSON.stringify(opts));
             }
             else
             {
-                console.log("Unable to build creep, error code: " + status + "\nTried to build creep: '" + newName +
+                console.log("Unable to build creep, error code: " + status + "\nTried to build creep: '" + name +
                     "' at Spawn('" + spawn.name + "') in " + spawn.pos + ", energy cost: " + Utils.getBodyCost(partList) +
-                    "/(" + minCost + "<->" + maxCost + ")\nBlueprint: " + JSON.stringify(blueprint) + "\nParts: " + partList);
+                    "\nParts: " + partList + "\nOpts: " + JSON.stringify(opts));
             }
         }
 

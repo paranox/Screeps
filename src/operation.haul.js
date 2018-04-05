@@ -85,9 +85,9 @@ Haul.prototype.readSaveData = function(data)
 	return true;
 }
 
-Haul.prototype.createSaveData = function()
+Haul.prototype.writeSaveData = function()
 {
-	var data = this.base.createSaveData(this);
+	var data = this.base.writeSaveData(this);
 	
 	if (this.sources != null)
 		data.sources = Object.keys(this.sources);
@@ -123,13 +123,16 @@ Haul.prototype.getJob = function(actor)
 		{
 			source = this.sources[id];
 
+			if (!source)
+				continue;
+
 			if (source.energy && source.energy > 0)
 				priority = source.energy / source.energyCapacity;
-
-			if (source.store && source.store[RESOURCE_ENERGY] > 0)
+			else if (source.store && source.store[RESOURCE_ENERGY] > 0)
 				priority = source.store[RESOURCE_ENERGY] / source.storeCapacity;
 
-			priority -= actor.creep.pos.getRangeTo(source) / 50;
+			if (actor.creep.room.name == source.room.name)
+				priority /= Math.max(1, actor.creep.pos.getRangeTo(source)) / 50;
 
 			if (priority > highestPriority)
 			{
@@ -139,7 +142,10 @@ Haul.prototype.getJob = function(actor)
 		}
 
 		if (!chosenSource)
+		{
+			console.log("Operation " + this.opName + ": " + actor.creep.name + ": No source found!");
 			return null;
+		}
 
 		//console.log("Operation " + this.opName + ": Giving resupply job to " + actor.creep.name + ", target: " + chosenSource);
 		return Game.empire.factories.job.createFromType(Job.Type.Resupply, { for:actor.creep.name, target:chosenSource } );
@@ -147,11 +153,11 @@ Haul.prototype.getJob = function(actor)
 
 	if (this.targets == null || Object.keys(this.targets).length == 0)
 	{
-		console.log("Operation " + this.opName + "[" + this.id + "]: No targets specified!");
+		//console.log("Operation " + this.opName + "[" + this.id + "]: No targets specified!");
 		return null;
 	}
 
-	//console.log("Operation " + this.opName + "[" + this.id + "]: Giving Supply job to " + actor.creep.name + ", target: " + this.target);
+	//console.log("Operation " + this.opName + "[" + this.id + "]: Giving Supply job to " + actor.creep.name + ", targets: " + Object.keys(this.targets));
 	return Game.empire.factories.job.createFromType(Job.Type.Supply, { for:actor.creep.name, targets:this.targets } );
 }
 

@@ -262,6 +262,6 @@ module.exports =
 
 	    Memory.empire.nextOpID = Game.empire.nextOpID;
 	    for (const id in Game.empire.operations)
-	    	/*Memory.empire.operations[id] = */Game.empire.operations[id].createSaveData();
+	    	/*Memory.empire.operations[id] = */Game.empire.operations[id].writeSaveData();
 	}
 }

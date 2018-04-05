@@ -61,9 +61,9 @@ Expand.prototype.readSaveData = function(data)
 	return true;
 }
 
-Expand.prototype.createSaveData = function()
+Expand.prototype.writeSaveData = function()
 {
-	var data = this.base.createSaveData(this);
+	var data = this.base.writeSaveData(this);
 	
 	if (this.target)
 		data.target = this.target.name;

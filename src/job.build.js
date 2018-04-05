@@ -99,6 +99,9 @@ Build.prototype.getBuildTarget = function(actor)
                 priority = 3.0;
                 break;
             case STRUCTURE_EXTENSION:
+                priority = 1.75;
+                break;
+            case STRUCTURE_LINK:
             	priority = 1.5;
             	break;
             case STRUCTURE_CONTAINER:

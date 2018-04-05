@@ -38,14 +38,21 @@ RoleBase.prototype.run = function(actor)
     {
         job = actor.operation.getJob(actor);
         if (job != null)
+        {
             actor.addJob(job);
+            //this.tryDoJob(job);
+            return;
+        }
         //else
         //    console.log(actor.creep.name + ": Operation " + actor.operation.opName + " had no work, going solo!");
     }
 
     job = this.getJob(actor);
     if (job != null)
+    {
         actor.addJob(job);
+        //this.tryDoJob(job);
+    }
 }
 
 RoleBase.prototype.getJob = function(actor)

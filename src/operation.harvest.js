@@ -66,9 +66,9 @@ Harvest.prototype.readSaveData = function(data)
 	return true;
 }
 
-Harvest.prototype.createSaveData = function()
+Harvest.prototype.writeSaveData = function()
 {
-	var data = this.base.createSaveData(this);
+	var data = this.base.writeSaveData(this);
 	
 	if (this.target)
 		data.target = this.target.id;
@@ -143,6 +143,9 @@ Harvest.prototype.getJob = function(actor)
 		{
 			if (this.targetPos.roomName != actor.creep.room.name)
 			{
+				console.log("Operation " + this.opName + "[" + this.id + "]: Actor " + actor.creep.name +
+					" in wrong room " + actor.creep.room + "!");
+
 				return Game.empire.factories.job.createFromType(Job.Type.MoveTo,
 					{ for:actor.creep.name, targetName:this.targetPos.roomName})
 			}

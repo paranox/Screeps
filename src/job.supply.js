@@ -137,6 +137,9 @@ Supply.prototype.getSupplyTarget = function(actor, typeFilter)
 	    });
 	}
 
+	if (targets.length == 0)
+		return null;
+
 	var priority;
 	var highestPriority = 0;
     var chosenTargetType = null;
@@ -166,21 +169,52 @@ Supply.prototype.getSupplyTarget = function(actor, typeFilter)
 
     		if (actor.doDebug)
     		{
-    			console.log(actor.creep.name + ": Highest priority target is now of type " + chosenTargetType +
-	    			" priority: " + priority + " > " + highestPriority + ", from target " + target.name +
-	    			", energy: " + target.energy + "/" + target.energyCapacity);
+    			var energy, capacity;
+    			if (target.energy) energy = target.energy;
+    			if (target.store) energy = target.store[RESOURCE_ENERGY];
+    			if (target.energyCapacity) capacity = target.energyCapacity;
+    			if (target.storeCapacity) capacity = target.storeCapacity;
+
+    			console.log(actor.creep.name + ": Highest priority target type is now of type " + chosenTargetType +
+	    			" priority: " + priority + " > " + highestPriority + ", from target " + target +
+	    			", energy: " + energy + "/" + capacity);
     		}
 
     		highestPriority = priority;
     	}
     }
 
-    if (chosenTargetType != null)
+    if (chosenTargetType)
     {
-    	target = actor.creep.pos.findClosestByPath(targets.filter(target => target.structureType == chosenTargetType ));
+    	var filteredTargets = targets.filter(target => target.structureType == chosenTargetType);
+    	if (filteredTargets.length == 0)
+    	{
+    		if (actor.doDebug)
+    		{
+    			console.log(actor.creep.name + ": Couldn't find filtered targets of type: " + chosenTargetType +
+    				", out of list: " + targets);
+    		}
+
+    		return targets[0];
+    	}
+
+    	target = actor.creep.pos.findClosestByPath(filteredTargets);
     	
-    	if (actor.doDebug)
-    		console.log(actor.creep.name + ": Closest target of type " + chosenTargetType + " is at " + target.pos);
+    	if (target)
+    	{
+	    	if (actor.doDebug)
+	    		console.log(actor.creep.name + ": Closest target of type " + chosenTargetType + " is at " + target.pos);
+    	}
+    	else
+    	{
+    		target = filteredTargets[0];
+
+    		if (actor.doDebug)
+    		{
+    			console.log(actor.creep.name + ": Couldn't find a target out of filtered list: " + filteredTargets +
+    				", picked " + target);
+    		}
+    	}
     	
     	return target;
     }
