@@ -27,6 +27,8 @@ module.exports =
 	    }
 
 		Game.empire.factories = { creep:CreepFactory, operation:OperationFactory, role:RoleFactory, job:JobFactory };
+
+    	Game.empire.factories.role.initPrototypes();
 	},
 
 	readData: function()

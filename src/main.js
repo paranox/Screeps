@@ -17,10 +17,9 @@ module.exports.loop = function ()
     }
 
     Empire.init();
-
-    Game.empire.factories.role.initPrototypes();
-
     Empire.readData();
+
+    /// Tick starts
 
     Empire.onTickStart();
 
@@ -35,6 +34,8 @@ module.exports.loop = function ()
         op.start();
     }
 
+    /// Tick update
+
     for (var id in Game.empire.operations)
     {
         op = Game.empire.operations[id];
@@ -42,15 +43,13 @@ module.exports.loop = function ()
         op.update();
     }
 
-    //console.log("Actor phase run!");
-
     for (var id in Game.empire.actors)
     {
         actor = Game.empire.actors[id];
         actor.run();
     }
 
-    //console.log("Actor phase end!");
+    // Tick end
 
     for (var id in Game.empire.actors)
     {
