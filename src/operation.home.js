@@ -201,6 +201,38 @@ Home.prototype.roomUpdate = function()
             console.log("Resource " + type + " reserves now at: " + this.home.reserves.resources[type]);
     }
 
+    if (Memory.empire.operations[this.id])
+    {
+        var memoryData = Memory.empire.operations[this.id];
+        if (memoryData.home && memoryData.home.reserves && memoryData.home.reserves.stores)
+        {
+            for (var i = 0; i < this.home.reserves.stores.length; i++)
+            {
+                storeStructure = this.home.reserves.stores[i];
+
+                if (!storeStructure)
+                    continue;
+
+                if (storeStructure.structureType == STRUCTURE_LINK)
+                {
+                    if (memoryData.home.reserves.stores[storeStructure.id])
+                    {
+                        var storeData = memoryData.home.reserves.stores[storeStructure.id];
+                        if (storeData.linkTransferFrom)
+                        {
+                            var source = Game.getObjectById(storeData.linkTransferFrom);
+                            if (source)
+                            {
+                                var amount = Math.floor((storeStructure.energyCapacity - storeStructure.energy) / 0.97);
+                                source.transferEnergy(storeStructure, Math.min(source.energy, amount));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Crappy old tower behaviour
 
     var towers = this.home.room.find(FIND_STRUCTURES,
