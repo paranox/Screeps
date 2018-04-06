@@ -37,7 +37,7 @@ Repairer.prototype.tryDoJob = function(actor)
         if (job.hasStarted == false)
             job.start(actor);
 
-        if (job.jobType != Job.Type.Repair && job.jobType != Job.Type.Resupply)
+        if (job.jobType == Job.Type.Upgrade || job.jobType == Job.Type.Harvest)
         {
             // Every 10 ticks, check for repair targets
             if (job.startTime < Game.time && (Game.time - job.startTime) % 10 == 0)

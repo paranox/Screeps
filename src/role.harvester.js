@@ -45,8 +45,10 @@ Harvester.prototype.getJob = function(actor)
     else if (actor.doDebug)
         console.log(actor.creep.name + ": Nothing to supply energy with!");
 
-    // Get the room's Controller for an Upgrade job
+    // Get the room's or operation home room's Controller for an Upgrade job
     var controller = actor.creep.room.controller;
+    if ((!controller || !controller.my) && actor.operation && actor.operation.home.room)
+        controller = actor.operation.home.room.controller;
     if (controller && controller.my)
         return Game.empire.factories.job.createFromType(Job.Type.Upgrade, { for:actor.creep.name, target:controller });
     else

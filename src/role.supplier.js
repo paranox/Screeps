@@ -32,7 +32,7 @@ Supplier.prototype.tryDoJob = function(actor)
         if (job.hasStarted == false)
             job.start(actor);
 
-        if (job.jobType == Job.Type.Upgrade)
+        if (job.jobType == Job.Type.Upgrade || job.jobType == Job.Type.Harvest)
         {
             // Every 10 ticks while doing Upgrade, check for Supply targets
             if (job.startTime < Game.time && (Game.time - job.startTime) % 10 == 0)
