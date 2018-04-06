@@ -170,7 +170,8 @@ Home.prototype.roomUpdate = function()
 
     this.home.reserves = { resources:{} };
     this.home.reserves.stores = this.home.room.find(FIND_STRUCTURES, { filter: (structure) =>
-            { return structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE } });
+            { return structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE ||
+                     structure.structureType == STRUCTURE_LINK } });
 
     var storeStructure, resource;
     for (var i = 0; i < this.home.reserves.stores.length; i++)

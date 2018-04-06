@@ -134,11 +134,11 @@ Resupply.prototype.onUpdate = function(actor)
         return;
     }
 
-    if (this.target != null && this.target.store[RESOURCE_ENERGY] <= 0)
+    if (this.target && ((this.target.store && this.target.store[RESOURCE_ENERGY] <= 0) || (this.target.energy && this.target.energy <= 0)))
 	{
 		if (actor.doDebug)
-            console.log(actor.creep.name + ": Resupply target " + this.target.name + " store empty!");
-
+            console.log(actor.creep.name + ": Resupply target " + this.target.name + " is empty!");
+		
 		this.target = null;
 	}
 
