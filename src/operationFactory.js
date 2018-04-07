@@ -108,7 +108,7 @@ module.exports =
 		}
 
 		console.log("Adding operation: " + Utils.objectToString(operation, 0, 1));
-		Memory.empire.operations[operation.id] = operation.createSaveData();
+		operation.writeSaveData();
 	},
 
 	addOperationFromType: function(opType, opts)

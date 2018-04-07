@@ -144,13 +144,12 @@ OperationBase.prototype.readSaveData = function(context, data)
 	if (data.home.spawnOrdersPlaced != null)
 		context.home.spawnOrdersPlaced = data.home.spawnOrdersPlaced;
 
-	var roleKeys = data.roles != null ? Object.keys(data.roles) : [];
-	var rolePosition;
-	if (data.roles != null && roleKeys.length > 0)
+	if (data.roles)
 	{
-		for (var i = 0; i < roleKeys.length; i++)
+		var rolePosition;
+		for (const id in data.roles)
 		{
-			rolePosition = Operation.createRolePositionFromData(data.roles[roleKeys[i]]);
+			rolePosition = Operation.createRolePositionFromData(data.roles[id]);
 			context.roles[rolePosition.roleType] = rolePosition;
 		}
 	}
@@ -201,15 +200,22 @@ OperationBase.prototype.writeSaveData = function(context)
 	if (context == undefined)
 		context = this;
 
-	var memoryObject = Memory.empire.operations[context.id] != undefined ? Memory.empire.operations[context.id] : {};
+	var memoryObject = Memory.empire.operations[context.id];
 
-	memoryObject.id = context.id;
-	memoryObject.opName = context.opName;
-	memoryObject.opType = Operation.getNameOf(context.opType);
+	if (!memoryObject)
+	{
+		memoryObject = {};
+		Memory.empire.operations[context.id] = memoryObject;
+
+		memoryObject.id = context.id;
+		memoryObject.opName = context.opName;
+		memoryObject.opType = Operation.getNameOf(context.opType);
+	}
 
 	if (context.isHalted == true)
 		memoryObject.isHalted = true;
 
+	// Jobs are constantly changing, don't bother checking for existing ones
     if (context.jobs.length > 0)
     {
         memoryObject.jobs = [];
@@ -217,7 +223,7 @@ OperationBase.prototype.writeSaveData = function(context)
             memoryObject.jobs.push(context.jobs[i].createSaveData());
     }
 	
-	if (context.home != null)
+	if (context.home)
 	{
 		if (!memoryObject.home)
 		{
@@ -236,17 +242,42 @@ OperationBase.prototype.writeSaveData = function(context)
 	else
 		console.log("Operation " + context.opName + "[" + context.id + "]: No home defined in context!");
 
-	var roles = {};
-	var roleKeys = context.roles != null ? Object.keys(context.roles) : [];
-	var roleData;
-	for (var i = 0; i < roleKeys.length; i++)
+	if (context.roles && Object.keys(context.roles).length > 0)
 	{
-		roleData = Operation.createRoleDataFromPosition(context.roles[roleKeys[i]]);
-		roles[roleData.roleType] = roleData;
-	}
+		var role, roleData;
 
-	if (Object.keys(roles).length > 0)
-		memoryObject.roles = roles;
+		if (Array.isArray(memoryObject.roles))
+		{
+			var rolesData = {};
+
+			for (var i = 0; i < memoryObject.roles.length; i++)
+			{
+				roleData = Object.create(memoryObject.roles[i]); 
+				rolesData[roleData.roleName] = roleData;
+				delete memoryObject.roles[i];
+			}
+
+			memoryObject.roles = rolesData;
+		}
+
+		if (!memoryObject.roles)
+			memoryObject.roles = {};
+
+		for (const id in context.roles)
+		{
+			role = context.roles[id];
+			roleData = memoryObject.roles[role.roleName];
+
+			if (!roleData)
+			{
+				roleData = Operation.createRoleDataFromPosition(role);
+				memoryObject.roles[role.roleName] = roleData;
+			}
+			else
+				roleData.current = role.current;
+		}
+
+	}
 
 	memoryObject.actors = {};
 	if (context.actors != null)
@@ -330,7 +361,7 @@ OperationBase.prototype.end = function()
 	{
 		role = this.roles[type];
 
-		if (!role.max != undefined && role.current >= role.max)
+		if (role.max != undefined && role.current >= role.max)
 		{
 			if (this.doDebug)
 			{
@@ -421,7 +452,8 @@ OperationBase.prototype.end = function()
 			else
 				nextBlueprint.opts.memory = { spawnOrderID:orderID, operationID:this.id };
 
-			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName);
+			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName + "\n" +
+				JSON.stringify(role));
 
 			var maxCost = this.home.spawn ? this.home.spawn.room.energyCapacityAvailable : 300;
 

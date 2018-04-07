@@ -59,21 +59,21 @@ Home.prototype.writeSaveData = function()
         }
 
         var storeObject, storeData;
-        for (var i = 0; i < this.home.reserves.stores.length; i++)
+        for (const id in this.home.reserves.stores)
         {
-            storeObject = this.home.reserves.stores[i];
+            storeObject = this.home.reserves.stores[id];
 
             if (!storeObject)
                 continue;
 
-            if (!data.home.reserves.stores[storeObject.id])
+            if (!data.home.reserves.stores[id])
             {
                 console.log("Operation " + this.opName + "[" + this.id + "]: New store object found: " + storeObject);
                 storeData = { type:storeObject.structureType, priority:1.0, resources:{} };
-                data.home.reserves.stores[storeObject.id] = storeData;
+                data.home.reserves.stores[id] = storeData;
             }
             else
-                storeData = data.home.reserves.stores[storeObject.id];
+                storeData = data.home.reserves.stores[id];
 
             if (storeObject.energy)
             {
@@ -169,17 +169,21 @@ Home.prototype.roomUpdate = function()
     this.home.roomLevel = this.home.room.controller.level;
 
     this.home.reserves = { resources:{} };
-    this.home.reserves.stores = this.home.room.find(FIND_STRUCTURES, { filter: (structure) =>
+
+    this.home.reserves.stores = {};
+    structures = this.home.room.find(FIND_STRUCTURES, { filter: (structure) =>
             { return structure.structureType == STRUCTURE_CONTAINER || structure.structureType == STRUCTURE_STORAGE ||
                      structure.structureType == STRUCTURE_LINK } });
 
     var storeStructure, resource;
-    for (var i = 0; i < this.home.reserves.stores.length; i++)
+    for (var i = 0; i < structures.length; i++)
     {
-        storeStructure = this.home.reserves.stores[i];
+        storeStructure = structures[i];
 
         if (this.doDebug)
             console.log("Found resource store structure: " + storeStructure);
+
+        this.home.reserves.stores[storeStructure.id] = storeStructure;
 
         for (const type in storeStructure.store)
         {
@@ -206,29 +210,55 @@ Home.prototype.roomUpdate = function()
         var memoryData = Memory.empire.operations[this.id];
         if (memoryData.home && memoryData.home.reserves && memoryData.home.reserves.stores)
         {
-            for (var i = 0; i < this.home.reserves.stores.length; i++)
+            var removeList = []
+            var storeData;
+            for (const id in memoryData.home.reserves.stores)
             {
-                storeStructure = this.home.reserves.stores[i];
+                storeStructure = this.home.reserves.stores[id];
 
                 if (!storeStructure)
+                {
+                    removeList.push(id);
                     continue;
+                }
 
+                storeData = memoryData.home.reserves.stores[storeStructure.id];
+
+                // Transfer energy between links
                 if (storeStructure.structureType == STRUCTURE_LINK)
                 {
-                    if (memoryData.home.reserves.stores[storeStructure.id])
+                    if (storeData.linkTransferFrom)
                     {
-                        var storeData = memoryData.home.reserves.stores[storeStructure.id];
-                        if (storeData.linkTransferFrom)
+                        var source = Game.getObjectById(storeData.linkTransferFrom);
+                        if (source && source.energy > 0 && source.cooldown == 0)
                         {
-                            var source = Game.getObjectById(storeData.linkTransferFrom);
-                            if (source)
+                            var capacity = (storeStructure.energyCapacity - storeStructure.energy);
+                            var amount = Math.min(source.energy, Math.floor(capacity / 0.97));
+
+                            if (amount < 100)
+                                continue;
+
+                            let status = source.transferEnergy(storeStructure, amount);
+                            switch (status)
                             {
-                                var amount = Math.floor((storeStructure.energyCapacity - storeStructure.energy) / 0.97);
-                                source.transferEnergy(storeStructure, Math.min(source.energy, amount));
+                                case OK:
+                                    if (this.doDebug)
+                                        console.log("Link transferred " + amount + " energy from " + source + " to " + storeStructure);
+                                    break;
+                                default:
+                                    console.log("Link unable to transfer " + amount + " energy from " +
+                                        source + " to " + storeStructure + ", error code: " + status);
+                                    break;
                             }
                         }
                     }
                 }
+            }
+
+            for (var i = 0; i < removeList.length; i++)
+            {
+                console.log("Operation " + this.opName + "[" + this.id + "]: Removing redundant store from data: " + removeList[i]);
+                delete memoryData.home.reserves.stores[removeList[i]];
             }
         }
     }
@@ -539,7 +569,7 @@ Home.prototype.getJob = function(actor)
             }
         }
 
-        if (this.home.reserves.stores && this.home.reserves.stores.length > 0)
+        if (this.home.reserves.stores && Object.keys(this.home.reserves.stores) > 0 )
         {
             targets = this.home.reserves.stores.filter((structure) =>
                 {

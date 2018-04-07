@@ -14,8 +14,8 @@ module.exports =
 	{
 		var obj = { roleName:Role.getNameOf(roleType), roleType:roleType, current:current, min:min };
 
-		if (max != undefined) obj["max"] = max;
-		if (priority != undefined) obj["priority"] = priority;
+		if (max != undefined) obj.max = max;
+		if (priority != undefined) obj.priority = priority;
 		
 		return obj;
 	},
@@ -25,8 +25,10 @@ module.exports =
 	{
 		var obj = { roleName:roleData.roleName, roleType:Role.Type[roleData.roleName], current:roleData.current, min:roleData.min };
 
-		if (roleData.max != undefined) obj["max"] = roleData.max;
-		if (roleData.priority != undefined) obj["priority"] = roleData.priority;
+		if (roleData.max) obj.max = roleData.max;
+		if (roleData.minCost) obj.minCost = roleData.minCost;
+		if (roleData.maxCost) obj.maxCost = roleData.maxCost;
+		if (roleData.priority) obj.priority = roleData.priority;
 		
 		return obj;
 	},
@@ -36,8 +38,8 @@ module.exports =
 	{
 		var obj = { roleName:rolePosition.roleName, roleType:rolePosition.roleType, current:rolePosition.current, min:rolePosition.min };
 
-		if (rolePosition.max != undefined) obj["max"] = rolePosition.max;
-		if (rolePosition.priority != undefined) obj["priority"] = rolePosition.priority;
+		if (rolePosition.max != undefined) obj.max = rolePosition.max;
+		if (rolePosition.priority != undefined) obj.priority = rolePosition.priority;
 		
 		return obj;
 	}

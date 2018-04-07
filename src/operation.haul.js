@@ -143,7 +143,9 @@ Haul.prototype.getJob = function(actor)
 
 		if (!chosenSource)
 		{
-			console.log("Operation " + this.opName + ": " + actor.creep.name + ": No source found!");
+			if (this.doDebug)
+				console.log("Operation " + this.opName + ": " + actor.creep.name + ": No source found!");
+			
 			return null;
 		}
 
