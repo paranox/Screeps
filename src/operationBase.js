@@ -132,13 +132,16 @@ OperationBase.prototype.readSaveData = function(context, data)
 		}
 	}
 
-	if (data.home != null)
+	if (data.home)
 	{
 		context.home =
 		{
 			room:Game.rooms[data.home.roomName],
 			spawn:Game.getObjectById(data.home.spawnID)
 		};
+
+		if (data.home.supportSpawnID)
+			context.home.supportSpawn = Game.getObjectById(data.home.supportSpawnID);
 	}
 
 	if (data.home.spawnOrdersPlaced != null)
@@ -236,7 +239,7 @@ OperationBase.prototype.writeSaveData = function(context)
 		}
 		else
 		{
-			memoryObject.spawnOrdersPlaced = context.home.spawnOrdersPlaced;
+			memoryObject.home.spawnOrdersPlaced = context.home.spawnOrdersPlaced;
 		}
 	}
 	else
@@ -425,22 +428,37 @@ OperationBase.prototype.end = function()
 
 		if (this.home.spawn != null)
 		{
+			var chosenSpawn = null;
 			var orderID = role.roleName + "_" + this.id;
 
 			// Check if order has been placed
-			if (this.home.spawn.memory.spawnQueue && this.home.spawn.memory.spawnQueue[orderID])
+			if (this.home.spawnOrdersPlaced[orderID])
 			{
-				if (!this.home.spawn.memory.spawnQueue[orderID].priority ||
-					this.home.spawn.memory.spawnQueue[orderID].priority < priority)
+				var placedorder = this.home.spawnOrdersPlaced[orderID];
+				if (placedorder.spawn)
+					chosenSpawn = Game.getObjectById(placedorder.spawn);
+				if (!chosenSpawn)
+					chosenSpawn = this.home.spawn;
+			}
+			else
+				chosenSpawn = this.home.spawn;
+
+			// Check whether the order exists
+			if (chosenSpawn.memory.spawnQueue && chosenSpawn.memory.spawnQueue[orderID])
+			{
+				if (!chosenSpawn.memory.spawnQueue[orderID].priority ||
+					chosenSpawn.memory.spawnQueue[orderID].priority < priority)
 				{
 					console.log("Operation " + this.opName + "[" + this.id + "]: Updating priority of spawn order " + orderID +
-						" from " + this.home.spawn.memory.spawnQueue[orderID].priority + " to " + priority);
+						" from " + chosenSpawn.memory.spawnQueue[orderID].priority + " to " + priority);
 
-					this.home.spawn.memory.spawnQueue[orderID].priority = priority;
+					chosenSpawn.memory.spawnQueue[orderID].priority = priority;
 				}
 
 				continue;
 			}
+
+			chosenSpawn = this.home.spawn;
 
 			var nextBlueprint = Game.empire.factories.creep.buildBlueprintFromRole(Role.Type[role.roleName]);
 
@@ -455,10 +473,12 @@ OperationBase.prototype.end = function()
 			console.log("Operation " + this.opName + "[" + this.id + "]: Adding spawn order for role " + role.roleName + "\n" +
 				JSON.stringify(role));
 
-			var maxCost = this.home.spawn ? this.home.spawn.room.energyCapacityAvailable : 300;
+			var maxCost = 300;
 
 			if (role.maxCost)
 				maxCost = role.maxCost;
+			else if (this.home.spawn && this.home.spawn.room.energyCapacityAvailable > maxCost)
+				maxCost = this.home.spawn.room.energyCapacityAvailable;
 
 			var minCost = role.minCost ? role.minCost : maxCost * 0.75;
 
@@ -469,8 +489,21 @@ OperationBase.prototype.end = function()
 					minCost = cost;
 			}
 
-			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, priority:priority };
-			Game.empire.factories.creep.addOrderToSpawnQueue(this.home.spawn, orderID, priority, nextBlueprint,
+			if (this.home.spawn && this.home.spawn.room.energyCapacityAvailable && this.home.spawn.room.energyCapacityAvailable < minCost &&
+				this.home.supportSpawn && this.home.supportSpawn.room.energyCapacityAvailable >= minCost)
+			{
+				chosenSpawn = this.home.supportSpawn;
+
+				if (this.home.supportSpawn && this.home.supportSpawn.room.energyCapacityAvailable > maxCost && !role.maxCost)
+				{
+					maxCost = this.home.supportSpawn.room.energyCapacityAvailable;
+					if (!role.minCost)
+						minCost = maxCost * 0.75;
+				}
+			}
+
+			this.home.spawnOrdersPlaced[orderID] = { time:Game.time, role:role.roleName, priority:priority, spawn:chosenSpawn.id };
+			Game.empire.factories.creep.addOrderToSpawnQueue(chosenSpawn, orderID, priority, nextBlueprint,
 				minCost, maxCost);
 		}
 	}
@@ -492,14 +525,24 @@ OperationBase.prototype.end = function()
 		}
 		else if (this.home.spawn.memory.spawnQueue != null)
 		{
-			var id;
-			var orders = Object.keys(this.home.spawnOrdersPlaced)
-			for (var i = 0; i < orders.length; i++)
+			var spawnOrder, spawn;
+			for (const id in this.home.spawnOrdersPlaced)
 			{
-				id = orders[i];
-				if (!this.home.spawn.memory.spawnQueue[id])
+				spawnOrder = this.home.spawnOrdersPlaced[id];
+
+				if (!spawnOrder)
+					continue;
+
+				if (spawnOrder.spawn)
+					spawn = Game.getObjectById(spawnOrder.spawn);
+				else
+					spawn = this.home.spawn;
+
+				if (!spawn.memory.spawnQueue[id])
 				{
-					console.log("Operation " + this.opName + "[" + this.id + "]: Spawn order " + id + " wasn't found in queue!");
+					console.log("Operation " + this.opName + "[" + this.id + "]: Spawn order " + id + " wasn't found in queue of " +
+						spawn + " at " + spawn.pos + "!");
+
 					delete this.home.spawnOrdersPlaced[id];
 				}
 			}
