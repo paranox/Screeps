@@ -480,7 +480,10 @@ OperationBase.prototype.end = function()
 			else if (this.home.spawn && this.home.spawn.room.energyCapacityAvailable > maxCost)
 				maxCost = this.home.spawn.room.energyCapacityAvailable;
 
-			var minCost = role.minCost ? role.minCost : maxCost * 0.75;
+			var minCost = 150;
+
+			if (role.minCost)
+				minCost = role.minCost;
 
 			if (nextBlueprint.minimumParts)
 			{
@@ -489,6 +492,7 @@ OperationBase.prototype.end = function()
 					minCost = cost;
 			}
 
+			// If home spawn can't cover min cost and support spawn is defined and it has capacity that can cover the min cost, use that
 			if (this.home.spawn && this.home.spawn.room.energyCapacityAvailable && this.home.spawn.room.energyCapacityAvailable < minCost &&
 				this.home.supportSpawn && this.home.supportSpawn.room.energyCapacityAvailable >= minCost)
 			{

@@ -105,8 +105,50 @@ Harvest.prototype.onUpdate = function(actor)
 		this.finish(actor, true);
 		return;
 	}
+
+    var status;
+
+    if (!actor.creep.pos.isNearTo(this.target.pos))
+    {
+        status = actor.creep.moveTo(this.target, { visualizePathStyle: { stroke: "#ffaa00" } });
+        switch (status)
+        {
+            case OK:
+                if (actor.doDebug)
+                    console.log(actor.creep.name + ": Moving towards Source at " + this.target.pos);
+
+                break;
+            case ERR_NO_PATH:
+                if (actor.doDebug)
+                    console.log(actor.creep.name + ": Unable to move towards Source at " + this.target.pos);
+
+                var opts = {};
+                opts[this.target.id] = this.target;
+                var source = this.getTargetSource(actor, this.target.room, opts );
+
+                if (source)
+                {
+                    if (actor.doDebug)
+                    {
+                        console.log(actor.creep.name + ": Changed harvest target from " + this.target + " at " + this.target.pos +
+                            " to " + source + " at " + source.pos);
+                    }
+
+                    this.target = source;
+                }
+
+                break;
+            default:
+                console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
+                    ") when trying to move to Source at " + this.target.pos);
+
+                break;
+        }
+
+        return;
+    }
     
-    var status = actor.creep.harvest(this.target);
+    status = actor.creep.harvest(this.target);
     switch (status)
     {
         case OK:
@@ -139,6 +181,34 @@ Harvest.prototype.onUpdate = function(actor)
 
             break;
     }
-};
+}
+
+Harvest.prototype.getTargetSource = function(actor, room, deniedSources)
+{
+    var sources = room.find(FIND_SOURCES);
+
+    var chosenSource = null;
+    var highestPriority = 0;
+
+    var source, priority, distance;
+    for (var i = 0; i < sources.length; i++)
+    {
+        source = sources[i];
+
+        if (deniedSources && deniedSources.hasOwnProperty(source.id))
+            continue;
+
+        distance = actor.creep.pos.getRangeTo(source.pos);
+        priority = distance / 10;
+
+        if (priority > highestPriority)
+        {
+            highestPriority = priority;
+            chosenSource = source;
+        }
+    }
+
+    return chosenSource;
+}
 
 module.exports = Harvest.prototype;
