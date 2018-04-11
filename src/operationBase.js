@@ -480,7 +480,7 @@ OperationBase.prototype.end = function()
 			else if (this.home.spawn && this.home.spawn.room.energyCapacityAvailable > maxCost)
 				maxCost = this.home.spawn.room.energyCapacityAvailable;
 
-			var minCost = 150;
+			var minCost = Math.max(maxCost - 600, maxCost * 0.5);
 
 			if (role.minCost)
 				minCost = role.minCost;
@@ -501,8 +501,6 @@ OperationBase.prototype.end = function()
 				if (this.home.supportSpawn && this.home.supportSpawn.room.energyCapacityAvailable > maxCost && !role.maxCost)
 				{
 					maxCost = this.home.supportSpawn.room.energyCapacityAvailable;
-					if (!role.minCost)
-						minCost = maxCost * 0.75;
 				}
 			}
 

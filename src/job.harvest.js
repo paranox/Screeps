@@ -138,6 +138,11 @@ Harvest.prototype.onUpdate = function(actor)
                 }
 
                 break;
+            case ERR_TIRED:
+                if (actor.doDebug)
+                    console.log(actor.creep.name + ": Too tired to move towards Source at " + this.target.pos);
+
+                break;
             default:
                 console.log(actor.creep.name + ": Unhandled status (Error code: " + status +
                     ") when trying to move to Source at " + this.target.pos);
