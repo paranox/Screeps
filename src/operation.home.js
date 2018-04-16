@@ -107,53 +107,6 @@ Home.prototype.getConstructorOptsHelpString = function()
 
 Home.prototype.onUpdate = function()
 {
-    // Make sure we're not losing vital roles
-    if (this.home.spawnOrdersPlaced && this.home.spawn.memory.spawnQueue)
-    {
-        var spawnQueueEntry, roleType;
-        for (const id in this.home.spawnOrdersPlaced)
-        {
-            spawnQueueEntry = this.home.spawn.memory.spawnQueue[id];
-            roleType = -1;
-
-            if (!spawnQueueEntry)
-                continue;
-
-            if (spawnQueueEntry.role)
-                roleType = Role.Type[spawnQueueEntry.role];
-            else if (spawnQueueEntry.blueprint.opts.memory.role)
-                roleType = Role.Type[spawnQueueEntry.blueprint.opts.memory.role];
-
-            if (roleType >= 0)
-            {
-                if ((roleType == Role.Type.Supplier || roleType == Role.Type.Harvester) && this.roles[roleType])
-                {
-                    //console.log("Spawn queue has an order for role " + roleType + " (" + Role.getNameOf(roleType) +
-                    //    ") and there's currently " + this.roles[roleType].current + " actors of that role enlisted");
-
-                    if (this.roles[roleType].current < this.roles[roleType].min)
-                    {
-                        var newMinCost = 300;
-                        var rolePrototype = Game.empire.factories.role.getPrototype(roleType);
-                        if (rolePrototype != null && rolePrototype.minimumParts)
-                            newMinCost = Utils.getBodyCost(rolePrototype.minimumParts);
-
-                        if (spawnQueueEntry.minCost > newMinCost)
-                        {
-                            spawnQueueEntry.minCost = newMinCost;
-
-                            console.log("Vital spawn order for " + roleType + " (" + Role.getNameOf(roleType) +
-                                ") has too few current actors enlisted " + this.roles[roleType].current + " < " +
-                                this.roles[roleType].min + ", set minimum cost to " + spawnQueueEntry.minCost);
-                        }
-                    }
-                }
-            }
-            else
-                console.log("Unhandled or undefined roleType " + roleType + " on spawn order " + id);
-        }
-    }
-
     this.roomUpdate();
     this.spawnUpdate();
 }
